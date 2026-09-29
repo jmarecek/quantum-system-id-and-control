@@ -5,6 +5,28 @@ following the thirteen lectures of `syllabus.txt`.  The set-up is the one used
 in the *Quantum Computing via Randomized Algorithms* course: **one LaTeX source
 per chapter is compiled both as handouts and as slides.**
 
+## Syllabus
+
+| lecture | topic | chapter file |
+| --- | --- | --- |
+| 1 | Motivating examples | `ch01_motivation.tex` |
+| 2 | Models of closed quantum systems | `ch02_closed_systems.tex` |
+| 3 | Models of open quantum systems | `ch03_open_systems.tex` |
+| 4 | Conditions for observability and controllability in state space | `ch04_control_observ_statespace.tex` |
+| 5 | Conditions for observability and controllability in frequency domain | `ch05_control_observ_frequency.tex` |
+| 6 | Sample complexity of identification | `ch06_sample_complexity.tex` |
+| 7 | Geometry of quantum states | `ch07_geometry_states.tex` |
+| 8 | Geometry of quantum channels | `ch08_geometry_channels.tex` |
+| 9 | Geometry of quantum optimal control | `ch09_geometry_control.tex` |
+| 10 | Quantum circuit complexity and the length of the trajectory in quantum optimal control | `ch10_circuit_complexity.tex` |
+| 11 | Algorithmic quantum state tomography and quantum channel tomography | `ch11_algorithmic_tomography.tex` |
+| 12 | Algorithmic quantum optimal control | `ch12_algorithmic_control.tex` |
+| 13 | The motivating examples revisited | `ch13_motivation_revisited.tex` |
+
+The course has no prerequisites: Lecture 2 introduces quantum mechanics and Lie
+theory from scratch, while Lecture 1 is an informal overview of the motivating
+examples and a refresher on conic optimization.
+
 ## Layout
 
 ```
@@ -29,100 +51,5 @@ Shared infrastructure copied from the quantum computing course:
 `amsmacros.tex`, `headingnames.tex`, `declarns.tex`, `algcodemacros.tex`,
 `myColours.tex`, `macros.tex`, `svmono.cls`, `svind.ist`, `spbasic.bst`.
 
-## Writing a chapter
-
-Every chapter file starts with
-
-```latex
-%\documentclass[overheadsbeamer.tex]{subfiles}
-\documentclass[handoutsbeamer.tex]{subfiles}
-\begin{document}
-\ona{ \setcounter{chapter}{N-1} }
-\lecture{Title}{LectNN}
-\chapter{Title}\label{C.Label}
-```
-
-and consists of `\begin{frame}\ft{Title} ... \end{frame}` blocks separated by
-`\section{}`/`\subsection{}`:
-
-* `\ona{...}` — appears **only in the handouts** (prose paragraphs, proofs, figure environments);
-* `\onp{...}` — appears **only on the slides** (bullet lists, resized figures);
-* everything else (equations, `defn`/`thm`/`propn`/`lem`/`cor`/`exm`/`exe`/`rmk`/`probl` environments) appears in both.
-
-Frames containing code listings need `\begin{frame}[fragile]`.
-
-Everything a chapter shows must sit inside a frame.  The full slide deck uses beamer's
-`ignorenonframetext`, which skips text *and assignments* outside frames; a chapter's
-closing `\biblio` is handled by the drivers (empty in the full builds, a reference list
-or a References frame in single-lecture builds).
-
-**Page budget (a guideline, not a hard limit):** aim for about 10 handout pages of
-text per chapter, and up to about 15 with figures or code snippets (`make pages`).
-Chapter 1 is deliberately longer: its material is lighter than the rest.
-
-## Figures and code
-
-Figures are never pasted as PDFs (the only exceptions are the team portraits and the hardware photographs `figures/team_*.jpg`, `figures/hw_*` taken over from the quantum computing course slides, with their original credits).  Each figure is produced by
-`code/chNN_<name>.py`, which uses the helpers in `code/tikzexport.py`
-(`pgfplots_axis`, `pgfplots_matrix`, `bloch_sphere`, `write_tikz`) to write
-`figures/chNN_<name>.tex`; the chapter includes it with
-`\input{figures/chNN_<name>.tex}`.  Snippets of the same scripts are shown with
-`\lstinputlisting[style=python,firstline=..,lastline=..]{code/chNN_<name>.py}`.
-Only `numpy`/`scipy` are needed.  `make figures` regenerates everything.
-
-## Building
-
-```sh
-make               # handouts + slides (latexmk)
-./build.sh         # same targets when make is unavailable: ./build.sh handout 03
-make handout-03    # notes for lecture 3 only
-make slides-03     # slides for lecture 3 only
-make labels        # refresh labels_*.tex from the last full build (done automatically by make handouts/slides)
-make pages         # page budget check
-```
-
-Requires TeX Live (tested with 2026: beamer, beamerarticle, subfiles, pgfplots,
-algorithm2e, natbib, ...) and Python 3.7+ with numpy and scipy.
-
-## Single-lecture builds
-
-`make handout-NN` / `make slides-NN` compile one chapter on its own.  Cross-chapter
-references to chapter numbers always resolve (fallbacks in `coursemacros.tex`);
-references to theorems, equations and figures of other chapters resolve to the
-numbers of the last full build through `labels_handouts.tex` / `labels_slides.tex`
-(printed without hyperlinks).  Run `make handouts` once after cloning to create them.
-
-## Checks
-
-* `code/test_standalone.sh` compiles every chapter on its own, as handout and as slides, and
-  reports exit codes, page counts and unresolved references (this is what "rendering the
-  handouts for one lecture only" must pass without errors).
-* `make pages` / `./build.sh pages` prints the handout page count of each chapter (the
-  standalone PDFs include the chapter's own reference list, which the full build does not).
-
-## Bibliography
-
-`refs.bib` merges the bibliographies of all source papers.  The reference lists that
-existed only as `thebibliography` items (the Ansel et al. tutorial, Control_Technical2)
-were resolved to proper entries through Crossref / DataCite by `code/resolve_bib.py`;
-items it could not match with confidence remain as `@misc` entries whose `title`
-holds the original text (`python3 code/resolve_bib.py` then `python3 code/merge_resolved_bib.py`
-to rerun the resolution).  The optional textbooks are `dalessandro2021introduction` and `borzi2017formulation`.  The six source papers of the course are `bondar2025globally`,
-`lawrence2026geometric`, `parvaiz2025identifiability`, `lawrence2026penalised`,
-`parvaiz2026survey`, and the tutorial `ansel2024introduction`.
-
-## Sources
-
-The chapters draw on the following material (kept in sibling folders, not part
-of the build):
-
-| folder | content | reuse |
-| --- | --- | --- |
-| `SystemID_Perspective/` | survey of identifiability and identification of open quantum systems | verbatim (own work) |
-| `SystemID_Technical/` | identifiability of autonomous and controlled open quantum systems | verbatim (own work) |
-| `Control_Technical/` | globally optimal control via polynomial optimization (QCPOP) | verbatim (own work) |
-| `Control_Technical2/` | geometric quantum control and the random Schrödinger equation | verbatim (own work) |
-| `Control_Technical3/` | penalised and constrained geodesics in geometric control | verbatim (own work) |
-| `Control_Tutorial/` | Ansel et al., tutorial on quantum optimal control | **rephrased only**, no figures |
-| `conic_optimization/` | the conic optimization course | verbatim (own work), lecture 1 |
-| `Quantum_Computing_via_Randomized_Algorithms/` | the quantum computing course | LaTeX set-up |
+How to write chapters, figures and code, and how to build and check the notes, is
+described in [contributing.md](contributing.md).
