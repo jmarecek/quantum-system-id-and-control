@@ -1,0 +1,13 @@
+1. Motivating examples.
+2. Models of closed quantum systems.
+3. Models of open quantum systems.
+4. Conditions for observability and controllability in state space.
+5. Conditions for observability and controllability in frequency domain.
+6. Sample complexity of identification.
+7. Geometry of quantum states.
+8. Geometry of quantum channels.
+9. Geometry of quantum optimal control.
+10. Quantum circuit complexity and the length of the trajectory in quantum optimal control.
+11. Algorithmic quantum state tomography and quantum channel tomography.
+12. Algorithmic quantum optimal control.
+13. The motivating examples revisited.

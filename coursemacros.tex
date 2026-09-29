@@ -1,0 +1,209 @@
+%   coursemacros.tex
+%
+%   Course-specific macros for Quantum Optimal Control
+%   (identification, geometry, and control of quantum systems).
+%   Loaded by handoutsbeamer.tex, overheadsbeamer.tex and book.tex
+%   after declarns.tex / algcodemacros.tex / beamermacros.tex, so
+%   anything defined there (\R, \C, \N, \Z, \Tr, \rank, \diag, ...)
+%   is already available and must NOT be redefined here.
+%
+%   Change Control:
+%   Date        Ver  Reason
+%   ----------  ---  -----------------------------------------------------------
+%   2026-09-22  0.1  Begun
+
+% ---------------------------------------------------------------------
+% Spaces and sets
+% ---------------------------------------------------------------------
+\newcommand*{\Hil}{\ensuremath{\mathcal{H}}}                 % Hilbert space
+\newcommand*{\Lin}[1]{\ensuremath{\mathcal{L}(#1)}}          % linear operators on #1
+\newcommand*{\Herm}[1][]{\ensuremath{\mathrm{Herm}(#1)}}     % Hermitian operators
+\newcommand*{\Dens}[1][]{\ensuremath{\mathcal{D}(#1)}}       % density operators
+\newcommand*{\Chan}[1][]{\ensuremath{\mathcal{C}(#1)}}       % CPTP maps / channels
+\newcommand*{\Id}{\ensuremath{\mathbbm{1}}}                  % identity operator
+\newcommand*{\Bloch}{\ensuremath{\mathbf{r}}}                % Bloch vector
+\newcommand*{\Expect}{\ensuremath{\mathbb{E}}}               % expectation
+\newcommand*{\Prob}{\ensuremath{\mathbb{P}}}                 % probability
+
+% ---------------------------------------------------------------------
+% Lie groups and Lie algebras
+% ---------------------------------------------------------------------
+\newcommand*{\SU}[1][n]{\ensuremath{\mathrm{SU}(#1)}}
+\newcommand*{\Un}[1][n]{\ensuremath{\mathrm{U}(#1)}}
+\newcommand*{\liesu}[1][n]{\ensuremath{\mathfrak{su}(#1)}}
+\newcommand*{\lieu}[1][n]{\ensuremath{\mathfrak{u}(#1)}}
+\newcommand*{\Lie}{\ensuremath{\mathrm{Lie}}}                % Lie closure
+\newcommand*{\ad}{\ensuremath{\operatorname{ad}}}
+\newcommand*{\Ad}{\ensuremath{\operatorname{Ad}}}
+\renewcommand*{\comm}[2]{\ensuremath{\left[#1,#2\right]}}      % commutator % overrides the text abbreviation from declarns.tex
+\newcommand*{\acomm}[2]{\ensuremath{\left\{#1,#2\right\}}}   % anticommutator
+
+% ---------------------------------------------------------------------
+% Dynamics: Hamiltonians, Lindbladians, propagators
+% ---------------------------------------------------------------------
+\newcommand*{\Hdrift}{\ensuremath{H_{0}}}                    % drift Hamiltonian
+\newcommand*{\Hctrl}[1][k]{\ensuremath{H_{#1}}}              % control Hamiltonian
+\newcommand*{\ctrl}{\ensuremath{u}}                          % control field
+\newcommand*{\Lind}{\ensuremath{\mathcal{L}}}                % Lindbladian
+\newcommand*{\Diss}{\ensuremath{\mathcal{D}}}                % dissipator
+\newcommand*{\Prop}{\ensuremath{U}}                          % propagator
+\newcommand*{\Texp}{\ensuremath{\mathcal{T}\!\exp}}          % time-ordered exponential
+\newcommand*{\vecop}[1]{\ensuremath{\operatorname{vec}(#1)}} % vectorisation
+\newcommand*{\Kraus}{\ensuremath{K}}                         % Kraus operator
+\newcommand*{\Choi}[1]{\ensuremath{\mathsf{J}(#1)}}          % Choi matrix
+\newcommand*{\ee}{\ensuremath{\mathrm{e}}}
+\renewcommand*{\imath}{\ensuremath{\mathrm{i}}}
+\renewcommand*{\hbar}{\mathchar'26\mkern-9mu h}
+
+% ---------------------------------------------------------------------
+% Norms, distances, fidelities
+% ---------------------------------------------------------------------
+\newcommand*{\norm}[1]{\ensuremath{\left\lVert #1 \right\rVert}}
+\newcommand*{\abs}[1]{\ensuremath{\left\lvert #1 \right\rvert}}
+\newcommand*{\inner}[2]{\ensuremath{\left\langle #1, #2 \right\rangle}}
+\newcommand*{\tracenorm}[1]{\ensuremath{\left\lVert #1 \right\rVert_{1}}}
+\newcommand*{\opnorm}[1]{\ensuremath{\left\lVert #1 \right\rVert_{\infty}}}
+\newcommand*{\dnorm}[1]{\ensuremath{\left\lVert #1 \right\rVert_{\diamond}}}
+\newcommand*{\HSnorm}[1]{\ensuremath{\left\lVert #1 \right\rVert_{\mathrm{HS}}}}
+\newcommand*{\Fid}{\ensuremath{F}}                           % fidelity
+\newcommand*{\QFI}{\ensuremath{\mathcal{F}_{Q}}}             % quantum Fisher information
+\newcommand*{\CFI}{\ensuremath{\mathcal{F}_{C}}}             % classical Fisher information
+
+% ---------------------------------------------------------------------
+% Control theory
+% ---------------------------------------------------------------------
+\newcommand*{\Ctrb}{\ensuremath{\mathcal{C}}}                % controllability matrix
+\newcommand*{\Obsv}{\ensuremath{\mathcal{O}}}                % observability matrix
+\newcommand*{\Hankel}{\ensuremath{\mathsf{H}}}               % Hankel matrix
+\newcommand*{\Reach}{\ensuremath{\mathcal{R}}}               % reachable set
+\newcommand*{\costJ}{\ensuremath{J}}                         % cost functional
+\newcommand*{\PMP}{PMP}                                      % Pontryagin maximum principle
+\newcommand*{\bigO}[1]{\ensuremath{O\!\left(#1\right)}}
+\newcommand*{\bigOmega}[1]{\ensuremath{\Omega\!\left(#1\right)}}
+\newcommand*{\bigTheta}[1]{\ensuremath{\Theta\!\left(#1\right)}}
+
+% ---------------------------------------------------------------------
+% Editorial helpers for a course under construction
+% ---------------------------------------------------------------------
+\newcommand*{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+\newcommand*{\keyref}[1]{\textcolor{blue!50!black}{\small [see \cite{#1}]}}
+
+% ---------------------------------------------------------------------
+% Overrides of declarns.tex conventions
+% ---------------------------------------------------------------------
+\renewcommand*{\Tr}{\ensuremath{\operatorname{Tr}}}          % declarns.tex prints "Trace"
+
+% ---------------------------------------------------------------------
+% Per-chapter macros inherited from the source papers.
+% Each macros_chNN.tex uses \providecommand so that the same macro
+% defined in two chapters does not raise an error (first wins).
+% ---------------------------------------------------------------------
+\InputIfFileExists{macros_ch01.tex}{}{}
+\InputIfFileExists{macros_ch02.tex}{}{}
+\InputIfFileExists{macros_ch03.tex}{}{}
+\InputIfFileExists{macros_ch04.tex}{}{}
+\InputIfFileExists{macros_ch05.tex}{}{}
+\InputIfFileExists{macros_ch06.tex}{}{}
+\InputIfFileExists{macros_ch07.tex}{}{}
+\InputIfFileExists{macros_ch08.tex}{}{}
+\InputIfFileExists{macros_ch09.tex}{}{}
+\InputIfFileExists{macros_ch10.tex}{}{}
+\InputIfFileExists{macros_ch11.tex}{}{}
+\InputIfFileExists{macros_ch12.tex}{}{}
+\InputIfFileExists{macros_ch13.tex}{}{}
+
+% ---------------------------------------------------------------------
+% Code listings (Python snippets from code/)
+% ---------------------------------------------------------------------
+\lstdefinestyle{python}{
+  language=Python,
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{blue!70!black}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  stringstyle=\color{green!40!black},
+  showstringspaces=false,
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  columns=fullflexible,
+  keepspaces=true
+}
+
+% ---------------------------------------------------------------------
+% declarns.tex redefines \i (dotless i) as an "inverse" operator with one
+% argument, which breaks \'{\i} and UTF-8 accents (Garc\'{\i}a, Ac\'in) in
+% running text and in bibliographies.  Restore the LaTeX text symbol; the
+% inverse is available as \inv{#1} instead.
+% ---------------------------------------------------------------------
+\providecommand*{\inv}[1]{\ensuremath{{#1}^{-1}}}
+\DeclareTextSymbol{\i}{OT1}{16}
+\DeclareTextSymbol{\i}{T1}{25}
+
+% ---------------------------------------------------------------------
+% Cross-chapter references in single-lecture builds.
+% Chapter files are compiled standalone with the subfiles package, so
+% \ref{C.Closed} etc. would print "??" and trigger warnings.  When the
+% .aux file does not define a chapter label, fall back to the chapter
+% number fixed by the syllabus.  In the full builds the real labels win.
+% ---------------------------------------------------------------------
+\makeatletter
+\newcommand*{\qocFallbackLabel}[2]{%
+  \@ifundefined{r@#1}{\global\@namedef{r@#1}{{#2}{}{}{}{}}}{}}
+\AtBeginDocument{%
+  \qocFallbackLabel{C.Motivation}{1}%
+  \qocFallbackLabel{C.Closed}{2}%
+  \qocFallbackLabel{C.Open}{3}%
+  \qocFallbackLabel{C.StateSpace}{4}%
+  \qocFallbackLabel{C.Frequency}{5}%
+  \qocFallbackLabel{C.SampleComplexity}{6}%
+  \qocFallbackLabel{C.GeometryStates}{7}%
+  \qocFallbackLabel{C.GeometryChannels}{8}%
+  \qocFallbackLabel{C.GeometryControl}{9}%
+  \qocFallbackLabel{C.Complexity}{10}%
+  \qocFallbackLabel{C.AlgTomography}{11}%
+  \qocFallbackLabel{C.AlgControl}{12}%
+  \qocFallbackLabel{C.Revisited}{13}%
+}
+\makeatother
+
+% ---------------------------------------------------------------------
+% Cross-chapter references to theorems, equations and figures in
+% single-lecture builds: import the labels of the last full build
+% (labels_handouts.tex / labels_slides.tex, i.e. the \newlabel lines of
+% handoutsbeamer.aux / overheadsbeamer.aux, extracted by make handouts,
+% make slides or ./build.sh labels) for every label that the standalone
+% .aux does not define.  Anchors are blanked, so hyperref prints the
+% number without a dangling link.  Nothing happens in the full builds,
+% and nothing breaks if the label files do not exist yet.
+% ---------------------------------------------------------------------
+\makeatletter
+% A label value is normally {{ref}{page}{name}{anchor}{}}; amsbook also writes
+% bare values such as \newlabel{tocindent0}{61.69456pt}, which are skipped.
+\def\qoc@providelabel#1#2{\qoc@providelabel@i{#1}#2{}{}\qoc@end}
+\def\qoc@providelabel@i#1{\@ifnextchar\bgroup{\qoc@providelabel@ii{#1}}{\qoc@gobbletoend}}
+\def\qoc@gobbletoend#1\qoc@end{}
+\def\qoc@providelabel@ii#1#2#3#4\qoc@end{%
+  \@ifundefined{r@#1}{\global\@namedef{r@#1}{{#2}{#3}{}{}{}}}{}}
+\newcommand*{\qocImportLabels}[1]{%
+  \begingroup
+    \makeatletter
+    \let\newlabel\qoc@providelabel
+    \InputIfFileExists{#1}{}{}%
+  \endgroup}
+\AtBeginDocument{%
+  \ifnum\pdfstrcmp{\jobname}{handoutsbeamer}=0 \else
+  \ifnum\pdfstrcmp{\jobname}{overheadsbeamer}=0 \else
+  \ifnum\pdfstrcmp{\jobname}{book}=0 \else
+    \only<article>{\qocImportLabels{labels_handouts.tex}}%
+    \only<presentation>{\qocImportLabels{labels_slides.tex}\qocImportLabels{labels_handouts.tex}}% labels inside \ona{} exist only in the handouts
+  \fi\fi\fi}
+\makeatother
+
+% ---------------------------------------------------------------------
+% "Chapter" in the handouts, "Lecture" on the slides.
+% ---------------------------------------------------------------------
+\newcommand*{\Chap}{\only<article>{Chapter}\only<presentation>{Lecture}}
+\newcommand*{\Chaps}{\only<article>{Chapters}\only<presentation>{Lectures}}
+\newcommand*{\chap}{\only<article>{chapter}\only<presentation>{lecture}}
+\newcommand*{\chaps}{\only<article>{chapters}\only<presentation>{lectures}}

@@ -1,0 +1,134 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   handoutsbeamer.tex
+%
+%   Quantum Optimal Control -- lecture notes / handouts.
+%
+%   One and the same set of chapter files (ch01_*.tex ... ch13_*.tex)
+%   is compiled
+%     * as handouts  by this file        (amsbook + beamerarticle), and
+%     * as slides    by overheadsbeamer.tex  (beamer).
+%   Text wrapped in \ona{...} appears only in the handouts, text in
+%   \onp{...} only in the slides; everything else appears in both.
+%
+%   Build:   latexmk -pdf handoutsbeamer      (or: make handouts)
+%   A single chapter can be built on its own:  latexmk -pdf ch02_closed_systems
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[a4paper,10pt,reqno]{amsbook}
+\usepackage[dvipsnames,table]{xcolor}
+
+\usepackage[noxcolor,noamsthm]{beamerarticle}
+\setjobnamebeamerversion{overheadsbeamer}
+
+\providecommand*{\numberbychaporsect}{chapter}
+
+\usepackage{natbib}
+\def\biblio{\bibliographystyle{plainnat}\bibliography{refs}}
+
+\input{handoutmacros}            % handout specific preamble stuff
+\newtheorem{fact}[thm]{Fact}     % commented in amsmacros.tex because beamer has defined it
+
+% preamble
+\usepackage{subfiles}
+\usepackage{fullpage}
+
+\usepackage{courier}
+\usepackage{latexsym,eurosym}
+\usepackage{amsfonts,amsmath,amssymb} %,amsthm}
+\usepackage{stmaryrd}
+\usepackage{graphicx,epsfig,xspace}
+\graphicspath{{figures/}}
+\usepackage{appendix}
+\usepackage{threeparttable}
+\usepackage{multirow}
+\usepackage{url}
+% Need norelsize option in the following to avoid clash with ams doc classes
+\only<article>{\usepackage[algo2e,algochapter,longend,boxruled,norelsize,noline,linesnumbered]{algorithm2e}\SetCommentSty{textsl}}
+\only<presentation>{\usepackage[algo2e,algosection,noline,longend,boxruled,norelsize]{algorithm2e}\SetCommentSty{textsl}\setlength{\algomargin}{1ex}}
+\usepackage[all]{xy}
+
+\parindent0pt
+\parskip\medskipamount
+
+\input{declarns}
+\input{algcodemacros}
+\input{beamermacros}
+\input{coursemacros}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepgfplotslibrary{colormaps}
+\usetikzlibrary{calc,positioning}
+
+% NOTE: the quantum computing course renewed \nl here (McGarraghy's non-indexed list);
+% that clobbers algorithm2e's line-number command, so it is not done in this course.
+
+\newcommand{\progs}{MSc (Open Informatics / Cybernetics and Robotics)}
+\newcommand{\courseCode}{XXXXXXXX} % TODO: fill in the KOS course code
+\newcommand{\courseName}{Quantum Optimal Control}
+\newcommand{\courseYear}{2026/27}
+
+\only<presentation>{
+\title{Quantum Optimal Control}
+\subtitle{Identification, Geometry, and Algorithms}
+\author{Jakub Mare{\v c}ek}
+\institute{CTU in Prague}
+}
+
+\def\leftmark{\textsc{\courseCode}}
+\def\rightmark{\textsc{\courseName}}
+
+% number equations, figures, tables, algorithms and theorems by chapter
+\numberwithin{equation}{\numberbychaporsect}
+\numberwithin{figure}{\numberbychaporsect}
+\numberwithin{table}{\numberbychaporsect}
+
+\usetheme{Boadilla}
+\setbeamercovered{transparent}
+
+\only<presentation>{\AtBeginLecture{\frame{\Large Lecture Topic: \insertlecture}}}
+
+\begin{document}
+
+\def\biblio{}   % chapters print their own bibliography only when built standalone
+
+\mode<article>{
+\thispagestyle{empty}
+\vspace*{3cm}
+{\LARGE\bfseries Quantum Optimal Control}
+
+\vskip 0.5cm
+{\Large Identification, Geometry, and Algorithms}
+
+\vskip 3cm
+{\Large Jakub Mare{\v c}ek}
+
+\vskip 0.5cm
+{\large Czech Technical University in Prague \\ \courseYear}
+
+\vfill
+{\small Lecture notes for \courseCode\ (\progs). Work in progress; comments welcome.}
+\clearpage
+}
+
+\tableofcontents
+
+\subfile{ch01_motivation}
+\subfile{ch02_closed_systems}
+\subfile{ch03_open_systems}
+\subfile{ch04_control_observ_statespace}
+\subfile{ch05_control_observ_frequency}
+\subfile{ch06_sample_complexity}
+\subfile{ch07_geometry_states}
+\subfile{ch08_geometry_channels}
+\subfile{ch09_geometry_control}
+\subfile{ch10_circuit_complexity}
+\subfile{ch11_algorithmic_tomography}
+\subfile{ch12_algorithmic_control}
+\subfile{ch13_motivation_revisited}
+
+\providecommand{\bbletal}{et al.}
+
+\clearpage
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\end{document}

@@ -1,0 +1,75 @@
+# ---- LaTeX: auxiliary and temporary files ----------------------------
+*.aux
+*.log
+*.out
+*.toc
+*.nav
+*.snm
+*.vrb
+*.bbl
+*.blg
+*.bcf
+*.run.xml
+*-blx.bib
+*.idx
+*.ilg
+*.ind
+*.lof
+*.lot
+*.loa
+*.lol
+*.thm
+*.brf
+*.xref
+*.glo
+*.gls
+*.glg
+*.acn
+*.acr
+*.alg
+*.fls
+*.fdb_latexmk
+*.synctex
+*.synctex.gz
+*.synctex(busy)
+*.dvi
+*.xdv
+*.auxlock
+*.figlist
+*.makefile
+*.dpth
+*.md5
+*.pytxcode
+pythontex-files-*/
+_minted*/
+*.upa
+*.upb
+# (do not ignore *.ist: svind.ist is a source file)
+
+# generated single-lecture slide drivers (make slides-NN)
+ch??_*_slides.tex
+
+# bibliography by-products of the Crossref/DataCite resolution step
+refs_resolved.bib
+refs_unresolved.txt
+
+# ---- Python: caches, byte code, environments --------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+*.egg-info/
+
+# ---- editors and OS ---------------------------------------------------
+.DS_Store
+*~
+*.swp
+*.swo
+.vscode/
+.idea/

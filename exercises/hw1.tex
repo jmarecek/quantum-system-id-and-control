@@ -1,0 +1,22 @@
+\documentclass{article}
+\usepackage{url,amsmath,amssymb}
+\begin{document}
+
+\textbf{Quantum Optimal Control -- first homework assignment}, due \textbf{TODO} (as a zip file in Brute)
+
+\vskip 1cm
+
+In this assignment you will build the simulator that the rest of the course relies on.
+You can get 20 points for all of:
+\begin{itemize}
+    \item in Python (\texttt{numpy}/\texttt{scipy} only), implementing a simulator of the Lindblad master equation
+    $\dot\rho = -\mathrm{i}[H(u(t)),\rho] + \sum_k \gamma_k \big(L_k\rho L_k^\dagger - \tfrac12\{L_k^\dagger L_k,\rho\}\big)$
+    for $n\le 3$ qubits with piecewise-constant controls $u(t)$, using the vectorised form $\dot x = A(u)\,x$ and the matrix exponential;
+    \item verifying it on a single qubit with amplitude damping and dephasing against the closed-form solution ($T_1$, $T_2$ decay);
+    \item simulating the two coupled qubits of Lecture~1 and plotting the expectation values of all two-qubit Pauli observables in time;
+    \item preparing a short document (PDF) with the plots, produced as TikZ via \texttt{code/tikzexport.py} from the course repository.
+\end{itemize}
+
+Any use of LLMs is allowed. You can get up to 10 additional points for a visualisation of the Bloch ball shrinking under the dissipative dynamics.
+
+\end{document}

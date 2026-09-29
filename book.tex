@@ -1,0 +1,106 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   book.tex
+%
+%   Quantum Optimal Control -- book-style rendering (Springer svmono),
+%   compiling the same chapter files as handoutsbeamer.tex.
+%   Optional: the handouts (handoutsbeamer.tex) are the primary output.
+%
+%   Build:   latexmk -pdf book      (or: make book)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[graybox,envcountchap,sectrefs]{svmono}
+
+\usepackage{mathptmx}
+\usepackage{helvet}
+\usepackage{courier}
+\usepackage{type1cm}
+
+\usepackage{makeidx}         % allows index generation
+\usepackage[dvipsnames,table]{xcolor}
+\usepackage{multicol}        % used for the two-column index
+\usepackage[bottom]{footmisc}% places footnotes at page bottom
+
+\usepackage[noxcolor,noamsthm]{beamerarticle}
+\setjobnamebeamerversion{overheadsbeamer}
+\providecommand*{\numberbychaporsect}{chapter}
+
+\let\proof\relax
+\let\endproof\relax
+\usepackage{amsthm,amsfonts,amsmath,amssymb}
+
+\usepackage{natbib}
+\def\biblio{\bibliographystyle{unsrt}\bibliography{refs}}
+\input{handoutmacros}            % handout specific preamble stuff
+\newtheorem{fact}[thm]{Fact}     % commented in amsmacros.tex because beamer has defined it
+
+\usepackage{subfiles}
+\usepackage{latexsym,eurosym}
+\usepackage{stmaryrd}
+\mode<article>
+\usepackage{graphicx,epsfig,xspace}
+\graphicspath{{figures/}}
+\usepackage{threeparttable}
+\usepackage{multirow}
+\usepackage{url}
+\only<article>{\usepackage[algo2e,algochapter,longend,boxruled,norelsize,noline,linesnumbered]{algorithm2e}\SetCommentSty{textsl}}
+\only<presentation>{\usepackage[algo2e,algosection,noline,longend,boxruled,norelsize]{algorithm2e}\SetCommentSty{textsl}\setlength{\algomargin}{1ex}}
+\usepackage[all]{xy}
+\parindent0pt
+\parskip\medskipamount
+\input{declarns}
+\input{algcodemacros}
+\input{beamermacros}
+\input{coursemacros}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepgfplotslibrary{colormaps}
+\usetikzlibrary{calc,positioning}
+\usetheme{Boadilla}
+\setbeamercovered{transparent}
+
+\makeindex             % used for the subject index (style: svind.ist)
+
+\begin{document}
+\def\biblio{}
+\providecommand{\bbletal}{et al.}
+
+\author{Jakub Mare{\v c}ek}
+\title{Quantum Optimal Control}
+\subtitle{Identification, Geometry, and Algorithms}
+\maketitle
+
+\frontmatter%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subfile{ch00_preface}
+\tableofcontents
+
+\mainmatter%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\part{Models}
+
+\subfile{ch01_motivation}
+\subfile{ch02_closed_systems}
+\subfile{ch03_open_systems}
+
+\part{Identification}
+
+\subfile{ch04_control_observ_statespace}
+\subfile{ch05_control_observ_frequency}
+\subfile{ch06_sample_complexity}
+
+\part{Geometry}
+
+\subfile{ch07_geometry_states}
+\subfile{ch08_geometry_channels}
+\subfile{ch09_geometry_control}
+\subfile{ch10_circuit_complexity}
+
+\part{Algorithms}
+
+\subfile{ch11_algorithmic_tomography}
+\subfile{ch12_algorithmic_control}
+\subfile{ch13_motivation_revisited}
+
+\backmatter%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bibliographystyle{unsrt}
+\bibliography{refs}
+\printindex
+
+\end{document}

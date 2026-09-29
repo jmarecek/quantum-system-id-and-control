@@ -1,0 +1,23 @@
+% macros_ch01.tex -- macros specific to Chapter 1 (loaded by coursemacros.tex)
+%
+% Agenda slides: \qocAgendaBody{n} typesets the agenda of the lecture with item n
+% (the one that comes next) in bold colour, the previous ones in gray.  Only on the
+% slides; the handouts do not need it.  The frame itself must be written literally
+% in the chapter file, because beamer's ignorenonframetext does not expand macros.
+\providecommand{\qocAgendaItem}[2]{%
+  \ifnum#1=\qocAgendaNow\relax \item \textbf{\alert{#2}}%
+  \else\ifnum#1<\qocAgendaNow\relax \item \textcolor{gray}{#2}%
+  \else \item #2\fi\fi}
+\providecommand{\qocAgendaBody}[1]{%
+  \onp{\def\qocAgendaNow{#1}%
+  \begin{enumerate}\setlength\itemsep{0.3em}
+    \qocAgendaItem{1}{Course organisation: plan, team, prerequisites, assessment}
+    \qocAgendaItem{2}{Hardware of a quantum computer, and the minimum of theory}
+    \qocAgendaItem{3}{Example A: quantum state tomography}
+    \qocAgendaItem{4}{Example B: a driven qubit, and the fastest transfer}
+    \qocAgendaItem{5}{Example C: synthesising a gate in a landscape full of traps}
+    \qocAgendaItem{6}{Example D: a qubit with random noise}
+    \qocAgendaItem{7}{Example E: identifying a two-qubit open system}
+    \qocAgendaItem{8}{Example F: gates from local interactions}
+    \qocAgendaItem{9}{What the examples have in common; conic optimization, a refresher}
+  \end{enumerate}}}

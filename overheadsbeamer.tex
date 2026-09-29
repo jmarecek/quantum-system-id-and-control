@@ -1,0 +1,115 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   overheadsbeamer.tex
+%
+%   Quantum Optimal Control -- slides.
+%   Compiles the very same chapter files as handoutsbeamer.tex, in
+%   beamer's presentation mode.  See the header of handoutsbeamer.tex.
+%
+%   Build:   latexmk -pdf overheadsbeamer      (or: make slides)
+%   Slides for a single lecture:               make slides-02
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[aspectratio=149,ignorenonframetext,xcolor={dvipsnames,table}]{beamer}
+
+% \biblio at the end of a chapter prints that chapter's references in a
+% single-lecture build; in the full deck it is emptied below (after the
+% \mode<presentation> switch, since ignorenonframetext skips assignments made
+% in \mode*), and the references come at the end of the deck.  A standalone
+% chapter would start in \mode* too (beamer enters it at the end of
+% \begin{document}), so the ignorenonframetext flag is cleared for such jobs.
+\def\biblio{\begin{frame}[allowframebreaks]{References}\tiny\bibliographystyle{plainnat}\bibliography{refs}\end{frame}}
+\ifnum\pdfstrcmp{\jobname}{overheadsbeamer}=0 \else
+  \makeatletter\beamer@ignorenonframefalse\makeatother
+\fi
+\newcommand{\chapter}{\section}
+\providecommand*{\numberbychaporsect}{section}
+
+\input{overheadmacrosbeamer}           % overhead specific preamble stuff
+
+\newcounter{myalgcounter}
+\setcounter{myalgcounter}{0}
+
+\usepackage{subfiles}
+
+\usepackage{courier}
+\usepackage{latexsym,eurosym}
+\usepackage{amsfonts,amsmath,amssymb} %,amsthm}
+\usepackage{stmaryrd}
+\mode<article>{\usepackage[dvipsnames,table]{xcolor}}
+\usepackage{graphicx,epsfig,xspace}
+\graphicspath{{figures/}}
+\usepackage{appendix}
+\usepackage{threeparttable}
+\usepackage{multirow}
+\usepackage{natbib}
+\usepackage{url}
+% Need norelsize option in the following to avoid clash with ams doc classes
+\only<article>{\usepackage[algo2e,algochapter,noline,longend,boxruled,norelsize]{algorithm2e}\SetCommentSty{textsl}}
+\only<presentation>{\usepackage[algo2e,algosection,noline,longend,boxruled,norelsize]{algorithm2e}\SetCommentSty{textsl}\setlength{\algomargin}{1ex}}
+\usepackage[all]{xy}
+
+\parindent0pt
+\parskip\medskipamount
+
+\input{declarns}
+\input{algcodemacros}
+\input{beamermacros}
+\input{coursemacros}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepgfplotslibrary{colormaps}
+\usetikzlibrary{calc,positioning}
+
+% NOTE: the quantum computing course renewed \nl here (McGarraghy's non-indexed list);
+% that clobbers algorithm2e's line-number command, so it is not done in this course.
+
+\only<presentation>{
+\title[Quantum Optimal Control]{Quantum Optimal Control}
+\subtitle{Identification, Geometry, and Algorithms}
+\author{Jakub Mare{\v c}ek}
+\institute{CTU in Prague}
+\date{2026/27}
+}
+
+\def\leftmark{Quantum Optimal Control}
+\def\rightmark{Quantum Optimal Control}
+
+\numberwithin{equation}{\numberbychaporsect}
+\numberwithin{figure}{\numberbychaporsect}
+\numberwithin{table}{\numberbychaporsect}
+
+\usetheme{Boadilla}
+\setbeamercovered{transparent}
+
+\only<presentation>{\AtBeginLecture{\frame{\Large Lecture Topic: \insertlecture}}}
+
+\begin{document}
+
+\only<presentation>{\begin{frame}
+\titlepage
+\end{frame}}
+
+\mode<presentation>
+\def\biblio{}   % chapters print their own references only when built standalone
+\subfile{ch01_motivation}
+\subfile{ch02_closed_systems}
+\subfile{ch03_open_systems}
+\subfile{ch04_control_observ_statespace}
+\subfile{ch05_control_observ_frequency}
+\subfile{ch06_sample_complexity}
+\subfile{ch07_geometry_states}
+\subfile{ch08_geometry_channels}
+\subfile{ch09_geometry_control}
+\subfile{ch10_circuit_complexity}
+\subfile{ch11_algorithmic_tomography}
+\subfile{ch12_algorithmic_control}
+\subfile{ch13_motivation_revisited}
+
+\providecommand{\bbletal}{et al.}
+
+\begin{frame}[allowframebreaks]{References}
+\tiny
+\bibliographystyle{plainnat}
+\bibliography{refs}
+\end{frame}
+
+\end{document}
