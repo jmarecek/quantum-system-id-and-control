@@ -62,7 +62,7 @@ def figure(u, Us, dt, sx=1.6, su=1.1, sp=2.4, gap=1.0, hi=6):
     for k, U in enumerate(Us):
         b.append("\\fill[ndInk] (%.3f,%.3f) circle (1.3pt);" % (sx * k * dt, y0 + sp * abs((U @ psi0)[1]) ** 2))
     b.append("\\node[left, text=ndRed] at (0,%.3f) {$|\\braket{1|\\psi(t)}|^2$};" % (y0 + 0.6 * sp))
-    b.append("\\node[note, anchor=west] (d) at (%.3f,%.3f) {dots: the product of\\\\ exponentials at $t_0,\\dots,t_n$};"
+    b.append("\\node[note, anchor=west] (d) at (%.3f,%.3f) {dots: the product of\\\\ exponentials at $t_0,\\dots,t_L$};"
              % (sx * Tf + 0.3, y0 + 0.35 * sp))
     kd = n - 3
     b.append("\\draw[pointer] (d.west) to[bend left=20] (%.3f,%.3f);"
