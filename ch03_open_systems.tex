@@ -1,0 +1,506 @@
+%\documentclass[overheadsbeamer.tex]{subfiles}
+\documentclass[handoutsbeamer.tex]{subfiles}
+
+\begin{document}
+
+\ona{ \setcounter{chapter}{2} } % ONE LESS
+\lecture{Models of Open Quantum Systems}{Lect03}
+\chapter{Models of Open Quantum Systems}\label{C.Open}
+
+\begin{frame}\ft{Outline}
+\ona{Very few quantum systems are truly isolated from their environment. This \chap{} summarises the common mathematical descriptions of \emph{open} quantum systems, with an emphasis on master equations, and shows that many of them can be reduced to a single form, the Gorini--Kossakowski--Sudarshan--Lindblad (GKSL) equation. We then recast the controlled GKSL equation as a real bilinear dynamical system with outputs, the representation on which the identification theory of \Chaps~\ref{C.StateSpace}--\ref{C.SampleComplexity} is built. Finally we introduce the random Schr\"odinger equation, a noise model that sits between unitary and GKSL dynamics and that will reappear in the robust-control chapters.}
+\onp{Outline of today's lecture:
+\begin{itemize}\setlength\itemsep{0.8em}
+    \item system plus bath: reduced states and the two kinds of description;
+    \item phenomenological master equations: the canonical GKSL equation and the Lindblad form;
+    \item perturbative master equations: Nakajima--Zwanzig, TCL, Redfield, secular approximation;
+    \item the assumptions behind them, and Markovian embedding;
+    \item the controlled GKSL equation as a \alert{bilinear system with outputs};
+    \item the random Schr\"odinger equation.
+\end{itemize}}
+\ona{\medskip\noindent\textit{Sources.} This \chap{} draws on \citep{parvaiz2026survey,parvaiz2025identifiability,lawrence2026geometric}; passages from these papers are reproduced with light editing.}
+\onp{\vfill{\scriptsize Sources: \citep{parvaiz2026survey,parvaiz2025identifiability,lawrence2026geometric}.}}
+\end{frame}
+
+\section{Open quantum systems}
+
+\begin{frame}\ft{System and environment}
+\ona{The dynamics of a closed quantum system are described by the Liouville--von Neumann equation \eqref{eq:lvn}, $\dot\rho=-\imath\comm{H_S}{\rho}$. As mentioned in \Chap~\ref{C.Closed}, this model is severely limited when applied to real-world quantum systems, for example, interacting qubits on a quantum processor, as very few such systems are truly isolated from their environment. This concern motivates the formulation of a model which takes into account the surrounding environment. The evolution of such a system can be described by considering the whole system as a product of the system of interest $S$ and the environment $B$ (often called a bath). With this description, the full system Hamiltonian can be written as}
+\onp{Model the system $S$ together with its bath $B$:}
+\begin{equation}\label{eq:ch03:hamil_full}
+    H_{\rm{full}} = H_{\rm S} \otimes \Id + \Id \otimes H_{\rm B} + H_{I} = H_{0} + H_{I},
+\qquad H_{I} = g\sum_{\alpha}S_{\alpha} \otimes B_{\alpha},
+\end{equation}
+\ona{where $H_{0}$ is known as the free Hamiltonian and $H_{I}$ the interaction Hamiltonian between the system and environment, written as a sum of couplings between self-adjoint operators acting on the system and environment, respectively. We assume that the full system is closed, and hence its dynamics follow the Liouville--von Neumann equation. A standard assumption that we will follow is that there is no initial correlation between the system and environment, i.e., at the initial time $t_0=0$}
+\onp{Full system closed; standard \alert{separability} assumption}
+\begin{equation}\label{eq:ch03:assump_sep}
+\rhofull\left(0\right)=\rhoS\left(0\right)\otimes\rhoB\left(0\right),
+\end{equation}
+\ona{where $\rhoS$ and $\rhoB$ are the density matrices that describe the system of interest and the environment, respectively. Taking a partial trace over the degrees of freedom of the environment, we compute the reduced density matrix of the system,}
+\onp{Reduced state of the system:}
+\begin{equation}\label{eq:ch03:reduced}
+\rhoS(t)=\TrB\big[U(t)\rhofull(0)U^\dagger(t)\big],\qquad U(t)=\ee^{-\imath H_{\rm full}t}.
+\end{equation}
+\ona{This formula is exact but useless in practice, since it requires the full evolution of system and bath. Describing the dynamics of $\rhoS$ alone needs more care.}
+\onp{Exact, but needs the bath. Describing $\rhoS$ alone is the hard part.}
+\end{frame}
+
+\begin{frame}\ft{System and bath, pictured}
+\ona{Figure~\ref{fig:ch03:bath} shows the typical picture behind \eqref{eq:ch03:hamil_full}. The system $S$, here a single qubit, is coupled to a bath $B$ of very many harmonic oscillators with frequencies $\omega_k$, through couplings of strength $g_k$. The bath enters the reduced dynamics only through its \emph{spectral density} $J(\omega)$, which records how strongly the system couples to bath modes of each frequency; for a continuum of modes, $g_k^2\approx J(\omega_k)\,\Delta\omega$. A common model is the Ohmic density $J(\omega)=\eta\,\omega\,\ee^{-\omega/\omega_c}$. Everything outside the dashed window is traced out: the reduced state $\rhoS$ is all we keep.}
+\ona{\begin{figure}[H]\centering
+\resizebox{0.85\linewidth}{!}{\input{figures/ch03_bath.tex}}
+\caption{A qubit $S$ coupled to a bath of oscillators, with line widths proportional to the couplings $g_k$ sampled from an Ohmic spectral density (inset). The partial trace keeps only what is inside the dashed window. Generated by \texttt{code/ch03\_bath.py}.}\label{fig:ch03:bath}
+\end{figure}}
+\ona{\endgraf\medskip\noindent\textit{Reading the figure.} The ball on the left is the system we care about, here a qubit. Each little spring on the right is one vibration mode of the environment: a photon mode of the electromagnetic field, a vibration of the crystal lattice, a resonance in the wiring of a chip. A thicker line means a stronger coupling between the qubit and that mode. The inset plots the spectral density $J(\omega)$: the horizontal axis is the frequency of a bath mode, the height says how strongly the qubit couples to modes of that frequency, and each stem is one of the springs drawn above.\endgraf\smallskip\noindent\textit{Why it matters.} The full system, a qubit together with a practically infinite number of bath modes, is far too large to simulate. What we can observe is only the qubit, the inside of the dashed window. For readers with a computer-science background, the partial trace $\TrB$ is the quantum analogue of \emph{marginalising} a joint probability distribution over the variables one does not observe; every master equation in this \chap{} is an attempt to describe the marginal without simulating the rest. For readers with a physics background: for a bath of harmonic oscillators coupled linearly to the system, the bath enters the second-order (Born) theory only through its correlation function, which is fixed by $J(\omega)$ and the temperature. Different hardware platforms differ to a large extent by their spectral densities.}
+\onp{\begin{center}\resizebox{!}{0.6\textheight}{\input{figures/ch03_bath.tex}}\end{center}}
+\end{frame}
+
+\begin{frame}\ft{Two kinds of description}
+\ona{On a theoretical level, any valid description should correspond (at least approximately) to the evolution governed by tracing out the environment from the dynamics determined by the full Hamiltonian \eqref{eq:ch03:hamil_full}. The temporal evolution of $S$ can be formally characterised either by utilising \emph{quantum master equations} or by employing \emph{dynamical maps}. Master equations are ordinary differential equations in which the state of the reduced subsystem serves as the unknown variable,}
+\begin{equation}\label{eq:ch03:first_master}
+\dot{\rhoS}\left(t\right) = F\left(\rhoS\right),
+\end{equation}
+\ona{where $F$ represents a superoperator that maps the reduced state (in general, its whole history $\rhoS(\cdot)$) to its time derivative. Relationships of this type are typically numerically solvable when supplied with a suitable initial condition \cite{Breuer_Petruccione_2010a}. Dynamical maps, on the other hand, are a closed-form alternative: a map $\mathcal{E}_{t_{1},t_{2}}$ governs the evolution from $t_1$ to $t_2$ if $\mathcal{E}_{t_{1},t_{2}}(\rhoS(t_{1}))=\rhoS(t_{2})$. The maps are required to be completely positive, trace preserving and Hermiticity preserving; their structure and the notion of Markovianity are the subject of \Chap~\ref{C.GeometryChannels}. Here we concentrate on master equations, since these are what we recast as dynamical systems.}
+\onp{\begin{itemize}\setlength\itemsep{0.6em}
+\item \textbf{Master equations}: ODEs $\dot\rhoS(t)=F(\rhoS)$, $F$ a superoperator, possibly depending on the history. Infinitesimal description. \alert{This \chap{}.}
+\item \textbf{Dynamical maps}: $\mathcal E_{t_1,t_2}(\rhoS(t_1))=\rhoS(t_2)$, completely positive and trace preserving. Finite-time description. \Chap~\ref{C.GeometryChannels}.
+\item Master equations come in two families: \emph{phenomenological} (GKSL) and \emph{perturbative} (Nakajima--Zwanzig, Redfield, \dots).
+\end{itemize}}
+\end{frame}
+
+\section{The GKSL master equation}
+
+\begin{frame}\ft{From a Kraus decomposition to a master equation}
+\ona{Let us start with perhaps the most famous of quantum master equations, namely the Lindblad or GKSL (after Gorini, Kossakowski, Sudarshan and Lindblad) equation. We follow \cite{Hall2014}, and in part \cite{gorini1976completely}, and derive its canonical form, which can be Markovian or non-Markovian. Any evolution of the reduced state that starts from a product state admits a Kraus decomposition (\Chap~\ref{C.GeometryChannels})}
+\onp{Start from a Kraus decomposition}
+\begin{equation}\label{eq:ch03:kraus}
+\rhoS(t)=\sum_jE_j(t)\rhoS(0)E_j^\dagger(t).
+\end{equation}
+\ona{Taking a time derivative,}
+\onp{and differentiate:}
+\begin{equation}
+    \dot\rhoS(t)=\sum_j \left(\dot E_j(t)\rhoS(0)E_j^\dagger(t)+E_j(t)\rhoS(0)\dot E_j^\dagger(t)\right).
+\end{equation}
+\ona{Here we have assumed that the Kraus operators themselves are differentiable, which is justified when the system--environment Hamiltonian is smooth. If the dynamical map is invertible, we can re-express $\rhoS(0)=\sum_j P_j(t)\rhoS(t)Q_j^\dagger(t)$ for some system operators $P_j$, $Q_j$, and hence $\dot \rhoS=\sum_m A_m(t)\rhoS B_m^\dagger(t)$ for suitable operators $A_m,B_m$. Expanding $A_m$ and $B_m$ in the orthonormal basis \eqref{eq:ch02:basis_conditions}, $A_m=\sum_nF_na_{nm}$, $B_m=\sum_nF_nb_{nm}$, gives the unique decomposition}
+\onp{Invert the map, $\rhoS(0)=\sum_jP_j\rhoS(t)Q_j^\dagger$, and expand everything in the basis $\{F_m\}$ of \eqref{eq:ch02:basis_conditions}:}
+\begin{equation}\label{eq:ch03:cmn}
+    \dot\rhoS(t)=\sum_{m,n=0}^{N^2-1} c_{mn}F_m\rhoS(t) F_n,\qquad c_{mn}\coloneqq \sum_{p} a_{mp}\bar b_{np},
+\end{equation}
+\ona{where the matrix $(c_{mn})$ is Hermitian. Splitting off the terms with $m=0$ or $n=0$ (those containing the identity) and using that $\dot\rhoS$ is traceless yields the canonical form on the next slide.}
+\onp{$(c_{mn})$ Hermitian. Split off $m=0$ or $n=0$ and use $\Tr\dot\rhoS=0$.}
+\end{frame}
+
+\begin{frame}\ft{The canonical GKSL equation}
+\begin{thm}[Canonical GKSL form \cite{Hall2014,gorini1976completely}]\label{thm:ch03:gksl}
+Under the assumptions above, the reduced state obeys
+\begin{equation}\label{eq:ch03:gksl}
+        \dot \rhoS(t)= -\imath \comm{H(t)}{\rhoS(t)}+
+        \sum_{j,k=1}^{N^2-1}\gamma_{jk}(t)\Big(F_j\rhoS(t) F_k-\tfrac{1}{2}\acomm{F_kF_j}{\rhoS(t)}\Big),
+\end{equation}
+where $H(t)$ is Hermitian and $\gamma(t)=(\gamma_{jk}(t))$ is a Hermitian $(N^2-1)\times(N^2-1)$ matrix, the \emph{Kossakowski} (or decoherence) matrix.
+\end{thm}
+\ona{Explicitly, with $C\coloneqq \frac12 \frac{c_{00}}{N}+\sum_{j\ge1}\frac{c_{j0}}{\sqrt{N}}F_j$ one has
+\[H(t)= \tfrac{\imath}{2}\big(C(t)-C^\dagger(t)\big),\qquad \gamma_{jk}(t)=\sum_{l}\Tr[F_jA_l(t)]\,\Tr[F_kB_l^\dagger(t)].\]
+If $\gamma$ is positive semidefinite and time independent, we get the ordinary Markovian form of the GKSL equation \cite{Lindblad1976,gorini1976completely}. By diagonalising $\gamma=U\tilde\gamma U^\dagger$ and defining $L_k(t)\coloneqq \sum_{j}U_{jk}(t)F_j$ we find the well-known \emph{Lindblad form}}
+\onp{$H=\tfrac\imath2(C-C^\dagger)$ and $\gamma_{jk}=\sum_l\Tr[F_jA_l]\Tr[F_kB_l^\dagger]$ are explicit. $\gamma\succeq0$ constant $\Rightarrow$ Markovian GKSL \cite{Lindblad1976,gorini1976completely}.}
+\end{frame}
+
+\begin{frame}\ft{The Lindblad form}
+\onp{Diagonalise $\gamma=U\tilde\gamma U^\dagger$ and set $L_k=\sum_jU_{jk}F_j$: \alert{Lindblad form}}
+\begin{equation}\label{eq:ch03:lindblad}
+        \dot\rhoS(t) = -\imath\comm{H(t)}{\rhoS(t)}
+        +\sum_{j=1}^{N^2-1}\tilde\gamma_j(t)\Big(L_j(t)\rhoS(t) L_j^\dagger(t) -\tfrac12\acomm{L_j^\dagger(t)L_j(t)}{\rhoS(t)}\Big),
+\end{equation}
+\ona{with \emph{jump operators} $L_j$ and rates $\tilde\gamma_j$. In the time-independent case the solution is a semigroup, $\rhoS(t)=\Phi(t)\rhoS(0)$ with $\Phi(t)=\exp(\Lind t)$, and Gorini, Kossakowski and Sudarshan showed that every generator of a completely positive trace-preserving semigroup has the form \eqref{eq:ch03:gksl} with constant $\gamma\succeq0$; see also \cite{Breuer2016}. Negative eigenvalues of $\gamma(t)$ signal non-Markovianity (\Chap~\ref{C.GeometryChannels}).}
+\onp{Jump operators $L_j$, rates $\tilde\gamma_j$. Negative $\tilde\gamma_j(t)$ $\Leftrightarrow$ non-Markovian (\Chap~\ref{C.GeometryChannels}). Constant, non-negative rates: the \alert{Markovian} Lindblad equation}
+\ona{In the Markovian case, with time-independent jump operators and rates $\tilde\gamma_j\ge0$, the equation reads}
+\begin{equation}\label{eq:ch03:lindblad-markov}
+\dot\rhoS=\Lind\rhoS\coloneqq-\imath\comm{H}{\rhoS}+\sum_j\tilde\gamma_j\Big(L_j\rhoS L_j^\dagger-\tfrac12\acomm{L_j^\dagger L_j}{\rhoS}\Big),\qquad \rhoS(t)=\ee^{\Lind t}\rhoS(0).
+\end{equation}
+\end{frame}
+
+\begin{frame}\ft{Markovian and non-Markovian evolution}
+\ona{What distinguishes Markovian from non-Markovian dynamics can be seen in an exactly solvable model: a qubit coupled resonantly to a bath with the Lorentzian spectral density $J(\omega)=\frac{\gamma_0\lambda^2}{2\pi((\omega_0-\omega)^2+\lambda^2)}$ \cite{Breuer_Petruccione_2010a}. The excited-state amplitude is multiplied by a function $G(t)$, and the reduced dynamics obey the master equation $\dot\rhoS=\gamma(t)\big(\sigma_-\rhoS\sigma_+-\tfrac12\acomm{\sigma_+\sigma_-}{\rhoS}\big)$ with the time-dependent rate $\gamma(t)=-2\,\tfrac{\mathrm d}{\mathrm dt}\log\abs{G(t)}$. A good measure of the state of the dynamics is \emph{distinguishability}: the trace distance between the evolved states of $\ket+$ and $\ket-$, which here equals $\abs{G(t)}$. Under any Markovian evolution, distinguishability can only decrease, since information flows from the system into the bath and never returns. For weak coupling ($\lambda\gg\gamma_0$) this is what happens, and $\gamma(t)\approx\gamma_0>0$ (Figure~\ref{fig:ch03:nonmarkov}). For strong coupling ($\lambda<2\gamma_0$) the distinguishability \emph{revives}: information flows back from the bath. Precisely on the revivals the rate $\gamma(t)$ is negative, which is the signature of non-Markovianity mentioned above.}
+\onp{Exactly solvable: qubit, Lorentzian bath. Distinguishability of $\ket\pm$ $=\abs{G(t)}$; rate $\gamma(t)=-2\frac{\mathrm d}{\mathrm dt}\log\abs{G}$.}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch03_nonmarkov.tex}}
+\caption{(a) The distinguishability $D(t)=\abs{G(t)}$ of the evolved $\ket+$ and $\ket-$, with $\gamma_0=2$: weak coupling ($\lambda=40$, blue) gives monotone decay, strong coupling ($\lambda=0.4$, red) revivals (shaded). (b) The rate $\gamma(t)$ of the master equation, negative exactly on the revivals; it is clipped where $G$ vanishes. Generated by \texttt{code/ch03\_nonmarkov.py}.}\label{fig:ch03:nonmarkov}
+\end{figure}}
+\ona{\endgraf\medskip\noindent\textit{Reading the figure.} Panel (a) shows how well we can tell apart two states that started perfectly distinguishable, $\ket+$ and $\ket-$: the value $1$ means perfectly, $0$ not at all. The blue curve, for weak coupling, decreases steadily. The red curve, for strong coupling, drops to zero and then rises again in the shaded intervals. Panel (b) shows the decay rate $\gamma(t)$ in the master equation that reproduces the red curve; it is negative exactly in the same shaded intervals.\endgraf\smallskip\noindent\textit{Why it matters.} Under any memoryless (Markovian) evolution, distinguishability can only decrease: no processing of a system can create information about how it was prepared. Computer scientists know this as the data-processing inequality, or as the fact that a Markov chain can only bring two distributions closer in total-variation distance. A revival therefore means that information which seemed lost had been stored in the bath and has come back: the bath has \emph{memory}. Such effects appear in strongly coupled solid-state devices. They cannot be captured by a Lindblad equation with constant non-negative rates, and they must be detected before such a model is fitted to data.}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch03_nonmarkov.tex}}\end{center}}
+\end{frame}
+
+\begin{frame}\ft{Example: a qubit with relaxation and dephasing}
+\ona{For a qubit with $H=\tfrac\omega2\sigma_z$, jump operators $L_1=\sqrt{\gamma_1}\,\sigma_-=\sqrt{\gamma_1}\ket0\bra1$ (amplitude damping, energy relaxation on the timescale $T_1=1/\gamma_1$) and $L_2=\sqrt{\gamma_\phi/2}\,\sigma_z$ (pure dephasing), the Lindblad equation \eqref{eq:ch03:lindblad} becomes, in Bloch coordinates,}
+\onp{$H=\tfrac\omega2\sigma_z$, $L_1=\sqrt{\gamma_1}\ket0\bra1$, $L_2=\sqrt{\gamma_\phi/2}\sigma_z$. In Bloch coordinates:}
+\begin{equation}\label{eq:ch03:bloch-open}
+\dot x=-\omega y-x/T_2,\qquad \dot y=\omega x-y/T_2,\qquad \dot z=-(z-1)/T_1,
+\end{equation}
+with $1/T_1=\gamma_1$ and $1/T_2=\gamma_1/2+\gamma_\phi$.
+\ona{These are the Bloch equations with relaxation. Two features will recur: the system matrix is no longer antisymmetric (the Bloch vector shrinks, purity decreases), and there is an \emph{affine} term $\tfrac{1}{T_1}$ driving $z$ towards the ground state $z=1$. Figure~\ref{fig:ch03:decoherence} shows the solution from $\ket+$ and Figure~\ref{fig:ch03:shrink} several trajectories on the Bloch sphere, computed by exponentiating the vectorised generator.}
+\ona{\begin{figure}[H]\centering
+\resizebox{0.9\linewidth}{!}{\input{figures/ch03_decoherence.tex}}
+\caption{Bloch components of a qubit with $\omega=2$, $\gamma_1=0.4$, $\gamma_\phi=0.3$ (so $T_1=2.5$, $T_2=2$), starting in $\ket+$: the precession of $x,y$ is damped inside the envelopes $\pm\ee^{-t/T_2}$ (dashed), and $z$ relaxes to the ground state $z=1$ as $1-\ee^{-t/T_1}$. Generated by \texttt{code/ch03\_decoherence.py}.}\label{fig:ch03:decoherence}
+\end{figure}}
+\ona{\endgraf\medskip\noindent\textit{Reading the figure.} The three curves are the averages $\langle\sigx\rangle$, $\langle\sigy\rangle$, $\langle\sigz\rangle$ that one would measure at time $t$, starting from $\ket+$, which points along the $x$-axis of the Bloch sphere. The curves $x$ and $y$ oscillate because the qubit precesses about the $z$-axis at frequency $\omega$, like the hand of a clock, and the oscillation shrinks inside the dashed envelope $\pm\ee^{-t/T_2}$: the qubit forgets its phase. The curve $z$ climbs to $1$: the qubit loses its energy and settles in the ground state on the timescale $T_1$.\endgraf\smallskip\noindent\textit{Why it matters.} $T_1$ and $T_2$ are the two numbers quoted on every datasheet of quantum hardware (\Chap~\ref{C.Motivation}). $T_2$ bounds how long a superposition, the resource that distinguishes a qubit from a bit, survives; $T_1$ bounds how long an excited state survives; and always $T_2\le2T_1$, because $1/T_2=1/(2T_1)+\gamma_\phi$. A computer scientist may think of them as the retention time of a memory cell that leaks: every computation must finish, or be protected by error correction, well within these times.}
+\onp{\begin{itemize}\item system matrix not antisymmetric: purity decreases; \item affine term: fixed point $z=1$ (ground state) rather than the origin.\end{itemize}}
+\end{frame}
+
+\begin{frame}<presentation>\ft{Relaxation and dephasing, pictured}
+\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch03_decoherence.tex}}\end{center}
+From $\ket+$: $x,y$ precess inside the envelopes $\pm\ee^{-t/T_2}$; $z$ relaxes to $1$ as $1-\ee^{-t/T_1}$.
+\end{frame}
+
+\begin{frame}\ft{Trajectories on the Bloch sphere}
+\ona{\begin{figure}[H]\centering
+\resizebox{0.8\linewidth}{!}{\input{figures/ch03_bloch_shrink.tex}}
+\caption{Three initial pure states (dots) under the same dissipative dynamics as in Figure~\ref{fig:ch03:decoherence}: every trajectory leaves the sphere, spirals inwards and converges to the ground state at the north pole. Red: the image of the whole Bloch ball at $t=1.2$, the ellipsoid with semi-axes $\ee^{-t/T_2}$, $\ee^{-t/T_2}$, $\ee^{-t/T_1}$ centred at $z=1-\ee^{-t/T_1}$: the channel contracts the ball and pushes it towards the ground state. Generated by \texttt{code/ch03\_decoherence.py}.}\label{fig:ch03:shrink}
+\end{figure}}
+\ona{\endgraf\medskip\noindent\textit{Reading the figure.} The sphere is the set of pure states. Each coloured curve is the Bloch vector of one initial state (the dot) as time goes on: it leaves the surface, so the state becomes mixed, spirals because of the precession, and ends at the north pole, the ground state $\ket0$. The red dashed ellipsoid shows where \emph{all} points of the Bloch ball are at time $t=1.2$: the whole ball has been squeezed and moved up.\endgraf\smallskip\noindent\textit{Why it matters.} Unitary dynamics (\Chap~\ref{C.Closed}) only rotate the ball. Open dynamics \emph{contract} it, so that different initial states become harder to tell apart: information leaks into the environment. A computer scientist will recognise the behaviour of a Markov chain converging to its stationary distribution irrespective of where it started; here the ground state plays the role of the stationary distribution. The ellipsoid is not centred at the origin: the map is \emph{affine}, a linear map followed by a shift, and the shift is the origin of the affine term $\bvec$ in Theorem~\ref{thm:ch03:blds}.}
+\onp{\begin{center}\resizebox{!}{0.6\textheight}{\input{figures/ch03_bloch_shrink.tex}}\end{center}
+Every initial state spirals to the ground state: the map $\rho(0)\mapsto\rho(t)$ is a contraction of the Bloch ball.}
+\end{frame}
+
+\begin{frame}\ft{Three channels on the Bloch ball}
+\ona{A Lindblad evolution run for a fixed time maps the Bloch ball into itself, and for the three standard noise processes of a qubit the image is an ellipsoid (Figure~\ref{fig:ch03:channels}). \emph{Amplitude damping}, with jump operator $\sqrt{\gamma}\ket0\bra1$, shrinks the ball and pushes it towards the ground state; this is energy loss. \emph{Dephasing}, with jump operator $\sqrt{\gamma/2}\,\sigz$, destroys the coherences $x,y$ but keeps the populations, squashing the ball onto the $z$-axis. \emph{Depolarising} noise, with jump operators $\tfrac{\sqrt\gamma}{2}\sigma_k$ for $k=x,y,z$, shrinks every direction alike, towards the maximally mixed state. A real device combines all three, and identifying their rates is the task of the following \chaps.}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch03_channels.tex}}
+\caption{The image of the Bloch ball (shaded) after time $t$ with $\gamma t=0.9$ under (a) amplitude damping, (b) dephasing and (c) depolarising noise. The semi-axes are $(\ee^{-\gamma t/2},\ee^{-\gamma t/2},\ee^{-\gamma t})$ with centre $(0,0,1-\ee^{-\gamma t})$, $(\ee^{-\gamma t},\ee^{-\gamma t},1)$, and $\ee^{-\gamma t}$ in all directions, respectively. Generated by \texttt{code/ch03\_channels.py}.}\label{fig:ch03:channels}
+\end{figure}}
+\ona{\endgraf\medskip\noindent\textit{Reading the figure.} In each panel the grey sphere stands for all states before the noise acts, and the shaded body for the same states after the noise has acted for a fixed time. The dark dot on top is the ground state $\ket0$, and the coloured dot the centre of the image.\endgraf\smallskip\noindent\textit{Why it matters.} These are the three standard noise models of quantum computing. Amplitude damping is energy loss, for instance spontaneous emission of a photon; dephasing comes from fluctuating energy levels, for instance a noisy magnetic field; depolarising noise is the isotropic, ``worst-case'' model used by default in simulations of quantum error-correcting codes. The three leave different fingerprints on the shape of the image, and that is precisely what makes them distinguishable in experiments: preparing several initial states, letting them evolve, and measuring $\sigx,\sigy,\sigz$ reveals the shape, and hence the noise. Doing this systematically is the identification problem of \Chaps~\ref{C.StateSpace}--\ref{C.SampleComplexity} and~\ref{C.AlgTomography}.}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch03_channels.tex}}\end{center}}
+\end{frame}
+
+\begin{frame}[fragile]\ft{Computing with the vectorised generator}\mop{\small}
+\ona{Numerically it is convenient to work with $\vecop{\rho}\in\C^{N^2}$, as in \eqref{eq:lvn-vec}. Using $\vecop{AXB}=(B^\top\otimes A)\vecop{X}$ for column-stacking vectorisation, the Lindblad generator becomes the $N^2\times N^2$ matrix}
+\begin{equation}\label{eq:ch03:vec-lind}
+\hat{\Lind}=-\imath(\Id\otimes H-H^\top\otimes\Id)+\sum_k\Big(\bar L_k\otimes L_k-\tfrac12\Id\otimes L_k^\dagger L_k-\tfrac12(L_k^\dagger L_k)^\top\otimes\Id\Big),
+\end{equation}
+\ona{and $\vecop{\rho(t)}=\ee^{\hat{\Lind}t}\vecop{\rho(0)}$. This is what the figures of this \chap{} use:}
+\onp{$\vecop{\rho(t)}=\ee^{\hat\Lind t}\vecop{\rho(0)}$, with $\hat\Lind$ assembled from Kronecker products:}
+\mop{\lstset{basicstyle=\ttfamily\scriptsize}}
+\lstinputlisting[style=python,firstline=26,lastline=34]{code/ch03_decoherence.py}
+\ona{The complex, redundant vector $\vecop\rho$ is fine for simulation; for identification we use the real coherence vector of Section~\ref{sec:ch03:dynrep}.}
+\end{frame}
+
+\begin{frame}\ft{The spectrum of the generator}
+\ona{Since $\vecop{\rho(t)}=\ee^{\hat\Lind t}\vecop{\rho(0)}$, the dynamics are governed by the eigenvalues of the $N^2\times N^2$ matrix $\hat\Lind$, just as for a classical linear system. For the qubit of the example they are $0$, $-1/T_1$ and $-1/T_2\pm\imath\omega$ (Figure~\ref{fig:ch03:spectrum}). The eigenvalue $0$ belongs to the steady state, here the ground state; the real parts of the others are decay rates, and their imaginary parts are oscillation frequencies. For every Lindbladian the eigenvalues lie in the closed left half-plane and come in complex-conjugate pairs, because the evolution is trace preserving, contractive and Hermiticity preserving. These eigenvalues are the poles of the transfer function in the frequency-domain analysis of \Chap~\ref{C.Frequency}.}
+\ona{\begin{figure}[H]\centering
+\resizebox{0.75\linewidth}{!}{\input{figures/ch03_spectrum.tex}}
+\caption{The eigenvalues of the vectorised Lindbladian $\hat\Lind$: the qubit of the example (red) and a random two-qubit Lindbladian (grey). All lie in the closed left half-plane, in conjugate pairs. Generated by \texttt{code/ch03\_spectrum.py}.}\label{fig:ch03:spectrum}
+\end{figure}}
+\ona{\endgraf\medskip\noindent\textit{Reading the figure.} Each dot is an eigenvalue of the matrix $\hat\Lind$ that generates the evolution. Its horizontal position says how fast a pattern in the state decays (further left means faster), and its vertical position how fast it oscillates. The dot at $0$ belongs to the state that does not change at all, the steady state.\endgraf\smallskip\noindent\textit{Why it matters.} These eigenvalues play the same role as the poles of a linear system in control engineering, or as the eigenvalues of the rate matrix of a continuous-time Markov chain in computer science and probability. The distance between the axis and the nearest non-zero eigenvalue, the \emph{spectral gap}, here $\min(1/T_1,1/T_2)=0.4$, sets how fast the system forgets its initial state, just as the spectral gap of a Markov chain sets its mixing time. Estimating these numbers from measured data is a large part of identification, especially in the frequency domain (\Chap~\ref{C.Frequency}).}
+\onp{\begin{center}\resizebox{!}{0.68\textheight}{\input{figures/ch03_spectrum.tex}}\end{center}}
+\end{frame}
+
+\section{Perturbative master equations}
+
+\begin{frame}\ft{Nakajima--Zwanzig}
+\ona{Let us now discuss the second category of master equations, namely the perturbative ones. Famous examples include the Nakajima--Zwanzig \cite{Nakajima1958,Zwanzig1960} and the Schoeller--Sch\"on equations; typically these reduce to the Bloch--Redfield equation, which we derive following \cite{de2017dynamics,Breuer_Petruccione_2010a,Lindar2020lecture}. The usual starting point is the Liouville--von Neumann equation for the complete system in the interaction picture, $\dot \rhofull(t) = -\imath \comm{V_{t}H_{I}}{\rhofull(t)}\eqqcolon g\Lind(t)[\rhofull]$, where $V_{t}X = \ee^{\imath H_{0}t}X\ee^{-\imath H_{0}t}$. One introduces a pair of projection superoperators, $\Pproj\rhofull = \TrB[\rhofull] \otimes \rhoB = \rhoS \otimes \rhoB$ and $\Qproj=\Id-\Pproj$, for some fixed environment state $\rhoB$, splits the equation into its $\Pproj$ and $\Qproj$ parts, formally solves the $\Qproj$ part with a propagator $\mathcal G(t,t_0)$ and substitutes back. This gives the integro-differential \emph{Nakajima--Zwanzig master equation}}
+\onp{Interaction picture, $\dot\rhofull=g\Lind(t)[\rhofull]$; projectors $\Pproj\rhofull=\rhoS\otimes\rhoB$, $\Qproj=\Id-\Pproj$. Solve the $\Qproj$-part formally and substitute:}
+\begin{equation}\label{eq:ch03:nzme}
+    \Pproj\dot\rhofull(t) =
+    g\Pproj\Lind(t)\Pproj\rhofull(t)+
+     g\Pproj\Lind(t)\mathcal{G}(t,t_0)\Qproj\rhofull(t_0)
+    +\int^{t}_{t_0}\Kker_{\textrm{NZ}}(t,\tau)\rhofull(\tau)\,\mathrm{d}\tau,
+\end{equation}
+\ona{with $\mathcal{G}(t,t_{0}) = T_+\exp[g\int^{t}_{t_0} \Qproj\Lind(\tau)\, \mathrm{d}\tau]$ and the \emph{memory kernel} $\Kker_{\textrm{NZ}}(t,\tau) = g^{2}\Pproj\Lind(t)\mathcal{G}(t,\tau)\Qproj\Lind(\tau)\Pproj$. Setting $\Kker_{\textrm{NZ}}(t,\tau) = \Lind\delta(t-\tau)$ is equivalent to the Markovian approximation. In realistic settings the first term can typically be removed, and if initial separability \eqref{eq:ch03:assump_sep} is assumed, the second term vanishes as well; the remaining equation is the \emph{homogeneous} NZME}
+\begin{equation}\label{eq:ch03:nzme-hom}
+\Pproj\dot\rhofull(t)=\int_{t_0}^t\Kker_{\rm NZ}(t,\tau)\Pproj\rhofull(\tau)\,\mathrm d\tau .
+\end{equation}
+\ona{Under the given assumptions the NZME is still \emph{exact}.}
+\onp{\begin{itemize}\item memory kernel $\Kker_{\rm NZ}$: exact, non-Markovian, hard to compute; \item $\Kker_{\rm NZ}=\Lind\delta(t-\tau)$ is the Markov approximation; separability kills the inhomogeneous term.\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Time-convolutionless and Redfield equations}
+\ona{The memory kernel in the NZME is often too difficult to compute numerically. An alternative is the \emph{time-convolutionless} (TCL) form, in which the convolution is removed entirely and the equation becomes time-local, $\Pproj\dot\rhofull(t) = \Kker_{\textrm{TCL}}(t)\Pproj\rhofull(t)$, with the memory carried by the time dependence of the generator rather than by an integral over the history \cite{Breuer_Petruccione_2010a,Banchi2018}. Both forms describe the same dynamics, although their perturbative expansions agree only order by order in the coupling.}
+\ona{More commonly, the Redfield equation is derived directly in the weak-coupling limit. Formally integrating the interaction-picture equation, substituting, and taking the partial trace gives}
+\onp{TCL: time-local, $\Pproj\dot\rhofull=\Kker_{\rm TCL}(t)\Pproj\rhofull$. Redfield: integrate once, trace out $B$, assume $\TrB\comm{V_tH_I}{\rhofull(0)}=0$:}
+\begin{equation}\label{eq:ch03:born}
+    \dot \rhoS(t) = - \int_{0}^{t} \mathrm{d}\tau\, \TrB\big\{\comm{V_{t}H_{I}}{\comm{V_{\tau}H_{I}}{\rhofull(\tau)}}\big\}.
+\end{equation}
+\ona{Here we assumed $\TrB\comm{V_{t}H_{I}}{\rhofull(0)} = 0$, which is possible by shifting the environmental operators and assuming initial separability. The system dynamics still depends on $\rhofull(t)$; the \emph{Born approximation} replaces $\rhofull(\tau)\to\rhoS(\tau)\otimes\rhoB$, and the \emph{first Markovian approximation} replaces $\rhoS(\tau) \to \rhoS(t)$. These two approximations give the Redfield equation \cite{REDFIELD19651}}
+\onp{Born: $\rhofull(\tau)\to\rhoS(\tau)\otimes\rhoB$; first Markov: $\rhoS(\tau)\to\rhoS(t)$. \alert{Redfield equation}}
+\begin{equation}\label{eq:ch03:redfield}
+    \dot \rhoS(t) = - \int^{t}_{0} \mathrm{d}\tau\, \TrB\big\{\comm{V_{t}H_{I}}{\comm{V_{\tau}H_{I}}{\rhoS(t) \otimes \rhoB}}\big\}.
+\end{equation}
+\ona{This equation is infamous for not being able to guarantee a completely positive evolution. The \emph{second Markovian approximation}, replacing $\tau \to t - \tau$ and extending the upper limit to $\infty$, makes it Markovian (with an $O(g^{4}\tau_{B})$ error),}
+\onp{Second Markov: $\tau\to t-\tau$, upper limit $\to\infty$:}
+\begin{equation}\label{eq:ch03:redfield-markov}
+    \dot \rhoS(t) = - \int^{\infty}_{0} \mathrm{d}\tau\, \TrB\big\{\comm{V_{t}H_{I}}{\comm{V_{t-\tau}H_{I}}{\rhoS(t) \otimes \rhoB}}\big\},
+\end{equation}
+\ona{but even then it is not guaranteed to be a generator of a dynamical semigroup, i.e.\ of GKSL form.}
+\onp{Still not guaranteed to be of GKSL form, nor completely positive.}
+\end{frame}
+
+\begin{frame}\ft{Secular approximation: from Redfield to Lindblad}\mop{\footnotesize}
+\ona{One arrives at a Lindbladian form by a further approximation known as the \emph{secular approximation} or rotating-wave approximation. Substituting $H_I=g\sum_\alpha S_\alpha\otimes B_\alpha$ and the spectral decomposition of the system operators in the frequency domain, $S_{\alpha}(t) = \sum_{\omega}S_{\alpha}(\omega)\ee^{-\imath\omega t}$ over the Bohr frequencies $\omega$, the Markovian Redfield equation reads}
+\ona{\begin{equation}
+    \dot\rhoS(t) = -g^{2}\sum_{\alpha,\beta}\sum_{\omega,\omega'}\Gamma_{\alpha\beta}(\omega)\ee^{\imath(\omega' - \omega)t}\comm{S^{\dagger}_{\alpha}(\omega')}{S_{\beta}(\omega)\rhoS(t)} + \mathrm{h.c.},
+\end{equation}}
+\ona{where $\Gamma_{\alpha\beta}(\omega) = \int^{\infty}_{0}\mathrm{d}\tau\, \ee^{\imath\omega\tau}\mathcal{B}_{\alpha\beta}(\tau)$ is the one-sided Fourier transform of the environment correlation function $\mathcal{B}_{\alpha\beta}(\tau) = \Tr[\ee^{\imath H_{B}\tau}B_{\alpha}\ee^{-\imath H_{B}\tau}B_{\beta}\rhoB]$. The secular approximation neglects the rapidly oscillating terms $\omega\ne\omega'$, valid when $|\omega-\omega'|^{-1} \ll \tau_{S}$. Moving back to the Schr\"odinger picture one arrives at}
+\onp{Bohr-frequency decomposition $S_\alpha(t)=\sum_\omega S_\alpha(\omega)\ee^{-\imath\omega t}$; drop terms oscillating at $\omega\ne\omega'$ (valid if $|\omega-\omega'|^{-1}\ll\tau_S$). Result:}
+\begin{equation}\label{eq:ch03:secular}
+\begin{split}
+\dot\rhoS(t) = -\imath\Big[ &H_{S} + g^{2}\sum_{\omega}\sum_{\alpha,\beta}\Delta_{\alpha\beta}(\omega)S^{\dagger}_{\alpha}(\omega)S_{\beta}(\omega), \rhoS(t)\Big] \\
+&+ g^{2}\sum_{\omega}\sum_{\alpha\beta}\gamma_{\alpha\beta}(\omega)\Big(S_{\beta}(\omega)\rhoS(t)S_{\alpha}^{\dagger}(\omega) - \tfrac{1}{2}\acomm{S_{\alpha}^{\dagger}(\omega)S_{\beta}(\omega)}{\rhoS(t)}\Big),
+\end{split}
+\end{equation}
+\ona{where $\Delta(\omega) = \frac{1}{2\imath}[\Gamma(\omega) - \Gamma^{\dagger}(\omega)]$ is the Lamb shift and $\gamma(\omega) = \Gamma(\omega) + \Gamma^{\dagger}(\omega)$ is the decoherence matrix, the full Fourier transform of the environment correlation function and therefore positive semidefinite. This is of the form \eqref{eq:ch03:gksl}. Neglecting the Lamb shift gives the Bloch--Redfield equation with its tensor $R_{abcd}$. The indiscriminate use of the secular approximation is controversial \cite{Jeske_Bloch_redfield_LHC_2015}; \cite{McCauley2020} showed, using system identification techniques, that Bloch--Redfield dynamics can be replaced by an accurate Lindbladian as long as the spectral density varies sufficiently slowly.}
+\onp{Lamb shift $\Delta(\omega)$; decoherence matrix $\gamma(\omega)\succeq0$ (a Fourier transform of a correlation function). This \emph{is} the GKSL form \eqref{eq:ch03:gksl}.}
+\end{frame}
+
+\begin{frame}\ft{Why the secular approximation works}
+\ona{The secular approximation discards the terms of the Markovian Redfield equation that oscillate at $\ee^{\imath(\omega'-\omega)t}$ with $\omega\ne\omega'$. Figure~\ref{fig:ch03:secular}(a) shows why this is reasonable: over the timescale $\tau_S$ on which the system evolves, such a term averages out, and its running average decays like $1/(\abs{\omega-\omega'}t)$. The terms with $\omega=\omega'$ keep their full weight. The approximation therefore depends on the spectrum of Bohr frequencies, the differences $E_j-E_k$ of the system's energies (panel b). It is accurate when the smallest gap between distinct Bohr frequencies is large compared to $1/\tau_S$. It fails for nearly degenerate gaps, which is the caveat on the Lindblad equation noted in the next frame.}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch03_secular.tex}}
+\caption{(a) A non-secular term $\cos((\omega'-\omega)t)$ (thin) and its running average (thick), which vanishes, against a secular term that is kept. (b) The Bohr frequencies of a three-level system with energies $(0,1,2.6)$ and their smallest gap. Generated by \texttt{code/ch03\_secular.py}.}\label{fig:ch03:secular}
+\end{figure}}
+\ona{\endgraf\medskip\noindent\textit{Reading the figure.} In panel (a), the thin red curve is a term of the Redfield equation that oscillates quickly; the thick red curve is its average from time $0$ up to $t$, which tends to zero; the blue line is a term that does not oscillate and is kept. In panel (b), each stem is one possible energy difference (Bohr frequency) of a three-level system, and the arrow marks the smallest separation between two distinct ones.\endgraf\smallskip\noindent\textit{Why it matters.} The secular approximation is what turns the Redfield equation into a Lindblad equation, and only the latter is guaranteed to produce valid density matrices. Computer scientists may think of it as a low-pass filter that removes high-frequency components. Whether it is justified is a statement about the spectrum in panel (b): it works when distinct frequencies are well separated compared with the decay rates, and fails for nearly degenerate ones. In many-qubit chips, whose qubits are deliberately given similar frequencies, this ``frequency crowding'' is a practical concern.}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch03_secular.tex}}\end{center}}
+\end{frame}
+
+\begin{frame}\ft{The assumptions, collected}
+\ona{The reductions above rest on three assumptions, which we now make explicit.}
+\begin{enumerate}\setlength\itemsep{0.3em}
+    \item\label{ass:ch03:sep} \textbf{Separability.} The system is initially in an uncorrelated state $\rhofull(0) = \rhoS(0) \otimes \rhoB(0)$. Standard \cite{Breuer_Petruccione_2010a,Lindar2020lecture}; justified if the system and the environment begin to interact at $t=0$. \ona{Separability alone guarantees that the reduced evolution is completely positive and trace preserving \cite{wood2009non}.}
+    \item\label{ass:ch03:born} \textbf{Born approximation.} Weak coupling, $g\tau_{B} \ll 1$: system--environment correlations are neglected and $\rhoB$ stays constant. \ona{In reality one performs a perturbative expansion $\rhofull = \rhoS^{(0)}(t) \otimes \rhoB + g^{2}\chi_{\rm full}$ and neglects the last term.}
+    \item\label{ass:ch03:markov} \textbf{Markov approximation.} The environment is memoryless: the timescale of the system dynamics is much longer than the decay time of environment correlations, $\tau_{S} \gg \tau_{B}$.
+\end{enumerate}
+\ona{With these assumptions, the non-unitary evolution \eqref{eq:ch03:lindblad} preserves Hermiticity, trace, and positivity of $\rhoS$. When dissipation is present and interactions are weak, the Lindblad equation is an accurate model, with the caveat that the transition frequencies of the system should not be degenerate or greatly separated \cite{McCauley2020}. Physical examples include optical cavities with photon loss, trapped ions, and superconducting qubits. A well-known example in which both the Born and Markov approximations break down is the Kondo model \cite{hewson1997kondo}; a thorough review of the two approximations is \cite{stefanini2025lindblad}.}
+\onp{Works well: cavities with photon loss, trapped ions, superconducting qubits. Fails: strongly coupled or structured baths (Kondo model \cite{hewson1997kondo}). Review: \cite{stefanini2025lindblad}.}
+\end{frame}
+
+\begin{frame}\ft{Two timescales}
+\ona{The Markov approximation compares two timescales (Figure~\ref{fig:ch03:timescales}). The environment's correlation function $C(\tau)=\langle B(\tau)B(0)\rangle$ decays within the bath memory time $\tau_B$: after a few $\tau_B$ the bath has forgotten its past. The system changes on its own timescale $\tau_S$, set by its frequencies and decay rates. When $\tau_S\gg\tau_B$, the system state is essentially frozen during the bath's memory window, so $\rhoS(\tau)$ under the integral in \eqref{eq:ch03:born} may be replaced by $\rhoS(t)$, and the upper limit by $\infty$. The Born approximation needs a separate condition, weak coupling $g\tau_B\ll1$.}
+\ona{\begin{figure}[H]\centering
+\resizebox{0.9\linewidth}{!}{\input{figures/ch03_timescales.tex}}
+\caption{A bath correlation function $C(\tau)$ (red) that decays within $\tau_B$, and a system observable (blue) that changes on $\tau_S=2\pi/\omega_S\gg\tau_B$. Within the memory window (shaded) the system is essentially frozen. Generated by \texttt{code/ch03\_timescales.py}.}\label{fig:ch03:timescales}
+\end{figure}}
+\ona{\endgraf\medskip\noindent\textit{Reading the figure.} The red curve shows how much the environment still ``remembers'' about its own state a time $\tau$ ago; it dies out quickly. The blue curve shows what the system does; it changes slowly. The shaded strip is the stretch of time over which the environment still remembers anything.\endgraf\smallskip\noindent\textit{Why it matters.} This picture is the justification of every memoryless model in this \chap{}. An analogy: the weather can be predicted without tracking individual air molecules, because each molecule forgets its velocity within nanoseconds while the weather changes over hours. In computer-science terms, it is the assumption that a noise process looks like independent (``white'') noise at the timescale of interest. When the two timescales are \emph{not} separated, when the red curve lives as long as the blue one, Markovian models fail, as in Figure~\ref{fig:ch03:nonmarkov} at strong coupling.}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch03_timescales.tex}}\end{center}}
+\end{frame}
+
+\begin{frame}\ft{A map of the master equations}
+\ona{Figure~\ref{fig:ch03:dendrogram} collects the descriptions of this \chap{} into a single \emph{dendrogram}. It records how each master equation or map is turned into the next one, and under which assumption. Various descriptions of open quantum system dynamics exist, each resting on certain approximations under which it accurately describes the dynamics. How these descriptions relate to one another is rarely made explicit, and the figure provides an overview \cite{parvaiz2026survey}. It goes beyond the conventional descriptions of open dynamics and includes the representation of the evolution as a linear dynamical system (autonomous case) or bilinear dynamical system (controlled case). Every equation in the figure is a link to the place in the text where it is discussed, and every assumption a link to its entry in the list above.}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch03_dendrogram.tex}}
+\caption{Dendrogram of open quantum system descriptions, after \cite{parvaiz2026survey}. Equations in red boxes are non-Markovian, those in blue boxes Markovian; the italic text on the edges states the assumption under which one equation leads to the next. (a) Nakajima--Zwanzig, (b) dynamical maps, (c) microscopic description, (d) the Lindblad equation, (e) linear and bilinear dynamical systems. Generated by \texttt{code/ch03\_dendrogram.py}.}\label{fig:ch03:dendrogram}
+\end{figure}}
+\ona{\endgraf\medskip\noindent\textit{Reading the figure.} Every box is one way of writing the dynamics of an open system; red boxes may remember the past, blue ones do not. Every edge is an assumption, written in italics. Following a path from the top to the bottom accumulates assumptions, and each box can be clicked to jump to its equation in the text.\endgraf\smallskip\noindent\textit{Why it matters.} The boxes near the top are more accurate but harder to use; the boxes at the bottom are simple linear and bilinear systems, for which the whole toolbox of system identification and control is available. Choosing a model therefore means choosing a set of assumptions, and the map makes the choice explicit. Each assumption on the way down is a claim about the device that can, and should, be checked against data before the simple model is trusted.}
+\onp{\vspace{-0.6em}\begin{center}\resizebox{!}{0.86\textheight}{\input{figures/ch03_dendrogram.tex}}\end{center}}
+\end{frame}
+
+\begin{frame}\ft{Reading the map}\mop{\footnotesize}
+\ona{The dendrogram is read from the top down. There are three entry points, and all three routes end in the Lindblad equation (d).}
+\begin{itemize}\setlength\itemsep{0.4em}
+    \item \textbf{(a) Projection operators.} The Nakajima--Zwanzig equation \eqref{eq:ch03:nzme} is exact. \hyperref[ass:ch03:sep]{Separability} removes the inhomogeneous term and leaves \eqref{eq:ch03:nzme-hom}. Expanding the propagator $\mathcal G(t,t_0)=\Id+O(g)$ to lowest order in the coupling joins the microscopic route.
+    \item \textbf{(c) Microscopic.} From the interaction-picture equation \eqref{eq:ch03:born}, the \hyperref[ass:ch03:born]{Born} and the first \hyperref[ass:ch03:markov]{Markov} approximations give the Redfield equation \eqref{eq:ch03:redfield}, and the second Markov approximation its Markovian version \eqref{eq:ch03:redfield-markov}. The \emph{secular} approximation $\omega=\omega'$ then yields the Lindblad form \eqref{eq:ch03:secular}.
+    \item \textbf{(b) Dynamical maps.} The exact reduced state \eqref{eq:ch03:reduced} becomes a Kraus decomposition \eqref{eq:ch03:kraus} under \hyperref[ass:ch03:sep]{separability}. Differentiating, for an invertible map, gives the time-dependent Lindblad form \eqref{eq:ch03:lindblad}, which is in general non-Markovian.
+    \item \textbf{(d) Lindblad.} Time-independent jump operators and non-negative rates $\gamma_k\ge0$ give the Markovian Lindblad equation \eqref{eq:ch03:lindblad-markov}.
+    \item \textbf{(e) Dynamical systems.} In coherence-vector coordinates $x_j=\Tr[F_j\rhoS]$, the Lindblad equation is a linear system without control and a bilinear one with control (Theorem~\ref{thm:ch03:blds}).
+\end{itemize}
+\ona{The colours mark where memory is lost: the red boxes may depend on the whole history of the state, the blue ones only on the present state. The first blue box appears with the second Markov approximation on the microscopic route, and with the constant non-negative rates on the dynamical-map route. Not contained in the dendrogram is the approach of the next frame, which embeds a non-Markovian system into a larger Markovian one without the Born--Markov approximations.}
+\end{frame}
+
+\begin{frame}\ft{Markovian embedding of non-Markovian systems}
+\ona{Numerical simulation and effective control of systems governed by non-Markovian dynamics are computationally demanding, since the environment cannot be eliminated without the approximations seen above. Numerous studies \cite{xue2019modeling,Pleasance2020} have instead embedded the principal non-Markovian system into an augmented system whose overall dynamics is Markovian. This is done by introducing an ancillary system, coupled to a Markovian environment, which acts as an input to the principal system with the aim of replicating the effects of the original environment. The effects of an environment are characterised by its power spectral density}
+\onp{Alternative to approximation: \alert{embed} the system into a larger Markovian one. Ancilla replicates the bath's power spectral density}
+\begin{equation}
+    S(\omega) = \int^{\infty}_{-\infty} \langle c^{\dagger}(t +\tau)c(t)\rangle \ee^{-\imath \omega \tau}\,\mathrm{d}\tau .
+\end{equation}
+\ona{\citet{xue2019modeling} show that power spectral densities that are rational functions of $\omega$, with $S(\omega)=S(-\omega)$, $S\to0$ at infinity and $S\ge0$, can always be realised by quantum linear systems; \citet{Pleasance2020} show an equivalence between systems coupled to an environment of infinitely many harmonic oscillators and systems coupled to a small number of discrete pseudomodes, leading to Lindbladian dynamics for the augmented system. For our purposes the message is the same as for the approximations: after embedding, we may again work with a GKSL equation, at the price of a larger $N$.}
+\onp{\begin{itemize}\item rational $S(\omega)$ $\Rightarrow$ realisable by a quantum linear system \cite{xue2019modeling}; \item Lorentzian $S(\omega)$ $\Rightarrow$ finitely many pseudomodes, Lindbladian augmented system \cite{Pleasance2020}; \item message: GKSL again, with larger $N$.\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{A pseudomode, worked out}
+\ona{The model of Figure~\ref{fig:ch03:nonmarkov} gives the simplest example of a Markovian embedding \cite{Pleasance2020}. Its Lorentzian spectral density of width $\lambda$ is reproduced exactly by a single auxiliary oscillator, the \emph{pseudomode}: the qubit couples with strength $\Omega=\sqrt{\gamma_0\lambda/2}$ to a cavity mode, which in turn leaks into a flat (Markovian) bath at rate $\kappa=2\lambda$. Qubit and mode together obey an ordinary GKSL equation, with Hamiltonian $\Omega(\sigma_+a+\sigma_-a^\dagger)$ and jump operator $\sqrt{2\lambda}\,a$. Its solution reproduces the non-Markovian population $\abs{G(t)}^2$ of the qubit, revivals included, to machine precision (Figure~\ref{fig:ch03:pseudomode}). The Markovian approximation $\ee^{-\gamma_0t}$ misses them. The memory of the bath, of duration $\sim1/\lambda$, has become the state of one extra degree of freedom.}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch03_pseudomode.tex}}
+\caption{(a) The qubit coupled to a damped pseudomode, which leaks into a flat bath. (b) The Lorentzian spectral density it reproduces, against a flat (Markovian) one. (c) The excited population: exact $\abs{G(t)}^2$ (red), the GKSL simulation of qubit and pseudomode (dots), and the Markovian approximation (dashed); $\gamma_0=2$, $\lambda=0.4$. Generated by \texttt{code/ch03\_pseudomode.py}.}\label{fig:ch03:pseudomode}
+\end{figure}}
+\ona{\endgraf\medskip\noindent\textit{Reading the figure.} Panel (a) is a cartoon of the embedding: the qubit talks to one extra oscillator, the pseudomode, which leaks into a memoryless environment. Panel (b) compares the spectral density reproduced in this way (red, a peak of width $2\lambda$) with the flat one assumed by Markovian models (blue). In panel (c), the red curve is the exact probability of finding the qubit excited, the black dots are computed from the enlarged Markovian model of qubit plus pseudomode, and the dashed blue curve is the Markovian approximation.\endgraf\smallskip\noindent\textit{Why it matters.} A system with memory can be simulated, and identified, with the same Lindblad tools as a memoryless one, provided we add hidden degrees of freedom. Computer scientists know the idea from hidden Markov models, and from turning a second-order process into a Markov chain by including the previous state in the current one; control engineers know it as a \emph{shaping filter} for coloured noise. The price is a larger state space, and new unknown parameters, those of the extra mode, to identify.}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch03_pseudomode.tex}}\end{center}}
+\end{frame}
+
+\section{The GKSL equation as a bilinear system}\label{sec:ch03:dynrep}
+
+\begin{frame}\ft{Controlled open quantum systems}
+\ona{In the above, we have shown that, through either approximation or embedding, many master equations can be formulated in GKSL form. In \cite{Alicki1995,Kurniawan2010} it has been shown that one can express the GKSL equation as a linear dynamical equation using the coherence vector of \Chap~\ref{C.Closed}. In practice, the dynamics of quantum systems are obtained by observing their response after probing with an input control pulse \cite{DAlessandro2021}, so we include controls via the Hamiltonian $H(t) = \Hdrift + \sum_{k}^{M} u_{k}(t)\Hctrl$. As in \eqref{eq:ch02:decomposition_hamiltonian}, we expand the traceless drift as $\Hdrift=\sum_{j=1}^n\theta_jF_j$, and we assume that the expansion coefficients of the control Hamiltonians in the basis are known, absorbing them into the control amplitudes,}
+\onp{Coherence vector $x_j=\Tr[F_j\rhoS]$ (\Chap~\ref{C.Closed}); $\Hdrift=\sum_j\theta_jF_j$; controls re-expanded in the basis:}
+\begin{equation}\label{eq:ch03:reformulated_control_hamiltonian}
+    \sum_{k=1}^{M} u_{k}(t)\Hctrl \rightarrow \sum_{k=1}^{N^{2} - 1} u_{k}(t)F_{k}.
+\end{equation}
+\ona{The generators also satisfy the conditions \eqref{eq:ch02:basis_conditions} of the jump operators, so without loss of generality we equate the operators in \eqref{eq:ch03:gksl} with this basis. Since the whole dynamics can be captured by $\xvec$, it represents the state and hence in the context of system identification it is called the state vector. For ease of presentation we take time-independent $\thvec$ and $\gamma$; the time-dependent case results in the same form.}
+\onp{The jump operators in \eqref{eq:ch03:gksl} are already the $F_j$. Unknowns: $\thvec\in\R^n$ and the Kossakowski matrix $\gamma$.}
+\end{frame}
+
+\begin{frame}\ft{The bilinear form}\mop{\footnotesize}
+\begin{thm}[Bilinear form of the controlled GKSL equation \cite{Parvaiz2025}]\label{thm:ch03:blds}
+A controlled open quantum system described by \eqref{eq:ch03:gksl} with $H(t)=\sum_j\theta_jF_j+\sum_ku_k(t)F_k$ can be recast as
+\begin{equation}\label{eq:ch03:BLDS_lindbladian}
+        \dot{\xvec}(t) = \underbrace{(\Amat^{(l)} + \Amat^{(d)})}_{\Amat}\xvec(t) + \bvec + \sum_{j=1}^{N^{2} - 1}\Nmat_{j}u_{j}(t)\xvec(t),
+\end{equation}
+where, with the structure constants of \eqref{eq:ch02:antisymmetric_structure_const}--\eqref{eq:ch02:symmetric_structure_const} and $z_{jkl} = f_{jkl} + \imath g_{jkl}$,
+\begin{align}\label{eq:ch03:LDS_matrices_and_vectors}
+        \Amat^{(l)}_{jk} &= -\sum^{n}_{l=1} \theta_{l}f_{jkl}, &
+        \Amat^{(d)}_{jk} &= -\sum^{n}_{l,m=1} \gamma_{lm}D^{(j,k)}_{lm}, &
+        (\Nmat_j)_{kl}&=-f_{jkl},\\ \nonumber
+        \beta_{j} &= \frac{\imath}{N}\sum^{n}_{k,l = 1} \gamma_{kl}f_{jkl}, &
+        D^{(j,k)}_{lm} &= \frac{1}{4}\sum_{{r}=1}^{n} \big(z_{l{r}k}f_{jm{r}} + \bar{z}_{m{r}k}f_{jl{r}}\big).
+\end{align}
+\end{thm}
+\ona{Here $\Amat^{(l)}\in \R^{n \times n}$ is the system matrix coming from the Liouville--von Neumann dynamics, while $\Amat^{(d)} \in \R^{n \times n}$ and $\bvec \in \R^{n}$ are the system matrix and vector coming from the dissipative dynamics, and each $\Nmat_{j}\in\R^{n\times n}$. Although $z_{jkl}$ and $D^{(j,k)}_{lm}$ are complex, the objects entering \eqref{eq:ch03:BLDS_lindbladian} are real: $\overline{D^{(j,k)}_{lm}}=D^{(j,k)}_{ml}$ and Hermiticity of $\gamma$ give $\overline{\Amat^{(d)}_{jk}}=\Amat^{(d)}_{jk}$, while antisymmetry of $f_{jkl}$ in $(k,l)$ gives $\beta_{j}=-\tfrac{1}{N}\sum_{k,l}\operatorname{Im}(\gamma_{kl})f_{jkl}\in\R$. In particular, $\bvec$ depends only on the imaginary part of $\gamma$ and vanishes whenever $\gamma$ is symmetric.}
+\onp{$\Amat^{(l)}$: unitary part (antisymmetric); $\Amat^{(d)},\bvec$: dissipative part; $\Nmat_j$: known a priori (structure constants). $\bvec=0$ if $\gamma$ is real symmetric.}
+\end{frame}
+
+\begin{frame}\ft{Derivation}
+\ona{\begin{pf}
+The steps follow Alicki and Lendi \cite{Alicki_Lendi_2014,Chruscinski2017}, who treat the uncontrolled case; the control only adds the bilinear term. Write $\dot x_i=\Tr[F_i\dot\rhoS]$ and split it according to \eqref{eq:ch03:gksl} into a Liouville--von Neumann part $\dot x_i^{(l)}$, a dissipative part $\dot x_i^{(d)}$ and a control part $\dot x_i^{(c)}$. The trace identity $\Tr[A\comm{B}{C}]=\Tr[\comm{A}{B}C]$ is used throughout.
+\emph{Liouville--von Neumann term:} $\dot{x}^{(l)}_{i} = -\imath\sum_{k}\theta_{k}\Tr[ F_{i}\comm{F_{k}}{\rhoS}] = -\imath\sum_{k}\theta_{k}\Tr[ \comm{F_{i}}{F_{k}}\rhoS]= \sum_{j,k}\theta_{k}f_{kji}x_{j}$, using \eqref{eq:ch02:antisymmetric_structure_const}, i.e.\ $\dot{\xvec}^{(l)} = \Amat^{(l)}\xvec$.
+\emph{Dissipation term:} adding \eqref{eq:ch02:antisymmetric_structure_const} and \eqref{eq:ch02:symmetric_structure_const} gives $F_{i}F_{j} = \frac{1}{N}\Id\delta_{ij} +\frac{\imath}{2}\sum_{k}\bar{z}_{ijk}F_{k}$, hence
+$\tfrac{1}{2}F_{l}\comm{F_i}{F_{k}} = \frac{\imath}{2N}f_{ikl}\Id - \frac{1}{4}\sum_{mj}f_{ikm}\bar{z}_{lmj}F_{j}$ and $\tfrac{1}{2}\comm{F_l}{F_{i}}F_{k}= \frac{\imath}{2N}f_{ikl}\Id  - \frac{1}{4}\sum_{mj}f_{lmi}z_{kmj}F_{j}$. Writing the dissipator as $\tfrac12\sum_{kl}\gamma_{kl}(\comm{F_k}{\rhoS F_l}+\comm{F_k\rhoS}{F_l})$ and taking the trace against $F_i$,
+$\dot{x}_{i}^{(d)} = - \frac{1}{4}\sum_{klmj}\gamma_{kl}(f_{ikm}\bar{z}_{lmj} + f_{lmi}z_{kmj})x_{j} +\frac{\imath}{N}\sum_{k,l}\gamma_{kl}f_{ikl} = \sum_j\Amat^{(d)}_{ij}x_j+\beta_i$, where $\Tr\rhoS=1$ produced the affine term.
+\emph{Control term:} identical to the first, $\dot x^{(c)}_{i} = -\imath\sum_{j}u_{j}\Tr[ \comm{ F_{i}}{ F_{j}}\rhoS ]= \sum_{jk}f_{ijk}u_{j}x_{k}$, so $(\Nmat_j)_{ik}=-f_{jik}=-f_{ijk}$ up to the sign convention of the antisymmetric constants.
+\end{pf}}
+\onp{\begin{itemize}\setlength\itemsep{0.5em}
+\item $\dot x_i=\Tr[F_i\dot\rhoS]$; split into unitary, dissipative and control parts.
+\item Trace identity $\Tr[A\comm BC]=\Tr[\comm AB C]$ plus $\comm{F_j}{F_k}=\imath\sum_lf_{jkl}F_l$ give $\Amat^{(l)}$ and $\Nmat_j$ immediately.
+\item $F_iF_j=\tfrac1N\delta_{ij}\Id+\tfrac\imath2\sum_k\bar z_{ijk}F_k$ turns the dissipator into $\Amat^{(d)}$; the identity component with $\Tr\rhoS=1$ produces $\bvec$.
+\item Full derivation in the notes / Appendix of \cite{Parvaiz2025}.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Standard form, outputs, and what is to be identified}
+\ona{From the above, the task of identifying the system amounts to finding the values of the parameters $\thvec$ of the Hamiltonian and the elements $\gamma_{jk}$ of the Kossakowski matrix. The matrix $\Amat^{(l)}$ is always antisymmetric, regardless of whether the system is open or closed. On the other hand, $\Amat^{(d)}$ in general does not have any symmetry properties; when $N=2$ or when the Kossakowski matrix is symmetric, $\Amat^{(d)}$ is symmetric and $\bvec$ vanishes. The bilinear coupling matrices $\Nmat_{j}$ do not need to be identified as they are composed only of the antisymmetric structure constants, which are known a priori. Equation \eqref{eq:ch03:BLDS_lindbladian} is not in the standard bilinear form because of $\bvec$; it is straightforward to reformulate it by appending $\bvec$ as an additional column to $\Amat$ and a constant $1$ to the state vector:}
+\onp{Unknowns: $\thvec$ and $\gamma$; $\Nmat_j$ known. Absorb the affine term by augmenting the state:}
+\begin{equation}\label{eq:ch03:standard_form}
+        \Amat \rightarrow \begin{bmatrix}
+           \Amat & \bvec \\ \mathbf{0} & 0 \end{bmatrix},\qquad
+           \Nmat_{j} \rightarrow \begin{bmatrix}
+               \Nmat_{j} & \mathbf{0} \\
+               \mathbf{0} & 0 \end{bmatrix}, \qquad
+           \xvec \rightarrow \begin{bmatrix}
+               \xvec \\ 1
+           \end{bmatrix},
+\end{equation}
+\ona{so that all matrices have dimension $N^2\times N^2$. In practice, for large quantum systems one might only have access to a set of local observables $\{O_{j}\}$, and the output vector is $\vec{y}(t) = [\langle O_{1}\rangle, \dots ]^{\top}$. Since observables are Hermitian, we decompose them in the same basis, $O_{j} = \sum_{k} o^{(j)}_{k}F_{k}$, so that the $j$'th row of the output matrix $\Cmat$ consists of the elements $o^{(j)}_{k}$:}
+\onp{Outputs are expectation values of observables $O_j=\sum_ko^{(j)}_kF_k$:}
+\begin{equation}\label{eq:ch03:output}
+\vec y(t)=\Cmat\,\xvec(t),\qquad \Cmat_{jk}=o^{(j)}_k .
+\end{equation}
+\ona{Equations \eqref{eq:ch03:BLDS_lindbladian}--\eqref{eq:ch03:output} are a classical bilinear (for $u\equiv0$: linear time-invariant) state-space model with inputs $u$, state $\xvec$ and outputs $\vec y$. This is the object to which the controllability, observability and identifiability theory of \Chaps~\ref{C.StateSpace}--\ref{C.Frequency} applies.}
+\onp{A classical bilinear state-space model $(\Amat,\{\Nmat_j\},\Cmat)$: \Chaps~\ref{C.StateSpace}--\ref{C.Frequency} apply.}
+\end{frame}
+
+\begin{frame}\ft{The system matrix, pictured}
+\ona{Figure~\ref{fig:ch03:amatrix} shows the matrices of Theorem~\ref{thm:ch03:blds} for two qubits, with Hamiltonian $H=0.5\,Z_1+0.4\,Z_2+0.3\,X_1X_2$ and jump operators $\sqrt{0.3}\,\sigma_-^{(1)}$ (amplitude damping of the first qubit) and $\sqrt{0.2}\,Z_2$ (dephasing of the second), computed directly as $\Amat_{ij}=\Tr[F_i\Lind(F_j)]$ and $\beta_i=\Tr[F_i\Lind(\Id/N)]$. The unitary part $\Amat^{(l)}$ is antisymmetric and rotates the coherence vector. The dissipative part $\Amat^{(d)}$ has no particular symmetry. Together with the affine term $\bvec$, which here has a single non-zero entry along $Z_1$, it drives every state to the unique steady state: all eigenvalues of $\Amat$ have negative real parts. Note that the dissipator need not shrink the coherence vector: amplitude damping turns mixed states into the pure ground state. All three matrices are sparse, which is what the identifiability results of \Chap~\ref{C.StateSpace} exploit.}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch03_amatrix.tex}}
+\caption{The matrices $\Amat^{(l)}$, $\Amat^{(d)}$ and the vector $\bvec$ for a two-qubit model in the normalised Pauli basis (rows labelled by Pauli strings); blue entries are positive, red negative, white zero. Generated by \texttt{code/ch03\_amatrix.py}.}\label{fig:ch03:amatrix}
+\end{figure}}
+\ona{\endgraf\medskip\noindent\textit{Reading the figure.} Each small square is one entry of a $15\times15$ matrix, and each row and column is labelled by a two-qubit observable (a Pauli string). Blue entries are positive, red negative, white zero, and darker means larger in magnitude. The left matrix comes from the Hamiltonian, the middle one from the noise, and the single column on the right is the constant term $\bvec$.\endgraf\smallskip\noindent\textit{Why it matters.} This is the quantum system written as a classical state-space model $\dot{\vec x}=\Amat\vec x+\bvec$, to which every tool of linear systems applies, whether one learnt it in a control, signal-processing or numerical-analysis course. The left matrix is antisymmetric: it describes reversible motion, which preserves the length of $\vec x$ (the purity). The middle one describes irreversible effects. Most entries are zero, and the non-zero ones depend on only a handful of physical parameters, five here, against $225$ entries. This sparsity is why identification is feasible at all.}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch03_amatrix.tex}}\end{center}}
+\end{frame}
+
+\begin{frame}\ft{Reducing the dimension: the accessible set}
+\ona{The size of the system matrices, $N^2-1=4^q-1$ for $q$ qubits, can be too large for efficient computation; however, we only need the dynamics governing the evolution of the observables that are being measured. Collect the unique basis elements appearing in the observables in $\mathcal{M} = \{ F_{v_{1}}, \dots, F_{v_m} \}$. Inspired by control theory for classical nonlinear systems, an iterative procedure finds the finite set of generators required to describe the dynamics of these observables:}
+\onp{Only the basis elements that couple to the measured observables $\mathcal M=\{F_{v_1},\dots,F_{v_m}\}$ matter:}
+\begin{equation} \label{eq:ch03:accessible_set}
+\begin{aligned}
+    G_{0} &= \mathcal{M},\qquad G_{j} = [G_{j-1}, \mathcal F] \cup G_{j-1},\\
+    [G_{j-1}, \mathcal F] &= \{ F_{k} \mid \Tr[F^{\dagger}_k\comm{g}{h}] \neq 0,\ g \in G_{j-1},\ h \in \mathcal F  \}.
+\end{aligned}
+\end{equation}
+\ona{This set is known as the \emph{accessible set} and is obtained when the procedure saturates, which will always occur since $\liesu[N]$ is finite dimensional. Writing reduced vectors $\tilde{x}$ of dimension $J \leq N^{2} - 1$ with reduced matrix ${\tilde{\Amat}} \in \R^{J \times J}$ allows us to rewrite \eqref{eq:ch03:BLDS_lindbladian} as $\dot{\tilde x} = \tilde{\Amat}\tilde{x}$ (for $u\equiv0$). Only those parameters appearing in the reduced system can be identified; parameters associated with inaccessible degrees of freedom remain undetermined and are irrelevant for the prediction of the measured outputs. Here $\mathcal F=\{F_j\}_{j=1}^n$ is the basis of \Chap~\ref{C.Closed}; in practice it may be replaced by the subset of generators actually present in $H$ and in the jump operators, which is typically much smaller.}
+\onp{\begin{itemize}\item Iterate $G_j=[G_{j-1},\Delta]\cup G_{j-1}$ until saturation: the \alert{accessible set}. \item Reduced system $\dot{\tilde x}=\tilde\Amat\tilde x$ of dimension $J\le N^2-1$. \item Parameters outside the accessible set are invisible to the measurements (\Chap~\ref{C.StateSpace}).\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The accessible set, step by step}
+\ona{Figure~\ref{fig:ch03:accessible} runs the iteration \eqref{eq:ch03:accessible_set} for three qubits with the measured observable $Z_1$. In the Pauli basis each step is a simple combinatorial rule: two Pauli strings have a non-zero commutator exactly when they anticommute, and the commutator is then a multiple of their product. For a transverse-field Ising chain the accessible set saturates after five steps at $J=6$ of the $63$ components; for an XY chain, at $J=15$. Only these components of the coherence vector, and only the parameters that couple to them, influence the measured output, so the identification problem shrinks accordingly.}
+\ona{\begin{figure}[H]\centering
+\resizebox{0.95\linewidth}{!}{\input{figures/ch03_accessible.tex}}
+\caption{The size of the accessible set $G_j$ against the step $j$, for three qubits measured through $Z_1$: a transverse-field Ising chain (blue) and an XY chain (red), against all $N^2-1=63$ components (dashed). Generated by \texttt{code/ch03\_accessible.py}.}\label{fig:ch03:accessible}
+\end{figure}}
+\ona{\endgraf\medskip\noindent\textit{Reading the figure.} The height of a bar is the number of observables, Pauli strings, whose evolution has to be tracked after $j$ steps of the procedure; the dashed line marks all $63$ of them. The procedure stops when a step adds nothing new.\endgraf\smallskip\noindent\textit{Why it matters.} One only needs to model what can influence the measurement. In computer-science terms, the procedure is a breadth-first search on a graph whose vertices are Pauli strings, with an edge between two strings when they anticommute, started from the measured observable. It is the analogue of dependency analysis, or program slicing, which finds the variables that can affect a program's output. For the Ising chain, $63$ unknowns shrink to $6$, which makes simulation and identification much cheaper. Equally important, parameters outside the accessible set cannot be identified from these measurements, however much data is collected.}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch03_accessible.tex}}\end{center}}
+\end{frame}
+
+\section{The random Schr\"odinger equation}
+
+\begin{frame}\ft{Random ordinary differential equations}
+\ona{The GKSL equation describes the \emph{average} effect of an environment. A complementary, intermediate model keeps every realisation unitary and puts the randomness into the Hamiltonian. The framework is that of random ordinary differential equations (RODEs), see the monograph of Han and Kloeden and the classical paper of Strand (1970).\citep{HanandKloeden,strand1970random}}
+\begin{defn}[RODE]\label{def:ch03:rode}
+Let $\eta:[0,T] \times \Omega \rightarrow \R^m$ be a random process on a probability space $(\Omega, \mathcal{F}, \Prob)$, and $f:[0,T] \times \R^n \times \R^m\rightarrow \R^n$ continuous. A random differential equation is an equation of the form
+\begin{equation}\label{eq:ch03:RODEmain}
+    \dd{t}x(t, \cdot) = f(t, x(t, \cdot),\eta(t, \cdot)), \qquad x(0, \cdot) = x_0 .
+\end{equation}
+It is linear if $f$ is linear in the state; any linear RODE can be written as $\dd{t}x(t, \cdot) = A(t, \cdot)x(t, \cdot)$ with a matrix-valued random process $A$.
+\end{defn}
+\ona{A random process $x(t,\omega)$ is a \emph{sample path solution} if, for almost all $\omega$, $x(\cdot,\omega)$ is absolutely continuous and satisfies \eqref{eq:ch03:RODEmain} for almost all $t$. Unlike stochastic differential equations, RODEs are solved pathwise by ordinary calculus; the noise enters as a parameter, not through an It\^o integral, and no white-noise idealisation is needed.}
+\onp{\begin{itemize}\item Solved \emph{pathwise} by ordinary calculus, one $\omega$ at a time. \item No It\^o calculus, no white noise: $\eta(\cdot,\omega)$ is an ordinary (rough) function. \item Averages over $\omega$ recover mixed-state behaviour.\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The random Schr\"odinger equation}
+\ona{The RODE of interest is the \emph{random Schr\"odinger equation} for the time evolution operator,}
+\begin{equation}\label{eq:ch03:rse}
+    \dd{t}U(t, \cdot) = -\imath \big(H_{0}(t) + H_{1}(t, \cdot)\big) U(t, \cdot),\qquad U(0, \cdot) = \Id,
+\end{equation}
+\ona{where $H_{0}(t)$ is the deterministic part of the Hamiltonian, while $H_{1}(t,\cdot)$ is a Hermitian matrix-valued random process, assumed essentially bounded and centred (any drift can be absorbed into $H_0$). The corresponding equation for random states, $\dd{t}\ket{\varphi(t,\cdot)}=-\imath(H_0+H_1)\ket{\varphi(t,\cdot)}$, is related to it pathwise by $\ket{\varphi(t,\omega)}=U(t,\omega)\ket{\varphi_0(\omega)}$. Since $H_0+H_1(t,\omega)$ is Hermitian, the sample trajectories $U(t,\omega)$ are always unitary. However, by considering ensemble averages over $\Omega$, we obtain the mixed-state behaviour that we expect open quantum systems to exhibit.}
+\onp{$H_0$ deterministic, $H_1(t,\omega)$ a bounded, centred Hermitian random process. Each sample path is unitary; the \alert{ensemble average is mixed}.}
+\begin{propn}[Mixed-state behaviour]\label{prop:ch03:mixed}
+Let $\psi\in L^2(\Omega,\Hil)$ be a normalised random state and $\rho(\omega)=\ket{\psi(\omega)}\bra{\psi(\omega)}$. Then $\hat\rho=\Expect_\omega\rho(\omega)$ is a density matrix, and it is mixed as soon as $\rho(\omega)$ is non-constant.
+\end{propn}
+\ona{\begin{pf}
+$\Tr\hat\rho=1$ and $\hat\rho\succeq0$ by linearity. $\rho(\omega)$ is supported on the pure states $\Dens[\Hil]\cap\{\Tr\rho^2=1\}$, and the expectation lies in the convex hull of the support. Since the set of pure states contains no non-trivial convex subsets, $\Expect\rho$ is mixed unless $\rho$ is almost surely constant.
+\end{pf}}
+\onp{Proof: $\Expect\rho$ lies in the convex hull of the support; pure states contain no non-trivial segments.}
+\end{frame}
+
+\begin{frame}\ft{Sample paths versus the ensemble}
+\ona{Figure~\ref{fig:ch03:rse} illustrates Proposition~\ref{prop:ch03:mixed} for a qubit with $H_0=\tfrac12\sigma_z+\tfrac12\sigma_x$ and a random dephasing term $H_1=\tfrac12 b(t,\omega)\sigma_z$, where $b$ is an Ornstein--Uhlenbeck process (correlation time $0.5$, unit variance). Each sample path keeps oscillating and stays pure, but different paths drift apart in phase; the ensemble mean of $\langle\sigma_x\rangle$ is therefore damped, and the purity of $\hat\rho$ decays towards its minimum $\tfrac12$, exactly as under the dephasing Lindbladian of Figure~\ref{fig:ch03:decoherence}. Trajectories of this kind, for Gaussian noise with Mat\'ern covariance, are studied in \cite{Parvaiz2025}.}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch03_rse.tex}}
+\caption{(a) Three sample paths of $\langle\sigma_x\rangle$ under the random Schr\"odinger equation with Ornstein--Uhlenbeck dephasing noise, and the ensemble mean over $300$ paths (blue). (b) Purity of the averaged state $\hat\rho$, which decays towards $\tfrac12$ although every path stays pure. Generated by \texttt{code/ch03\_rse.py}.}\label{fig:ch03:rse}
+\end{figure}}
+\ona{\endgraf\medskip\noindent\textit{Reading the figure.} In panel (a), each thin coloured curve is one run of the experiment under a randomly fluctuating field, and each run is an ordinary, valid evolution of a pure state. The thick blue curve is the average over $300$ such runs. Panel (b) shows the purity of the averaged state: $1$ means pure, $\tfrac12$ means completely mixed for a qubit.\endgraf\smallskip\noindent\textit{Why it matters.} Decoherence can be understood as \emph{averaging over unknown fluctuations}. No single run loses information, but since we do not know which run occurred, our description, the average, is mixed. Computer scientists will recognise Monte Carlo simulation: averaging random trajectories approximates an expectation, and each trajectory needs only a state vector with $N$ entries rather than a density matrix with $N^2$. Physicists will recognise classical noise, such as fluctuating magnetic fields or $1/f$ charge noise, as a source of dephasing. The robust control of \Chap~\ref{C.GeometryControl} designs pulses that work well for every sample path, not just on average.}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch03_rse.tex}}\end{center}
+$H_0=\tfrac12\sigma_z+\tfrac12\sigma_x$, $H_1=\tfrac12b(t,\omega)\sigma_z$, $b$ Ornstein--Uhlenbeck. Paths stay pure; the mean dephases.}
+\end{frame}
+
+\begin{frame}\ft{Generating standard error processes}
+\ona{Despite its apparent simplicity, the random Schr\"odinger equation captures most ``standard'' quantum errors considered in quantum information theory. Consider a bit-flip channel on a single qubit, with Kraus operators $\Kraus_1=\sqrt p\,X$ and $\Kraus_2=\sqrt{1-p}\,\Id$. It is not difficult to write down a random Hamiltonian that generates this channel upon taking ensemble averages: if}
+\onp{Bit flip: Kraus $\sqrt pX$, $\sqrt{1-p}\Id$. Random Hamiltonian:}
+\begin{equation}
+    H_{1}(t, \omega) =
+    \begin{cases}\begin{pmatrix} 0 & \pi/2 \\ \pi/2 & 0 \end{pmatrix} & \text{with probability } p, \\[2ex]
+    0 & \text{with probability } 1-p,\end{cases}
+\end{equation}
+\ona{then evolving for one unit of time generates the bit-flip channel. The same trick works for any mixed-unitary error with Kraus operators $\{\sqrt{p_j}U_j\}$, $\sum_jp_j=1$: choose Hamiltonians $H_j(t)$ generating $U_j$ and let $H_1(t,\omega)$ follow $H_j$ with probability $p_j$. This choice is (very) non-unique. Another common error is $1/f$ noise: the authors of the $1/f$-noise study cited in \cite{Parvaiz2025} consider the random Hamiltonian $\hat H_q=\tfrac12\mathbf B\cdot\vec\sigma$ with $\mathbf B=\mathbf B_0(t)+\mathbf b(t,\omega)$, which coincides with the random Schr\"odinger formalism as long as $\mathbf b$ is essentially bounded. Arbitrary channels would require non-Hermitian noise processes, which is beyond our scope. The error bounds and the geometric robust-control theory built on this model are the subject of \Chap~\ref{C.GeometryControl}.}
+\onp{\begin{itemize}\item Any mixed-unitary channel $\{\sqrt{p_j}U_j\}$: pick $H_j$ generating $U_j$ with probability $p_j$. \item $1/f$ noise: $\hat H_q=\tfrac12(\mathbf B_0(t)+\mathbf b(t,\omega))\cdot\vec\sigma$. \item Error bounds and robust control on this model: \Chap~\ref{C.GeometryControl}.\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The bit flip, pictured}
+\ona{Figure~\ref{fig:ch03:bitflip} shows the random Hamiltonian that generates the bit-flip channel. On each sample path the state either stays where it is, with probability $1-p$, or is rotated by $\pi$ about the $x$-axis, with probability $p$. Both sample paths are unitary. The average lies on the chord between the two end points, at weight $p$, and has Bloch vector $(x,(1-2p)y,(1-2p)z)$. Applied to all states, the channel squeezes the Bloch ball into a cigar along the $x$-axis, which is the bit-flip channel with Kraus operators $\sqrt{1-p}\,\Id$ and $\sqrt p\,\sigx$.}
+\ona{\begin{figure}[H]\centering
+\resizebox{0.85\linewidth}{!}{\input{figures/ch03_bitflip.tex}}
+\caption{The bit-flip channel from a random Hamiltonian, with $p=0.3$. A sample path either stays at $\Bloch$ or follows the rotation by $\pi$ about $x$ (red). The average (green dot) lies on the chord, and the image of the whole ball is the green cigar. Generated by \texttt{code/ch03\_bitflip.py}.}\label{fig:ch03:bitflip}
+\end{figure}}
+\ona{\endgraf\medskip\noindent\textit{Reading the figure.} The sphere represents the states. The red arc is the path of the state if the random ``kick'' happens; the dashed chord joins the two possible outcomes, not kicked and kicked; the green dot is their average, weighted by the probabilities; and the green cigar is the image of all states.\endgraf\smallskip\noindent\textit{Why it matters.} The bit-flip channel, a standard error model of quantum error correction and the quantum version of the binary symmetric channel, arises from the same mechanism as the previous figure: a random, but always unitary, evolution. The picture also shows what is quantum about it. A classical bit flip only scrambles $z$, but here the $y$-component shrinks too, while the $x$-component is untouched, since $\ket\pm$ are eigenstates of $\sigx$. Error-correcting codes are designed around such directional structure; the three-qubit repetition code corrects any single bit flip of this kind.}
+\onp{\begin{center}\resizebox{!}{0.68\textheight}{\input{figures/ch03_bitflip.tex}}\end{center}}
+\end{frame}
+
+\begin{frame}\ft{Summary}
+\begin{itemize}\setlength\itemsep{0.4em}
+    \item Open systems: reduced state $\rhoS=\TrB\rhofull$; described by master equations (infinitesimal) or dynamical maps (finite time, \Chap~\ref{C.GeometryChannels}).
+    \item Canonical GKSL equation \eqref{eq:ch03:gksl}: Hamiltonian $H$ plus Kossakowski matrix $\gamma$; Lindblad form with jump operators; Markovian iff $\gamma\succeq0$ constant.
+    \item Perturbative route: Nakajima--Zwanzig (exact) $\to$ Born, Markov $\to$ Redfield $\to$ secular approximation $\to$ GKSL. Non-Markovian baths can be embedded into larger Markovian systems.
+    \item Coherence-vector form: a real \emph{bilinear} state-space model $\dot{\xvec}=(\Amat+\sum_ju_j\Nmat_j)\xvec+\bvec$, $\vec y=\Cmat\xvec$, with unknowns $(\thvec,\gamma)$ and known $\Nmat_j$; accessible set reduces the dimension.
+    \item Random Schr\"odinger equation: unitary sample paths, mixed averages; reproduces standard error channels.
+    \item Next: when do the outputs $\vec y$ determine $(\Amat,\bvec)$, and hence $(\thvec,\gamma)$? Controllability, observability and identifiability (\Chap~\ref{C.StateSpace}).
+\end{itemize}
+\ona{Further reading: \citet{Breuer_Petruccione_2010a}; \citet{Alicki_Lendi_2014}; \citet{Lindar2020lecture}; the survey \cite{Parvaiz2025} on which this \chap{} is based.}
+\end{frame}
+
+\biblio
+\end{document}

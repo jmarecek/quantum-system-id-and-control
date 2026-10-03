@@ -136,3 +136,49 @@ class View:
         pts = (np.cos(polar) * ax[None, :]
                + np.sin(polar) * (np.outer(np.cos(t), a) + np.outer(np.sin(t), b)))
         return self.curve(pts, front, back)
+
+
+class Plot:
+    """A hand-drawn style line plot: page = (x0 + sx (t - tmin), y0 + sy (v - vmin))."""
+
+    def __init__(self, xlim, ylim, width, height, origin=(0.0, 0.0)):
+        self.xlim, self.ylim = xlim, ylim
+        self.sx = width / (xlim[1] - xlim[0])
+        self.sy = height / (ylim[1] - ylim[0])
+        self.o = np.asarray(origin, dtype=float)
+
+    def P(self, t, v):
+        return self.o + np.array([self.sx * (t - self.xlim[0]), self.sy * (v - self.ylim[0])])
+
+    def pt(self, t, v):
+        return pt(self.P(t, v))
+
+    def axes(self, xlabel="", ylabel="", xticks=(), yticks=(), yzero=None):
+        """Axis arrows (the x-axis at height yzero, default ylim[0]) and ticks given as (value, label)."""
+        yz = self.ylim[0] if yzero is None else yzero
+        out = ["\\draw[faint, ->, >=stealth] %s -- %s node[right, text=ndInk] {%s};"
+               % (self.pt(self.xlim[0], yz), self.pt(self.xlim[1] + 0.04 * (self.xlim[1] - self.xlim[0]), yz), xlabel),
+               "\\draw[faint, ->, >=stealth] %s -- %s node[above, text=ndInk] {%s};"
+               % (self.pt(self.xlim[0], self.ylim[0]), self.pt(self.xlim[0], self.ylim[1] + 0.06 * (self.ylim[1] - self.ylim[0])), ylabel)]
+        for v, lab in xticks:
+            p = self.P(v, yz)
+            out.append("\\draw[faint] (%.3f,%.3f) -- (%.3f,%.3f) node[below, font=\\scriptsize, text=ndInk] {%s};"
+                       % (p[0], p[1] + 0.06, p[0], p[1] - 0.06, lab))
+        for v, lab in yticks:
+            p = self.P(self.xlim[0], v)
+            out.append("\\draw[faint] (%.3f,%.3f) -- (%.3f,%.3f) node[left, font=\\scriptsize, text=ndInk] {%s};"
+                       % (p[0] + 0.06, p[1], p[0] - 0.06, p[1], lab))
+        return out
+
+    def curve(self, ts, vs, style):
+        return polyline([self.P(t, v) for t, v in zip(ts, vs)], style)
+
+
+def ellipsoid_outline(V, centre, axes, n=60):
+    """Page polygon of the outline of an axis-aligned ellipsoid (convex hull of its projection)."""
+    from scipy.spatial import ConvexHull
+    u, w = np.meshgrid(np.linspace(0, 2 * np.pi, n), np.linspace(0, np.pi, n // 2))
+    pts = np.stack([np.cos(u) * np.sin(w), np.sin(u) * np.sin(w), np.cos(w)], -1).reshape(-1, 3)
+    P2 = np.array([V.P(np.asarray(centre) + np.asarray(axes) * p) for p in pts])
+    hull = ConvexHull(P2)
+    return [P2[i] for i in hull.vertices]
