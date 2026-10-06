@@ -48,7 +48,7 @@ def main():
     b.append(N.polyline([m + (x, 0.35 * np.cos(np.pi * x / 1.5)) for x in s], "line width=1.2pt, ndGold"))
     b.append(N.polyline([m + (x, -0.35 * np.cos(np.pi * x / 1.5)) for x in s], "line width=1.2pt, ndGold"))
     b.append("\\node at %s {pseudomode};" % N.pt(m + (0, -0.95)))
-    b.append("\\draw[<->, >=stealth, line width=0.9pt, ndBlue] %s -- %s node[midway, above, font=\\footnotesize] {$\\Omega$};" % (N.pt(q + (0.6, 0)), N.pt(m + (-0.85, 0))))
+    b.append("\\draw[<->, >=stealth, line width=0.9pt, ndBlue] %s -- %s node[midway, above, font=\\footnotesize] {$g_{\\rm p}$};" % (N.pt(q + (0.6, 0)), N.pt(m + (-0.85, 0))))
     w = np.linspace(0, 1.3, 60)
     b.append(N.polyline([m + (0.85 + x, 0.12 * np.sin(14 * x)) for x in w], "->, >=stealth, line width=0.9pt, ndRed"))
     b.append("\\node[font=\\footnotesize, text=ndRed, above] at %s {$\\kappa=2\\lambda$};" % N.pt(m + (1.5, 0.15)))

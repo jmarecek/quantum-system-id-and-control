@@ -24,7 +24,7 @@ def random_lindbladian(n, rng, k=3):
 def main():
     omega, g1, gphi = 2.0, 0.4, 0.3
     T1, T2 = 1 / g1, 1 / (g1 / 2 + gphi)
-    L = lindbladian(0.5 * omega * Z, [np.sqrt(g1) * np.array([[0, 1], [0, 0]], complex), np.sqrt(gphi / 2) * Z])
+    L = lindbladian(-0.5 * omega * Z, [np.sqrt(g1) * np.array([[0, 1], [0, 0]], complex), np.sqrt(gphi / 2) * Z])
     ev = np.linalg.eigvals(L)
     expected = np.array([0, -1 / T1, -1 / T2 + 1j * omega, -1 / T2 - 1j * omega])
     assert all(np.min(abs(ev - e)) < 1e-10 for e in expected)
@@ -36,8 +36,8 @@ def main():
     P = lambda z: (s * z.real, s * z.imag)
     b = []
     b.append("\\fill[ndSky, fill opacity=0.4] (%.2f,%.2f) rectangle (0,%.2f);" % (-s * xm, -s * ym, s * ym))
-    b.append("\\draw[faint, ->, >=stealth] (%.2f,0) -- (%.2f,0) node[right, text=ndInk] {$\\mathrm{Re}\\,\\lambda$};" % (-s * xm - 0.2, 1.2))
-    b.append("\\draw[faint, ->, >=stealth] (0,%.2f) -- (0,%.2f) node[above, text=ndInk] {$\\mathrm{Im}\\,\\lambda$};" % (-s * ym - 0.1, s * ym + 0.3))
+    b.append("\\draw[faint, ->, >=stealth] (%.2f,0) -- (%.2f,0) node[right, text=ndInk] {$\\mathrm{Re}\\,\\mu$};" % (-s * xm - 0.2, 1.2))
+    b.append("\\draw[faint, ->, >=stealth] (0,%.2f) -- (0,%.2f) node[above, text=ndInk] {$\\mathrm{Im}\\,\\mu$};" % (-s * ym - 0.1, s * ym + 0.3))
     for z in ev2:
         b.append("\\fill[ndInk!40] %s circle (1.6pt);" % N.pt(P(z)))
     labels = {0: ("$0$: steady state", "above right"), 1: ("$-1/T_1$", "below"),
@@ -45,7 +45,7 @@ def main():
     for k, z in enumerate(expected):
         b.append("\\node[dot, fill=ndRed, minimum size=5pt, label={[font=\\scriptsize, text=ndRed]%s:%s}] at %s {};"
                  % (labels[k][1], labels[k][0], N.pt(P(z))))
-    b.append("\\node[note, anchor=west] at (%.2f,%.2f) {$-\\mathrm{Re}\\,\\lambda$: decay rates\\\\ $\\mathrm{Im}\\,\\lambda$: oscillation frequencies};" % (1.5, 1.6))
+    b.append("\\node[note, anchor=west] at (%.2f,%.2f) {$-\\mathrm{Re}\\,\\mu$: decay rates\\\\ $\\mathrm{Im}\\,\\mu$: oscillation frequencies};" % (1.5, 1.6))
     b.append("\\node[note, anchor=west] at (%.2f,%.2f) {red: the qubit of\\\\ the example; grey: a\\\\ random two-qubit\\\\ Lindbladian};" % (1.5, -1.4))
     b.append("\\node[note, anchor=north] at (%.2f,%.2f) {all eigenvalues in the left half-plane};" % (-s * xm / 2, -s * ym - 0.05))
     N.write("ch03_spectrum", b)

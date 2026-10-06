@@ -26,7 +26,7 @@ def main():
     b.append("\\fill[ndGold, fill opacity=0.25] %s rectangle %s;" % (Pl.pt(0, -1.05), Pl.pt(3 * TAU_B, 1.15)))
     b.append(Pl.curve(t, xs, "line width=1.6pt, ndBlue"))
     b.append(Pl.curve(t, C, "line width=1.2pt, ndRed"))
-    b.append("\\node[note, anchor=south west, text=ndRed] (c) at %s {bath correlation $C(\\tau)$:\\\\ gone after a few $\\tau_B$};" % Pl.pt(1.1, 0.45))
+    b.append("\\node[note, anchor=south west, text=ndRed] (c) at %s {bath correlation $\\mathcal B(\\tau)$:\\\\ gone after a few $\\tau_B$};" % Pl.pt(1.1, 0.45))
     b.append("\\draw[pointer] (c.west) to[bend right=20] %s;" % Pl.pt(0.18, C[np.searchsorted(t, 0.18)] + 0.04))
     b.append("\\node[note, anchor=north west, text=ndBlue] (s) at %s {system, e.g.\\ $\\langle\\sigma_x\\rangle$:\\\\ changes on $\\tau_S=2\\pi/\\omega_S\\gg\\tau_B$};" % Pl.pt(5.6, -0.45))
     b.append("\\draw[pointer] (s.north west) to[bend left=15] %s;" % Pl.pt(4.4, xs[np.searchsorted(t, 4.4)] - 0.04))

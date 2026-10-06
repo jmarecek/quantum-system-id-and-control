@@ -105,7 +105,7 @@ def shrink_figure(L, T1, T2):
 
 if __name__ == "__main__":
     omega, gamma1, gammaphi = 2.0, 0.4, 0.3
-    H = 0.5 * omega * Z
+    H = -0.5 * omega * Z                                  # |0> is the ground state
     sigma_minus = np.array([[0, 1], [0, 0]], dtype=complex)           # |0><1|
     jumps = [np.sqrt(gamma1) * sigma_minus, np.sqrt(gammaphi / 2) * Z]
     L = lindbladian(H, jumps)

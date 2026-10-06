@@ -31,7 +31,7 @@ def main():
     assert (np.diff(Dn) > 1e-6).any() and (rate < -0.1).any()   # non-Markovian: revivals, negative rate
     b = []
     Pl = N.Plot((0, 14), (0, 1.1), 7.5, 3.8)
-    b += Pl.axes("$t$", "$D(t)$", yticks=[(0, "$0$"), (1, "$1$")])
+    b += Pl.axes("$t$", "$|G(t)|$", yticks=[(0, "$0$"), (1, "$1$")])
     up = np.diff(Dn) > 0
     idx = np.where(up)[0]
     for seg in np.split(idx, np.where(np.diff(idx) != 1)[0] + 1):
@@ -41,7 +41,7 @@ def main():
     b.append(Pl.curve(t, Dn, "line width=1.5pt, ndRed"))
     b.append("\\node[note, anchor=south west, text=ndBlue] at %s {weak coupling: decays\\\\ monotonically (Markovian)};" % Pl.pt(4.6, 0.55))
     b.append("\\node[note, anchor=north west, text=ndRed] (r) at %s {strong coupling: revivals,\\\\ information flows back};" % Pl.pt(7.2, 1.08))
-    b.append("\\node[font=\\small] at %s {(a) distinguishability $D(t)$ of $\\ket\\pm$};" % N.pt(Pl.P(7, 0) + np.array([0, -1.15])))
+    b.append("\\node[font=\\small] at %s {(a) distinguishability $|G(t)|$ of $\\ket\\pm$};" % N.pt(Pl.P(7, 0) + np.array([0, -1.15])))
     Q = N.Plot((0, 14), (-4.2, 4.2), 7.5, 3.8, origin=(9.4, 0.0))
     b += Q.axes("$t$", "$\\gamma(t)$", yticks=[(-4, "$-4$"), (0, "$0$"), (4, "$4$")], yzero=0.0)
     r = np.clip(rate, -4.2, 4.2)

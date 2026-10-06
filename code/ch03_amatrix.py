@@ -1,6 +1,6 @@
 """ch03_amatrix.py -- the coherence-vector system matrix of two qubits.
 
-For H = 0.5 Z1 + 0.4 Z2 + 0.3 X1X2 and jump operators sqrt(0.3) sigma_-^{(1)},
+For H = -0.5 Z1 - 0.4 Z2 + 0.3 X1X2 (|0> the ground state) and jump operators sqrt(0.3) sigma_-^{(1)},
 sqrt(0.2) Z2, the coherence vector x_i = Tr[F_i rho] in the normalised Pauli
 basis obeys dx/dt = (A^(l) + A^(d)) x + b with
     A_ij = Tr[F_i L(F_j)],   b_i = Tr[F_i L(I/N)],
@@ -53,7 +53,7 @@ def heat(b, M, x0, y0, c, title, vmax, labels=True):
 
 
 def main():
-    H = 0.5 * np.kron(Z, I) + 0.4 * np.kron(I, Z) + 0.3 * np.kron(X, X)
+    H = -0.5 * np.kron(Z, I) - 0.4 * np.kron(I, Z) + 0.3 * np.kron(X, X)
     jumps = [np.sqrt(0.3) * np.kron(SM, I), np.sqrt(0.2) * np.kron(I, Z)]
     Al, bl = matrices(generator(H, []))
     A, b_ = matrices(generator(H, jumps))

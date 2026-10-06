@@ -1,0 +1,193 @@
+%\documentclass[overheadsbeamer.tex]{subfiles}
+\documentclass[handoutsbeamer.tex]{subfiles}
+
+\begin{document}
+
+\ona{ \setcounter{chapter}{12} } % ONE LESS
+\lecture{The Motivating Examples Revisited}{Lect13}
+\chapter{The Motivating Examples Revisited}\label{C.Revisited}
+
+\begin{frame}\ft{Outline}
+\ona{Lecture~\ref{C.Motivation} introduced a handful of examples as questions. Twelve lectures later we can answer them. For each example we recall the problem, name the tools that address it, show the result, and record a take-away. The examples come, in order, from the identifiability of open quantum systems (two coupled qubits), from globally optimal control (three-level gates, resonator transfer), from robust control under the random Schr\"odinger equation (a noisy qubit), from penalised geodesics (2-local control of $n$ qubits), and from the time-optimal control of a two-level system as realised with a Bose--Einstein condensate in an optical lattice. We end with the questions that remain open.}
+\onp{Outline of today's lecture:
+\begin{itemize}\setlength\itemsep{0.7em}
+    \item two coupled qubits: identifiability and identification from shot-noisy data (Lectures~\ref{C.Open}, \ref{C.StateSpace}, \ref{C.SampleComplexity}, \ref{C.AlgTomography});
+    \item three-level gate synthesis: QCPOP vs.\ GRAPE and CRAB (Lectures~\ref{C.Motivation}, \ref{C.AlgControl});
+    \item a noisy qubit: noise-informed control (Lectures~\ref{C.Open}, \ref{C.GeometryControl}, \ref{C.AlgControl});
+    \item 2-local control of $n$ qubits: penalised geodesics (Lectures~\ref{C.GeometryControl}, \ref{C.Complexity});
+    \item the two-level system, time-optimal control, and the BEC experiment (Lectures~\ref{C.Closed}, \ref{C.GeometryControl}, \ref{C.AlgControl});
+    \item open problems.
+\end{itemize}}
+\ona{\medskip\noindent\textit{Sources.} This \chap{} draws on \citep{ansel2024introduction,bondar2025globally,lawrence2026geometric,parvaiz2025identifiability,lawrence2026penalised,parvaiz2026survey}; passages from these papers are reproduced with light editing, whereas material from the tutorial of \citet{ansel2024introduction} is paraphrased.}
+\onp{\vfill{\scriptsize Sources: \citep{ansel2024introduction,bondar2025globally,lawrence2026geometric,parvaiz2025identifiability,lawrence2026penalised,parvaiz2026survey}.}}
+\end{frame}
+
+\section{Two coupled qubits: identifiability and identification}
+
+\begin{frame}\ft{The problem and the tools}
+\ona{Recall the noise-identification example of Lecture~\ref{C.Motivation}: a two-qubit system, adapted from \cite{Zhang2015}, with}
+\begin{equation}\label{eq:ch13:example}
+\begin{aligned}
+\dot\rho=&-\imath\comm{H}{\rho}+\sum_{k=1}^2\frac{g_k^z}{2}\big(\sigma_z^k\rho\sigma_z^k-\rho\big)
++\sum_{k=1}^2 2g_k^-\Big(\sigma_-^k\rho\sigma_+^k-\tfrac12\acomm{\sigma_+^k\sigma_-^k}{\rho}\Big)
++2g_k^+\Big(\sigma_+^k\rho\sigma_-^k-\tfrac12\acomm{\sigma_-^k\sigma_+^k}{\rho}\Big),\\
+H=&\ \frac{\omega_1}{2}\sigma_z^1+\frac{\omega_2}{2}\sigma_z^2+\delta\big(\sigma_+^1\sigma_-^2+\sigma_-^1\sigma_+^2\big),
+\end{aligned}
+\end{equation}
+\ona{where $\sigma_j^k$ acts on qubit $k$. Two-qubit systems are the smallest open systems in which correlated noise and cross-decoherence appear, and they underlie all universal gate sets, so identification at this scale directly supports gate calibration. The Hamiltonian has $3$ parameters $(\omega_1,\omega_2,\delta)$ out of $n=15$ possible, the dissipator $6$ rates $\{g_k^z,g_k^-,g_k^+\}$. The tools: the coherence-vector form $\dot x=\mathbf A x+\vec\beta$ (Lecture~\ref{C.Open}); the reconstruction matrices $\Tone,\Ttwo,\Tthree$ and the identifiability theorems (Lecture~\ref{C.StateSpace}); the multirate sampling condition and its finite-precision reading (Lecture~\ref{C.Frequency}); the shot-noise scaling (Lecture~\ref{C.SampleComplexity}); and the identification pipeline (Lecture~\ref{C.AlgTomography}).}
+\onp{\begin{itemize}
+    \item Two qubits, local dephasing/decay/pump, exchange coupling $\delta$: $3$ Hamiltonian parameters, $6$ rates.
+    \item Question (Lecture~\ref{C.Motivation}): can they be recovered from expectation values, and with how many shots?
+    \item Tools: coherence vector (\ref{C.Open}), $\Tone,\Ttwo,\Tthree$ and identifiability (\ref{C.StateSpace}), sampling rates (\ref{C.Frequency}), shot noise (\ref{C.SampleComplexity}), pipeline (\ref{C.AlgTomography}).
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Structural reconstructibility}
+\ona{The Lindblad operators $\sigma_z^k,\sigma_\pm^k$ do not form an orthonormal basis, so one first rewrites \eqref{eq:ch13:example} in the canonical GKSL form with the tensor-product Pauli basis of $\liesu[4]$. For the ordering $(\sigma_x^k,\sigma_y^k,\sigma_z^k)$ within each qubit the Kossakowski matrix is block diagonal, $\gamma=\gamma^{(1)}\oplus\gamma^{(2)}\oplus0_{9\times9}$, with single-qubit blocks}
+\begin{equation}\label{eq:ch13:gamma}
+\gamma^{(k)}=\begin{pmatrix} g_k^-+g_k^+ & -\imath(g_k^--g_k^+) & 0\\ \imath(g_k^--g_k^+) & g_k^-+g_k^+ & 0\\ 0&0&g_k^z/2\end{pmatrix}.
+\end{equation}
+\ona{The $9\times9$ block spanned by the correlation generators vanishes because the dissipation is purely local. $\gamma$ is Hermitian but not real-symmetric in general: the transverse coherences are purely imaginary and proportional to the pump--loss asymmetry $g_k^--g_k^+$, vanishing only in the unital case $g_k^+=g_k^-$. Of the $n^2=225$ entries, ten are nonzero, amounting to eight independent structural elements that encode the six rates.}
+\ona{Explicit computation shows that $\Ttwo$ is \emph{not} of full rank for $\liesu[4]$, so the unrestricted inverse problem, recovering an arbitrary Hermitian $\gamma\in\Herm[15]$ from $\mathbf A^{(d)}$ alone, is underdetermined. This is the generic situation: physical generators are sparse in the operator basis, and it is the restricted map that governs identifiability in practice. Restricting the columns of $\Ttwo$ to the eight-dimensional support of the physically realised $\gamma$ yields a $225\times8$ matrix of full column rank $8$ \cite{parvaiz2023generating}. Since $g_k^-+g_k^+$ and $g_k^--g_k^+$ determine $g_k^\pm$, and $g_k^z$ appears alone on the diagonal, all six decoherence parameters are uniquely recoverable, alongside the three Hamiltonian parameters guaranteed by the full column rank of $\Tone$. The example exercises both halves of the framework: the unconditional guarantee for the Hamiltonian part and the support-restricted rank test for the dissipative part. In the symmetric (unital) case, $\Tthree\in\R^{225\times120}$ has full rank $120$ and the symmetric reconstruction algorithm applies directly.}
+\onp{\begin{itemize}
+    \item Pauli basis of $\liesu[4]$: $\gamma=\gamma^{(1)}\oplus\gamma^{(2)}\oplus0_{9\times9}$, blocks \eqref{eq:ch13:gamma}; 8 structural elements encode 6 rates.
+    \item $\Ttwo$ not full rank on all of $\Herm[15]$: the \emph{unrestricted} problem is underdetermined.
+    \item Restricted to the 8-dimensional support: full column rank $\Rightarrow$ all 6 rates recoverable.
+    \item $\Tone$ full column rank $\Rightarrow$ $(\omega_1,\omega_2,\delta)$ recoverable unconditionally.
+    \item Take-away: identifiability is a \alert{support-restricted rank test}, not a generic count.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Identification from synthetic data}
+\ona{The pipeline of Lecture~\ref{C.AlgTomography}: prepare the $n=15$ initial states whose coherence vectors form a basis (products of Pauli eigenstates suffice), record finite-ensemble estimates of all $\langle F_j\rangle$ with $S$ shots per time point at several sampling rates $\tau_i$ with badly approximable ratios, estimate the discrete propagators $\ee^{\mathbf A\tau_i}$ by least squares, reconcile the principal matrix logarithms across rates to obtain $\mathbf A$, and apply the reconstruction algorithm to obtain $(\hat{\vec\theta},\hat\gamma)$. The relative errors $\varepsilon_\theta=\|\hat{\vec\theta}-\vec\theta\|/\|\vec\theta\|$ and $\varepsilon_\gamma=\|\hat\gamma-\gamma\|_F/\|\gamma\|_F$ decrease as $S^{-1/2}$, consistent with shot-noise-limited estimation, and saturate at a level set by the conditioning of the reconstruction matrix. Figure~\ref{fig:ch13:twoqubit} shows a qualitative re-creation with a single rate $\tau=0.3$, $K=20$ time points, and a support-restricted least-squares fit of the nine parameters to the identified generator (\texttt{code/ch13\_twoqubit\_id.py}).}
+\ona{\begin{figure}[h]\centering
+\resizebox{0.48\linewidth}{!}{\input{figures/ch13_twoqubit_err.tex}}\hfill
+\resizebox{0.48\linewidth}{!}{\input{figures/ch13_twoqubit_bars.tex}}
+\caption{Two-qubit model \eqref{eq:ch13:example}, qualitative re-creation. Left: relative errors of the Hamiltonian parameters and of the rates against the number of shots $S$ per time point, averaged over 5 runs; dashed: $S^{-1/2}$. Right: exact and recovered parameters at $S=10^4$. Generated by \texttt{code/ch13\_twoqubit\_id.py}.}\label{fig:ch13:twoqubit}
+\end{figure}}
+\onp{\begin{center}
+\resizebox{0.48\linewidth}{!}{\input{figures/ch13_twoqubit_err.tex}}\hfill
+\resizebox{0.48\linewidth}{!}{\input{figures/ch13_twoqubit_bars.tex}}
+\end{center}
+Errors scale as $S^{-1/2}$ (shot-noise limited); the rates are harder than the frequencies (\texttt{code/ch13\_twoqubit\_id.py}).}
+\end{frame}
+
+\begin{frame}[fragile]\ft{The identification step in code}
+\ona{The core of the re-creation: least squares for the discrete propagator on the affine coherence vector, a matrix logarithm for the generator, and a least-squares projection onto the known parameter support (the role of $\Tone^+,\Tthree^+$ in the reconstruction algorithm).}
+\ona{\lstinputlisting[style=python,firstline=80,lastline=85]{code/ch13_twoqubit_id.py}}
+\onp{\lstinputlisting[style=python,basicstyle=\ttfamily\scriptsize,firstline=80,lastline=85]{code/ch13_twoqubit_id.py}}
+\ona{Finite precision matters for the sampling condition of Lecture~\ref{C.Frequency}: sampling at rate $\tau$ identifies $\ee^{\mathbf A\tau}$, and the logarithm is ambiguous exactly when two eigenvalues of $\mathbf A$ satisfy $\operatorname{Im}(\lambda_p-\lambda_q)\tau\in2\pi\Z\setminus\{0\}$. Multirate data resolve the ambiguity unless the rate ratios are low-order rationals commensurate with the eigenvalue differences; what matters in practice is distance from low-order rationals at the scale of the spectral radius of $\mathbf A$, not exact irrationality. In the re-creation a single rate with $\tau\,\rho(\mathbf A)<\pi$ suffices.}
+\onp{\begin{itemize}
+    \item Sampling at $\tau$ identifies $\ee^{\mathbf A\tau}$; $\log$ is ambiguous iff $\operatorname{Im}(\lambda_p-\lambda_q)\tau\in2\pi\Z\setminus\{0\}$.
+    \item Multirate sampling with ratios far from low-order rationals resolves it (Lecture~\ref{C.Frequency}).
+\end{itemize}}
+\end{frame}
+
+\section{Three-level gate synthesis: global vs.\ local optimisation}
+
+\begin{frame}\ft{The problem and the tools}
+\ona{Recall the gate-synthesis example: a three-level system with drift $\Hdrift=\operatorname{diag}(0,0.515916,1)$ and control Hamiltonian $V$ with nonzero elements $\braket{1|V|2}=\braket{2|V|1}=1/\sqrt2$, $\braket{2|V|3}=\braket{3|V|2}=1$ (scaled Hamiltonians of IBM two-qubit devices), a piecewise-constant control $\lambda(t)$ with a specified number of segments, horizon $T=0.5$, and the task of realising a target unitary $U^\star$. The tools: the control landscape and its traps (Lecture~\ref{C.GeometryControl}), GRAPE and CRAB (Lecture~\ref{C.AlgControl}), and QCPOP with the moment/SOS hierarchy of Lecture~\ref{C.Motivation} (Lecture~\ref{C.AlgControl}).}
+\ona{A set of 1000 target unitaries is generated by evolving the system for $T=0.5$ under $\lambda=x_0+x_1t+x_2t^2$ with $x_k$ uniform on $[-1,1]$, so that every target is exactly reachable. For each target, GRAPE and CRAB (QuTiP, four types of initial guess) and QCPOP (Julia, TSSOS) are run with a two-segment piecewise-constant control, each taking about $1$--$2$ seconds; the infidelity $\abs{1-f_{PSU}}$ with $f_{PSU}=\abs{\Tr(\widehat U^\dagger U^\star)}/3$ of the synthesised $\widehat U$ is recorded. CRAB frequently becomes trapped in local minima and shows poor performance, GRAPE performs well, and QCPOP achieves even better results than GRAPE. For the polynomial (Magnus) formulation with $n=3$, $p=5$, the convergence condition $\int_0^T\norm{A}\,\mathrm{d}t<\pi$ is satisfied for all samples, the global minimum found by TSSOS is (as the hierarchy's monotonicity predicts) slightly above the value of the polynomial objective at the generating $x^\star$, so $\widehat x\ne x^\star$, yet the evolution operator $\widehat U$ generated by $\widehat x$ is very close to $U^\star$: quantum control problems have non-unique solutions \cite{rabitz_quantum_2004}.}
+\onp{\begin{itemize}
+    \item $\Hdrift=\operatorname{diag}(0,0.516,1)$, $V_{12}=1/\sqrt2$, $V_{23}=1$, $T=0.5$, 1000 reachable targets, 2-segment control.
+    \item GRAPE, CRAB (QuTiP) vs.\ QCPOP (TSSOS): all $\approx1$--$2$\,s per problem.
+    \item Result: CRAB often trapped; GRAPE good; \alert{QCPOP best}.
+    \item Magnus formulation: $\widehat x\neq x^\star$ but $\widehat U\approx U^\star$ (non-unique solutions).
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{A toy re-creation, and the dense-trap regime}
+\ona{Figure~\ref{fig:ch13:qcpop} re-creates the comparison in miniature: for one target generated by a hidden three-segment control, the global optimum is found by enumerating a $33^3$ grid of controls followed by a local polish (standing in for polynomial optimisation), and BFGS is started from 200 random initial guesses (standing in for GRAPE). Most local runs reach the global value, but a sizeable fraction ends in local minima several orders of magnitude worse.}
+\ona{\begin{figure}[h]\centering
+\resizebox{0.7\linewidth}{!}{\input{figures/ch13_qcpop_vs_grape.tex}}
+\caption{Histogram of the final infidelities of 200 local gradient searches from random starts for a three-segment control of the three-level system; dashed: the global optimum found by enumeration. Generated by \texttt{code/ch13\_qcpop\_vs\_grape.py}.}\label{fig:ch13:qcpop}
+\end{figure}}
+\ona{The decisive test is a problem with dense traps: transferring the state of one linear resonator to another through a controlled linear coupling, $H=\hbar\omega a^\dagger a+\hbar\lambda(t)(a+a^\dagger)(b+b^\dagger)+\hbar\omega b^\dagger b$, in a time $T$ much shorter than the minimum time for an exact transfer. Gradient search fails for $T<\tau/3$, $\tau=2\pi/\omega$: of 2000 searches only a couple succeeded below $\tau/3$, and solutions for all $T$ required path tracing with on the order of a thousand restarts \cite{jacobs_fast_2016}, yielding a five-segment control with $1\%$ infidelity at $T=\tau/50$. QCPOP at $T=\tau/50$ with a three-segment control finds a solution with the same $1\%$ infidelity in a single run, and, as long as the polynomial approximation is good, certifies that this is the best possible fidelity and that no two-segment control achieves it. Take-away: global optimisation changes what is computable in practice, not only how fast.}
+\onp{\begin{center}\resizebox{!}{0.42\textheight}{\input{figures/ch13_qcpop_vs_grape.tex}}\end{center}
+\begin{itemize}
+    \item Dense traps: resonator transfer at $T=\tau/50$; gradient search needs $\sim10^3$ restarts \cite{jacobs_fast_2016}.
+    \item QCPOP: one run, $1\%$ infidelity with 3 segments; \alert{certifies} 2 segments are infeasible.
+\end{itemize}}
+\end{frame}
+
+\section{A noisy qubit: noise-informed control}
+
+\begin{frame}\ft{The problem, the tools, and the result}
+\ona{Recall the noisy-qubit example: a single qubit with $H=H_d+\sum_{j=1}^3u_j\sigma_j+H_n(t,\omega)$, drift $H_d=\tfrac12\sigma_y$, and a noise Hamiltonian $H_n$ modelled by the random Schr\"odinger equation of Lecture~\ref{C.Open}. The tools: the worst-case error bound and its tightness under the worst-case noise condition, the noise metric $\gLam$ coupling control and noise, and the geodesic characterisation of robust controls (Lecture~\ref{C.GeometryControl}); and the noise-informed robust counterpart of Lecture~\ref{C.AlgControl}.}
+\ona{The admissible controls are fifth-degree polynomials $u_j=\sum_{k=0}^5c_{jk}t^k$ with random initialisation. The coupling is $\gLam=\operatorname{diag}(1,\tfrac1{100},\tfrac1{100})$: applying $\sigma_x$ induces ten times as much noise as applying $\sigma_y$ or $\sigma_z$. Two numerical experiments are run in Julia with the Optim package. The first minimises $\norm{U_{0,S}(T)-V}^2$, ignoring the noise. The second minimises the noise-informed cost $c_2=\norm{U_{0,S}(T)-V}^2+\big[\int_0^T\sqrt{\gLam(H_{0,S},H_{0,S})}\,\mathrm{d}t\big]^2$. Noise is then sampled consistently with the coupling: 100 trajectories with entries given by the coordinate-wise arctangent of a Gaussian process with Mat\'ern covariance, multiplied by the envelope $\tfrac1{2\pi}\gLam(H_0(t),H_0(t))$, so that $\ess\sup H_n(t)=\gLam(H_0(t),H_0(t))$. Evolving the system with each control and comparing the errors shows an approximately $2.6$-fold reduction of the operator-norm error for the noise-aware controls. Varying the worst-case signal-to-noise ratio $\eta\in[0,2]$ in the noise term $\int_0^t\eta\sqrt{\gLam(H_{0,S},H_{0,S})}\,\mathrm{d}t$, the average error grows linearly with $\eta$ in both cases, with the noise-aware results consistently lower and more regular. Take-away: a soft penalty by the $\gLam$-length of the control path buys robustness at the cost of a standard deterministic optimisation.}
+\onp{\begin{itemize}
+    \item Qubit, $H_d=\tfrac12\sigma_y$, controls $u_j$ degree-5 polynomials, $\gLam=\operatorname{diag}(1,10^{-2},10^{-2})$: $\sigma_x$ is 10$\times$ noisier.
+    \item Noise-blind: $\min\norm{U_{0,S}(T)-V}^2$. Noise-informed: $\min c_2$ (adds the $\gLam$-length$^2$).
+    \item 100 Mat\'ern-process noise samples per control: \alert{$\approx2.6$-fold} lower operator-norm error.
+    \item Error grows linearly in the signal-to-noise ratio $\eta\in[0,2]$; noise-aware stays below and smoother.
+\end{itemize}
+\todo{re-create: violin/scatter of errors with and without the noise term (code/ch13\_noise\_informed.py)}}
+\end{frame}
+
+\section{2-local control of $n$ qubits: penalised geodesics}
+
+\begin{frame}\ft{The problem and the tools}
+\ona{Recall the last control example of Lecture~\ref{C.Motivation}: on $M=\SU[2^n]$ with the bi-invariant metric $g$ induced by $\langle A,B\rangle=-\Tr(AB)$ on $\lieg=\liesu[2^n]$, let $\liedd\subset\lieg$ be the real span of the $-\imath P$ for Pauli strings $P$ with $\abs{\operatorname{supp}P}\le2$ (the 2-local directions), and consider the right-invariant control system}
+\begin{equation}\label{eq:ch13:2local}
+    \dot U(t)=\big(A_d+A_c(t)\big)U(t),\qquad A_c(t)\in\liedd,
+\end{equation}
+\ona{with $A_d=-\imath H_d$, $A_c=-\imath H_c$ for a Hermitian drift and a 2-local control Hamiltonian, and cost $\int_0^1\langle A_c,A_c\rangle\,\mathrm{d}t$, the control energy of the complexity-geometry programme \cite{nielsen2006geometric,dowling2006,lawrence2025}. The subbundle $D_U=\liedd\cdot U$ is bracket-generating by the universality of two-qubit interactions \cite{d2021introduction}. The tools: sub-Riemannian geodesics and the penalty metrics $g_q$ (Lecture~\ref{C.GeometryControl}), and the $\Gamma$-convergence theory of penalised geodesics with drift (Lecture~\ref{C.Complexity}).}
+\onp{\begin{itemize}
+    \item $\SU[2^n]$, Killing metric, $\liedd=$ 2-local directions, $\dot U=(A_d+A_c)U$, $A_c\in\liedd$, cost $\int\langle A_c,A_c\rangle$.
+    \item Hard constraint $A_c\in\liedd$ vs.\ soft: penalise $q\,\langle P_{\liedd^\perp}A_c,P_{\liedd^\perp}A_c\rangle$.
+    \item Tools: penalty metrics $g_q$ (\ref{C.GeometryControl}), $\Gamma$-convergence with drift (\ref{C.Complexity}).
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The result}
+\ona{The problem satisfies the hypotheses of the main convergence theorem of Lecture~\ref{C.Complexity} exactly, each assumption expressing a structural feature of the system. The defining ODE is linear, so the flow of the drift is globally defined and consists of the left translations $\varphi_t=L_{a_t}$, $a_t=\ee^{tA_d}$; left translations are isometries of a bi-invariant metric, so the drift is a Killing field. The bundle condition reads $\comm{A_d}{\liedd}\subseteq\liedd$, which holds whenever $H_d$ is 1-local: if $A$ is a Pauli string with support $\{i\}$ and $Q$ one with support of size at most $2$, then $\comm{A}{Q}$ vanishes if $i\notin\operatorname{supp}Q$ and is supported in $\operatorname{supp}Q$ otherwise, so it is again 2-local. The condition requires the drift to \emph{normalise} $\liedd$, strictly more than $A_d\in\liedd$: a 2-local drift generally fails, e.g.\ for $n=3$, $\comm{-\imath Z\otimes Z\otimes I}{-\imath I\otimes X\otimes X}=2(-\imath Z\otimes Y\otimes X)$ is 3-local. This is precisely the mechanism that makes $\liedd$ bracket-generating, and for such drifts the general (non-symmetric) theory applies instead.}
+\ona{The soft-constrained problems admit arbitrary $A_c\in\lieg$ and penalise the non-2-local component, $\int_0^1\big(\langle P_{\liedd}A_c,P_{\liedd}A_c\rangle+q\langle P_{\liedd^\perp}A_c,P_{\liedd^\perp}A_c\rangle\big)\mathrm{d}t$, the cost induced by the penalised metric $g_q$. The soft problem at parameter $q$ is solved by a minimising $g_q$-geodesic $\xi_q$ from $x$ to the rotated target $y'=\ee^{\imath H_d}y$, with physical trajectory $\gamma_q(t)=\ee^{-\imath H_dt}\xi_q(t)$. As $q\to\infty$, the $\xi_q$ subconverge strongly in $H^1$ to a sub-Riemannian minimiser, the controls converge in $L^2$, the optimal energies increase to $d_\infty(x,\ee^{\imath H_d}y)^2$, and the non-2-local component of the optimal control vanishes in $L^2$ at the explicit rate $\bigO{q^{-1/2}}$, indeed $q\int_0^1\abs{P_{\liedd^\perp}A_c^q}^2\mathrm{d}t\to0$, for the full sequence. Without drift, these are the penalty metrics of Nielsen and coworkers and the limit studied by \citet{shizume}; the theory strengthens convergence of distances to strong $H^1$-convergence of the trajectories with quantitative control of the constraint violation, and extends the programme to a 1-local drift. Take-away: Nielsen's penalty approach to circuit complexity is justified, and the penalty can be sent to infinity along the full sequence.}
+\onp{\begin{itemize}
+    \item 1-local drift $\Rightarrow$ Killing field and $\comm{A_d}{\liedd}\subseteq\liedd$: the symmetric theorem applies with $T=1$.
+    \item 2-local drift fails ($\comm{ZZI}{IXX}\propto ZYX$ is 3-local): that is what makes $\liedd$ bracket-generating.
+    \item $q\to\infty$: $g_q$-geodesics $\to$ sub-Riemannian minimiser strongly in $H^1$; controls in $L^2$; energies $\nearrow d_\infty^2$.
+    \item Constraint violation $\|P_{\liedd^\perp}A_c^q\|_{L^2}=\bigO{q^{-1/2}}$ for the \emph{full} sequence.
+    \item Take-away: \alert{Nielsen's penalty metrics are justified}, now also with a 1-local drift.
+\end{itemize}}
+\end{frame}
+
+\section{The two-level system: time-optimal control and a BEC experiment}
+
+\begin{frame}\ft{Time-optimal transfer of a qubit}
+\ona{Recall the first example: a qubit with $H=\tfrac\Delta2\sigma_z+\tfrac{u}{2}\sigma_x$, $\abs u\le u_0$, to be transferred from $\ket\uparrow$ to $\ket\downarrow$ in minimum time. Lecture~\ref{C.GeometryControl} resolved it with the maximum principle. Without drift and with two controls $\|(u_x,u_z)\|\le u_0$, the extremals are regular and the optimum is a $\pi$-pulse, $u_x=\pm u_0$, $u_z=0$, $T^\star=\pi/u_0$; it saturates the Mandelstam--Tamm quantum speed limit, since the trajectory is the great half-circle from pole to pole traversed at maximal speed. With a drift and a single control the switching function $H_x=\tfrac12\operatorname{Im}\braket{\chi|\sigma_x|\psi}$ dictates $u=u_0\operatorname{sgn}H_x$: a bang-bang control whose bangs all have the same duration except the first and the last, singular arcs are not optimal, and the time-optimal solution consists of two bangs of durations $t_1,t_2$ computed in closed form; the minimum time is $T^\star=2\pi/\Omega$ with $\Omega=\sqrt{u_0^2+\Delta^2}$, strictly larger than the speed-limit bound $\pi/\Omega$, because the geodesic of the speed-limit argument is not a trajectory of the constrained dynamics. Numerically, Lecture~\ref{C.AlgControl} recovers these solutions by shooting (driftless case) and approaches them by GRAPE with an energy penalty (drift case).}
+\onp{\begin{itemize}
+    \item Two controls, no drift: $\pi$-pulse, $T^\star=\pi/u_0$ $=$ Mandelstam--Tamm speed limit (geodesic at full speed).
+    \item One control with drift $\Delta$: bang-bang, $u=u_0\operatorname{sgn}H_x$, two bangs $(t_1,t_2)$, $T^\star=2\pi/\Omega>\pi/\Omega$.
+    \item Speed limit not saturated: the geodesic is not a dynamical trajectory.
+    \item Numerics: shooting (Lecture~\ref{C.AlgControl}) reproduces both to machine precision.
+\end{itemize}
+\todo{redraw: Bloch-sphere trajectories of the $\pi$-pulse and of the two-bang solution (code/ch13\_bangbang.py)}}
+\end{frame}
+
+\begin{frame}\ft{From theory to experiment: a BEC in an optical lattice}
+\ona{The two-level problem is not merely academic. A dilute Bose--Einstein condensate in a one-dimensional optical lattice \cite{BEC2021,BEC2023} is described, in dimensionless units and neglecting interactions, by $\imath\,\dd{t}\ket\psi=\big(\hat p^2-\tfrac s2\cos(\hat x+\varphi(t))\big)\ket\psi$, where the lattice depth $s$ and the lattice phase $\varphi(t)$ are the experimental knobs; shaking the lattice, i.e.\ varying $\varphi$, is the control. Bloch's theorem conserves the quasi-momentum $q$, and in the plane-wave basis $\ket{\phi_{q+n}}$ the dynamics is a tridiagonal system, $\imath\dot c_{q,n}=(n+q)^2c_{q,n}-\tfrac s4(\ee^{\imath\varphi}c_{q,n-1}+\ee^{-\imath\varphi}c_{q,n+1})$, i.e.\ $H=\Hdrift+\cos\varphi\,H_1+\sin\varphi\,H_2$: a bilinear system of Lecture~\ref{C.Closed} on a truncated Hilbert space ($\abs n\le n_{\max}=10$, dimension $21$).}
+\ona{Two uses of the machinery. (i) \emph{Full state control by GRAPE.} With the cost $1-\abs{\braket{\psi_f|\psi(T)}}^2$, the GRAPE update of Lecture~\ref{C.AlgControl} reads $u_n'=u_n-\epsilon\operatorname{Im}\braket{\chi_n|(-\sin u_n\,H_1+\cos u_n\,H_2)|\psi_n}$; with $400$ slices and about $100$ iterations (seconds on a laptop) one reaches infidelities of order $10^{-4}$ for transfers from the ground state to momentum eigenstates, Gaussian and squeezed states, and to Bloch eigenstates of excited bands, which are then verified experimentally by the absence of evolution of the measured momentum distribution. (ii) \emph{Emulation of the two-level problem.} For shallow lattices ($s\lesssim0.5$) and $q$ near the band edge, the two lowest bands form an effective two-level system with $H=\tfrac{\Delta(t)}2\sigma_z+\tfrac\omega2\sigma_x$, $\omega=-s/2$ and $\Delta=-\dot{\tilde\varphi}$, i.e.\ the lattice depth is the offset and the phase velocity is the bounded control. The bang-bang solution of the previous frame is implemented as two successive constant phase drifts $\dot\varphi=1\pm0.5$ for the computed durations ($t_1\approx64\,\mu$s, $t_2\approx156\,\mu$s), and the exchange of the two superposition states is confirmed by quenching into a deep lattice where they are not eigenstates. Robustness to uncalibrated depth $s$, quasi-momentum spread, timescale and interactions is assessed by evaluating the fidelity of the fixed control over the uncertainty ranges: depth calibration and the quasi-momentum spread are what limits the transfers.}
+\onp{\begin{itemize}
+    \item BEC in a shaken lattice: $H=\Hdrift+\cos\varphi\,H_1+\sin\varphi\,H_2$ on $21$ plane waves; control $=$ lattice phase.
+    \item GRAPE, $400$ slices, $\sim100$ iterations: infidelity $10^{-4}$ for momentum, Gaussian, squeezed and band eigenstates; verified experimentally.
+    \item Shallow lattice: effective qubit $H=\tfrac{\Delta}{2}\sigma_z+\tfrac\omega2\sigma_x$; the \alert{bang-bang} time-optimal transfer realised as two phase drifts $\dot\varphi=1\pm0.5$.
+    \item Robustness scan: depth calibration and quasi-momentum spread are the bottlenecks.
+\end{itemize}}
+\end{frame}
+
+\section{Open problems}
+
+\begin{frame}\ft{What remains open}
+\ona{The picture that emerges from the examples is less complete than the volume of work suggests. On identification: the bilinear representation places controlled open systems within reach of classical system identification, but finite-sample guarantees for the full pipeline (tomography error $\to$ propagator $\to$ logarithm $\to$ master-equation parameters) are only beginning to be understood, non-Markovian dynamics require embeddings whose identifiability is unexplored, and the support of the generator, which decides identifiability, is itself usually unknown. On control: the convergence rate of the moment/SOS hierarchy and of the Magnus series governs the cost of QCPOP and is understood only in special cases; scaling polynomial optimisation to many qubits needs structure (sparsity, symmetry) that is not yet exploited systematically. On geometry: computing $\gLam$-geodesics beyond one qubit, in particular in the sub-Riemannian limit, is open, as is the extension of the penalised-geodesics theory to drifts that do not normalise the constraint distribution and to time-optimal (rather than energy-optimal) formulations. On robustness: the random Schr\"odinger model needs to be connected quantitatively to measured noise spectra, and the noise-informed relaxation to the true worst-case optimum.}
+\onp{\begin{itemize}
+    \item \textbf{Identification}: end-to-end finite-sample guarantees; unknown support; non-Markovian embeddings.
+    \item \textbf{Global control}: convergence rates of SOS hierarchy and Magnus series; exploiting sparsity/symmetry at scale.
+    \item \textbf{Geometry}: $\gLam$-geodesics beyond one qubit and in the sub-Riemannian limit; non-symmetric drift; time-optimal versions.
+    \item \textbf{Robustness}: calibrating the random Schr\"odinger model from noise spectra; gap between $c_2$ and the worst-case optimum.
+\end{itemize}
+\vspace{0.5em}
+Thank you. Questions?}
+\end{frame}
+
+\biblio
+\end{document}

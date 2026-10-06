@@ -1,0 +1,291 @@
+%\documentclass[overheadsbeamer.tex]{subfiles}
+\documentclass[handoutsbeamer.tex]{subfiles}
+
+\begin{document}
+
+\ona{ \setcounter{chapter}{9} } % ONE LESS
+\lecture{Quantum Circuit Complexity and the Length of the Trajectory}{Lect10}
+\chapter{Quantum Circuit Complexity and the Length of the Trajectory in Quantum Optimal Control}\label{C.Complexity}
+
+\begin{frame}\ft{Outline}
+\ona{How many elementary gates does a unitary $V\in\SU[2^n]$ need? Nielsen's answer is geometric: the gate count is controlled, up to polynomial factors, by the length of the shortest path from $\Id$ to $V$ in a metric that penalises many-body directions. In the language of \Chap~\ref{C.GeometryControl}, circuit complexity is the minimal time of an optimal control problem whose admissible Hamiltonians are local. The penalty is a soft constraint; the hardware constraint is hard: only local directions exist. This \chap{} proves, following \cite{subRiemannian}, that as the penalty tends to infinity the penalised geodesics converge to sub-Riemannian geodesics, so that the two viewpoints agree; it then shows how a drift can be absorbed by a geometric interaction picture, and applies the result to gate synthesis with two-local controls.}
+\onp{Outline of today's lecture:
+\begin{itemize}\setlength\itemsep{0.6em}
+    \item circuit complexity and Nielsen's complexity geometry;
+    \item hard versus soft constraints: penalised metrics $\gq$ and the sub-Riemannian limit;
+    \item $\Gamma$-convergence and Sobolev spaces of curves;
+    \item convergence of penalised geodesics (main theorem) and quantitative bounds;
+    \item drift: the geometric interaction picture and vakonomic control;
+    \item gate synthesis with 2-local controls;
+    \item trajectory length $=$ complexity: the punchline.
+\end{itemize}}
+\ona{\medskip\noindent\textit{Sources.} This \chap{} draws on \citep{lawrence2026penalised,lawrence2026geometric}; passages from these papers are reproduced with light editing.}
+\onp{\vfill{\scriptsize Sources: \citep{lawrence2026penalised,lawrence2026geometric}.}}
+\end{frame}
+
+\section{Circuit complexity and Nielsen's geometry}
+
+\begin{frame}\ft{Gate complexity}
+\begin{defn}[Circuit complexity]\label{def:ch10:complexity}
+Fix a universal gate set $\mathcal G$ of one- and two-qubit gates. The $\epsilon$-complexity $C_\epsilon(V)$ of $V\in\SU[2^n]$ is the least number of gates from $\mathcal G$ whose product is within distance $\epsilon$ of $V$.
+\end{defn}
+\ona{Two classical facts frame the discussion. First, almost every unitary is hard: a counting argument gives $C_\epsilon(V)\ge\bigOmega{4^n\log(1/\epsilon)/\log n}$ for most $V$ \cite{NielsenChuang}. Second, the choice of gate set does not matter much: the Solovay--Kitaev theorem approximates any single-qubit gate to precision $\epsilon$ with $\bigO{\log^c(1/\epsilon)}$ gates from any universal finite set, $c\approx3.97$, so complexities with respect to different gate sets agree up to polylogarithmic factors \cite{NielsenChuang}. What is missing is a \emph{lower bound technique} for specific unitaries. \citet{nielsen2006geometric,Nielsen_06,dowling2006} proposed one: measure the length of the shortest path from $\Id$ to $V$ in a Riemannian metric on $\SU[2^n]$ that makes many-body directions expensive.}
+\onp{\begin{itemize}
+    \item Counting: most $V$ need $\bigOmega{4^n}$ gates. Solovay--Kitaev: gate set irrelevant up to $\mathrm{polylog}(1/\epsilon)$.
+    \item Missing: lower bounds for \emph{specific} $V$. \alert{Complexity geometry} \citep{nielsen2006geometric,dowling2006}.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Nielsen's penalty metric}
+\ona{Write the Hamiltonian in the Pauli basis, $H=\sum_\sigma h_\sigma\sigma$, where $\sigma$ ranges over the $4^n-1$ non-identity Pauli strings, and call a string $k$-local if it acts non-trivially on at most $k$ qubits. Nielsen's metric on $\liesu[2^n]$ is}
+\begin{equation}\label{eq:ch10:nielsen}
+    \gq(H,H) = \sum_{\abs{\operatorname{supp}\sigma}\le2} h_\sigma^2 + q\sum_{\abs{\operatorname{supp}\sigma}>2} h_\sigma^2 ,
+\end{equation}
+\ona{extended to a right-invariant metric on $\SU[2^n]$. A trajectory $\dot U=-\imath H(t)U$ has $\gq$-length $\int_0^1\sqrt{\gq(H(t),H(t))}\,\mathrm{d}t$ and the distance $d_q(\Id,V)$ is the infimum over trajectories reaching $V$. The main theorem of \cite{nielsen2006geometric} states that for $q\ge4^n$ (say) one has}
+\begin{equation}\label{eq:ch10:lowerbound}
+    C_\epsilon(V)\ \ge\ c\,\frac{d_q(\Id,V)}{n^2}\qquad\text{and}\qquad C_\epsilon(V)\le\bigO{n^6\,d_q(\Id,V)^3/\epsilon^2},
+\end{equation}
+\ona{for a constant $c$: geodesic length lower-bounds gate count, and a geodesic can be discretised into a circuit of polynomially related size. The proof of the lower bound synthesises the circuit as a path whose two-qubit gates are cheap and observes that any $\gq$-short path stays in low-weight directions; the upper bound cuts a geodesic into $\bigO{d_q}$ pieces, each generated by a Hamiltonian whose high-weight part is negligible, and compiles each piece with Trotterisation. \citet{PhysRevD.100.046020} study the sectional curvature of such metrics---already on a single qubit, penalising $\sigma_z$ produces negative curvature and geodesics that are hard to extend---and conjecture that the complexity of $\ee^{-\imath Ht}$ for a chaotic $H$ grows linearly for a time exponential in $n$.}
+\onp{\begin{itemize}
+    \item $\gq$: unit cost for 1- and 2-local Pauli directions, cost $q$ for the rest; right-invariant on $\SU[2^n]$.
+    \item Nielsen: $C_\epsilon(V)\gtrsim d_q(\Id,V)/n^2$ and $C_\epsilon(V)\lesssim n^6d_q^3/\epsilon^2$ \cite{nielsen2006geometric}.
+    \item \citet{PhysRevD.100.046020}: negative curvature, linear complexity growth.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Two pictures of the same constraint}
+\ona{\begin{figure}[h]\centering
+\resizebox{0.95\linewidth}{!}{\input{figures/ch10_complexity.tex}}
+\caption{Left: unit balls of the penalised metrics $\gq$ in a plane spanned by a cheap (horizontal, in $D$) and an expensive (vertical, in $D^\perp$) direction; as $q\to\infty$ the ball flattens to the horizontal segment of the sub-Riemannian geometry. Right: a round geodesic from $\Id$ to $V$ spends most of its length in the expensive direction, so its $\gq$-length grows like $\sqrt q$; a horizontal path, which reaches the same target by combining cheap directions whose bracket generates $D^\perp$, has a $\gq$-length independent of $q$. Generated by \texttt{code/ch10\_complexity.py}.}\label{fig:ch10:complexity}
+\end{figure}}
+\onp{\begin{center}\resizebox{0.95\linewidth}{!}{\input{figures/ch10_complexity.tex}}\end{center}
+Soft constraint: penalise $D^\perp$ by $q$. Hard constraint: forbid $D^\perp$ (sub-Riemannian). Does $q\to\infty$ connect them?}
+\end{frame}
+
+\section{Hard and soft constraints}
+
+\begin{frame}\ft{Penalised metrics and the Carnot--Carath\'eodory limit}
+\ona{Let $(M,g)$ be a connected, complete Riemannian manifold and $D\subset TM$ a bracket-generating subbundle: the iterated Lie brackets of sections of $D$ span $TM$. The metric induces $TM\cong D\oplus D^\perp$ with orthogonal projections $P,\Pperp$. For $q\in\Npos$ set}
+\begin{equation}\label{eq:ch10:gq}
+    \gq(X,Y) = g(PX,PY) + q\,g(\Pperp X,\Pperp Y),
+\end{equation}
+\ona{so that $g\le\gq\le q\,g$ and $d_g\le d_q\le\sqrt q\,d_g$; each $(M,\gq)$ is complete. Associated to $\gq$ are the energy and length of a curve $\gamma:[0,1]\to M$,}
+\begin{equation}\label{eq:ch10:Eq}
+    \Ener{q}(\gamma)=\tfrac12\int_0^1\gq(\dot\gamma,\dot\gamma)\,\mathrm{d}t,\qquad l_q(\gamma)=\int_0^1\sqrt{\gq(\dot\gamma,\dot\gamma)}\,\mathrm{d}t,
+\end{equation}
+\ona{whose minimisers between fixed endpoints coincide up to constant-speed reparametrisation and exist by Hopf--Rinow. The limit functionals $\Ener{\infty}$ and $l_\infty$ equal $\tfrac12\int g(\dot\gamma,\dot\gamma)$ and $\int\sqrt{g(\dot\gamma,\dot\gamma)}$ if $\dot\gamma(t)\in D_{\gamma(t)}$ for a.e.\ $t$ (\emph{horizontal} curves) and $+\infty$ otherwise. $l_\infty$ is the Carnot--Carath\'eodory length; by Chow--Rashevskii any two points are joined by a horizontal curve, so $\dinf(x,y)=\inf_\gamma l_\infty(\gamma)$ is finite, provided the infimum runs over $H^1$ (or Lipschitz) curves rather than $C^1$ ones \cite{Agrachev_Barilari_Boscain_2019}. It is basic that $d_q(x,y)\to\dinf(x,y)$ \cite{ledonne}; extracting the minimising \emph{curves} is harder, since $\lim_q\gq$ does not exist and the geodesic equation has no limit.}
+\onp{\begin{itemize}
+    \item $\gq=g$ on $D$, $q\,g$ on $D^\perp$; $g\le\gq\le qg$. Energy $\Ener{q}$, length $l_q$.
+    \item $\Ener{\infty},l_\infty$: finite only on \alert{horizontal} curves ($\dot\gamma\in D$ a.e.). $\dinf=$ Carnot--Carath\'eodory distance; Chow--Rashevskii $\Rightarrow$ finite.
+    \item Known: $d_q\to\dinf$. Wanted: convergence of the \alert{geodesics}. The geodesic equation has no limit!
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Vakonomic versus nonholonomic constraints}
+\ona{Two variational principles impose a velocity constraint. The \emph{vakonomic} one restricts the functional to horizontal curves first and then varies within them; the \emph{nonholonomic} one varies on all curves and then requires stationarity only against infinitesimally horizontal variations. They give different dynamics: the nonholonomic principle yields the observed motion of a constrained mechanical system, the vakonomic principle is the right one for optimal control and computes normal sub-Riemannian geodesics. Penalisation is a third route to the vakonomic problem: solve the unconstrained problem for $\gq$ and let $q\to\infty$. \citet{Montgomery2002} warns against using this route to prove regularity of sub-Riemannian minimisers: the convergence may not preserve smoothness, and not every minimiser is a limit of Riemannian geodesics (some are isolated \cite{agrachev_sarychev}). The results below claim neither; they show that limits of penalised geodesics \emph{are} minimisers, and that they converge strongly.}
+\onp{\begin{itemize}
+    \item Vakonomic (restrict, then vary): optimal control, normal sub-Riemannian geodesics.
+    \item Nonholonomic (vary, then restrict): constrained mechanics.
+    \item Penalisation $q\to\infty$: a third route to the vakonomic problem. Caveats \cite{Montgomery2002}: no regularity claim, not every minimiser is a limit.
+\end{itemize}}
+\end{frame}
+
+\section{$\Gamma$-convergence}
+
+\begin{frame}\ft{Definition and fundamental theorem}
+\begin{defn}[$\Gamma$-convergence]\label{def:ch10:gamma}
+Let $X$ be a first-countable topological space. Functionals $F_n:X\to\R\cup\{+\infty\}$ $\Gamma$-converge to $F$ if for every $x\in X$: (i) for every sequence $x_n\to x$, $F(x)\le\liminf_nF_n(x_n)$; (ii) there is a recovery sequence $x_n\to x$ with $\limsup_nF_n(x_n)\le F(x)$.
+\end{defn}
+\begin{thm}[Fundamental theorem of $\Gamma$-convergence; \cite{DeGiorgi,dalMaso}]\label{thm:ch10:fundamental}
+If $F_n\xrightarrow{\Gamma}F$ and $x_n$ minimises $F_n$, then every accumulation point of $\{x_n\}$ minimises $F$.
+\end{thm}
+\ona{Pointwise convergence is not enough for this conclusion, and it is easy to see that $\Ener{q}\to\Ener{\infty}$ pointwise: on horizontal curves the two agree, and a non-horizontal $C^1$ curve has $\Ener{q}\to\infty$. $\Gamma$-convergence was, in Braides' words, ``maieutically'' reverse-engineered so that Theorem~\ref{thm:ch10:fundamental} holds \cite{Braides2006}. The $\Gamma$-limit of a nondecreasing sequence of lower semicontinuous functionals is their pointwise supremum \cite{dalMaso}, which is how it will be verified here.}
+\onp{\begin{itemize}
+    \item $\Gamma$-limit $=$ liminf inequality $+$ recovery sequence.
+    \item Minimisers of $F_n$ accumulate at minimisers of $F$ (pointwise convergence would \emph{not} give this).
+    \item Nondecreasing l.s.c.\ family $\Rightarrow$ $\Gamma$-limit $=$ pointwise supremum.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Sobolev curves and the right topology}
+\begin{defn}[Sobolev curves \cite{Lewis2020}]\label{def:ch10:sobolev}
+$H^1([0,1],M)$ is the set of $\gamma:[0,1]\to M$ with $f\circ\gamma\in H^1([0,1],\R)$ for all smooth $f:M\to\R$; $H^1([0,1],M,x,y)$ fixes the endpoints and $H^1([0,1],M,x,y,D)$ additionally requires $\dot\gamma\in D$ a.e. The topology is the coarsest making all semimetrics $\rho_{a,f}(\gamma_1,\gamma_2)=\norm{(f\circ\gamma_1)^{(a)}-(f\circ\gamma_2)^{(a)}}_{L^2}$, $a\in\{0,1\}$, continuous.
+\end{defn}
+\ona{Through a Whitney embedding $\varphi:M\hookrightarrow\R^N$ finitely many $f$ (the coordinate projections) suffice, so the space is pseudometrisable and first countable, and Definition~\ref{def:ch10:gamma} applies. Convergence can be checked chart by chart after a uniform-convergence argument has localised the curves. Rather than working on $H^1$ directly, one extends $\Ener{q}$ and $\Ener{\infty}$ by $+\infty$ to the space $\Cxy$ of continuous curves from $x$ to $y$ with the uniform metric $d_{C^0}(\sigma_1,\sigma_2)=\sup_td_g(\sigma_1(t),\sigma_2(t))$.}
+\begin{thm}[$\Gamma$-convergence on $\Cxy$]\label{thm:ch10:gammaC0}
+The extended functionals satisfy $\Ener{q}\xrightarrow{\Gamma}\Ener{\infty}$ on $(\Cxy,d_{C^0})$ as $q\to\infty$.
+\end{thm}
+\ona{The proof has two ingredients: $\Ener{q}$ is lower semicontinuous under uniform convergence (weak compactness of $H^1$ balls in charts plus weak lower semicontinuity of the quadratic energy), and $q\mapsto\Ener{q}$ is nondecreasing with pointwise supremum $\Ener{\infty}$.}
+\onp{\begin{itemize}
+    \item $H^1$ curves in $M$ via test functions; Whitney embedding $\Rightarrow$ pseudometrisable.
+    \item Work on $\Cxy$ with the sup metric; extend energies by $+\infty$.
+    \item Theorem: $\Ener{q}\xrightarrow{\Gamma}\Ener{\infty}$ (l.s.c.\ $+$ monotone).
+\end{itemize}}
+\end{frame}
+
+\section{Convergence of penalised geodesics}
+
+\begin{frame}\ft{The main theorem}
+\begin{thm}[Convergence of penalised geodesics \cite{subRiemannian}]\label{thm:ch10:penalised}
+Let $(M,g)$ be connected and complete, $D\subset TM$ bracket-generating, $x,y\in M$, and for each $q\in\Npos$ let $\gamma_q$ minimise $\Ener{q}$ over $\Cxy$ (a constant-speed minimising $\gq$-geodesic). Then there exist $q_j\to\infty$ and a minimiser $\gamma$ of $\Ener{\infty}$ over $\Cxy$---a horizontal curve of constant speed---such that
+\begin{enumerate}
+    \item[(i)] $\gamma_{q_j}\to\gamma$ in $H^1([0,1],M)$, in particular uniformly;
+    \item[(ii)] $\Ener{q_j}(\gamma_{q_j})\to\Ener{\infty}(\gamma)=\min\Ener{\infty}$ and $l_{q_j}(\gamma_{q_j})\to l_\infty(\gamma)$;
+    \item[(iii)] $q_j\int_0^1g(\Pperp\dot\gamma_{q_j},\Pperp\dot\gamma_{q_j})\,\mathrm{d}t\to0$.
+\end{enumerate}
+Moreover $\min_{\Cxy}\Ener{q}\nearrow\min_{\Cxy}\Ener{\infty}=\tfrac12\dinf(x,y)^2$ as $q\to\infty$.
+\end{thm}
+\ona{\begin{pf}[Sketch]
+\emph{Step 1 (uniform limit).} Chow--Rashevskii gives a horizontal $\sigma$ with $C:=\Ener{\infty}(\sigma)<\infty$, and $\Ener{q}(\sigma)=C$ for all $q$. Minimality and $g\le\gq$ give $\tfrac12\int g(\dot\gamma_q,\dot\gamma_q)\le\Ener{q}(\gamma_q)\le C$, so by Cauchy--Schwarz $d_g(\gamma_q(s),\gamma_q(t))\le\sqrt{2C}\,\abs{t-s}^{1/2}$: the family is equicontinuous and, by completeness, lies in a compact set; Arzel\`a--Ascoli yields a uniformly convergent subsequence $\gamma_{q_j}\to\gamma\in\Cxy$. \emph{Step 2 (the limit minimises).} By Theorem~\ref{thm:ch10:gammaC0} and the fundamental theorem, $\gamma$ minimises $\Ener{\infty}$; testing against $\sigma$ shows $\Ener{\infty}(\gamma)<\infty$, so $\gamma$ is horizontal. \emph{Step 3 (upgrade to $H^1$).} Energies converge: $\Ener{\infty}(\gamma)\le\liminf\Ener{q_j}(\gamma_{q_j})\le\limsup\Ener{q_j}(\gamma_{q_j})\le\Ener{\infty}(\gamma)$. In charts, $\dot\gamma_{q_j}\rightharpoonup\dot\gamma$ weakly in $L^2$ with convergent norms, hence strongly (Radon--Riesz), which is $H^1$ convergence; (iii) follows from $2(\Ener{q_j}-\Ener{1})(\gamma_{q_j})=(q_j-1)\int g(\Pperp\dot\gamma_{q_j},\Pperp\dot\gamma_{q_j})\to0$.
+\end{pf}}
+\onp{Proof: Arzel\`a--Ascoli (energy bound $\Rightarrow$ H\"older-equicontinuous) $\to$ uniform limit; $\Gamma$-convergence $\to$ limit minimises, hence horizontal; energy convergence $+$ Radon--Riesz $\to$ strong $H^1$ convergence.}
+\end{frame}
+
+\begin{frame}\ft{The full sequence and a quantitative bound}
+\ona{The subsequence cannot be dispensed with in general: if $\Ener{\infty}$ has several minimisers the penalised geodesics may accumulate at more than one of them. What survives for the whole family is what matters if one computes $\gamma_q$ for a single large $q$.}
+\begin{propn}[Full sequence]\label{prop:ch10:full}
+As $q\to\infty$: (i) the $H^1$-distance from $\gamma_q$ to $\arg\min\Ener{\infty}$ tends to $0$; (ii) $\Ener{1}(\gamma_q)\to\min\Ener{\infty}$; (iii) if the minimiser $\gamma$ is unique, $\gamma_q\to\gamma$ in $H^1$.
+\end{propn}
+\begin{propn}[A priori bound on the constraint violation]\label{prop:ch10:apriori}
+For every integer $q\ge2$,
+\begin{equation}\label{eq:ch10:apriori}
+    \int_0^1 g(\Pperp\dot\gamma_q,\Pperp\dot\gamma_q)\,\mathrm{d}t\ \le\ \frac{2\min\Ener{\infty}-d_g(x,y)^2}{q-1}.
+\end{equation}
+\end{propn}
+\ona{\begin{pf}
+By \eqref{eq:ch10:gq} the left-hand side equals $2(\Ener{q}(\gamma_q)-\Ener{1}(\gamma_q))/(q-1)$. Minimality gives $\Ener{q}(\gamma_q)\le\min\Ener{\infty}$ (test against a horizontal minimiser), and Cauchy--Schwarz gives $\Ener{1}(\gamma_q)\ge\tfrac12d_g(x,y)^2$.
+\end{pf}
+Combining with (ii) of Proposition~\ref{prop:ch10:full}, $q\int g(\Pperp\dot\gamma_q,\Pperp\dot\gamma_q)\to0$ for the full sequence. $\Gamma$-convergence enters the proof of Theorem~\ref{thm:ch10:penalised} exactly once and can be replaced by a direct lower-semicontinuity argument; its role is to organise the argument, while the hard work is Arzel\`a--Ascoli and the upgrade to $H^1$.}
+\onp{\begin{itemize}
+    \item Several minimisers $\Rightarrow$ subsequences needed; but $\operatorname{dist}_{H^1}(\gamma_q,\arg\min\Ener{\infty})\to0$ always.
+    \item Explicit rate: normal component vanishes in $L^2$ like $\bigO{q^{-1/2}}$, constant depending only on $(x,y,g,D)$.
+\end{itemize}}
+\end{frame}
+
+\section{Drift: the geometric interaction picture}
+
+\begin{frame}\ft{Control problems with drift}
+\ona{Return to control. Let $X$ be a time-dependent vector field (the drift) and consider}
+\begin{equation}\label{eq:ch10:drift}
+    \min_{(Y,\gamma)}\int_0^1 g\big(Y(t),Y(t)\big)\,\mathrm{d}t\quad\text{s.t.}\quad \dot\gamma=X(t,\gamma)+Y(t),\ \gamma(0)=x,\ \gamma(1)=y,
+\end{equation}
+\ona{with the control $Y$ either unconstrained ($Y\in TM$, soft version with $g$ replaced by $\gq$) or constrained ($Y\in D$, hard version). The objective is the energy added by the control. In quantum mechanics one removes a drift by passing to the interaction picture; the same works on a manifold.}
+\begin{defn}[Assumption on the flow]\label{def:ch10:flow}
+$X$ is smooth and its evolution operator $\varphi_{t,s}$ is globally defined on $[0,1]$ from every initial time $s$; then each $\varphi_t:=\varphi_{t,0}$ is a diffeomorphism with inverse $\varphi_{0,t}$.
+\end{defn}
+\onp{\begin{itemize}
+    \item $\dot\gamma=X+Y$; minimise control energy $\int g(Y,Y)$; $Y\in D$ (hard) or penalised (soft).
+    \item Quantum analogy: remove the drift by passing to the interaction picture.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The geometric interaction picture}
+\begin{propn}[Geometric interaction picture]\label{prop:ch10:interaction}
+For an admissible pair $(Y,\gamma)$ set $\zeta(t)=\varphi_t^{-1}(\gamma(t))$ and $\tilde Y(t)=(d\varphi_t^{-1})_{\gamma(t)}Y(t)$. Then $\zeta\in H^1$, $\zeta(0)=x$, $\zeta(1)=\varphi_1^{-1}(y)$, $\dot\zeta=\tilde Y$ a.e., and conversely; moreover $g(Y,Y)=(\varphi_t^*g)(\tilde Y,\tilde Y)$ and $\gq(Y,Y)=(\varphi_t^*\gq)(\tilde Y,\tilde Y)$.
+\end{propn}
+\ona{\begin{pf}
+Differentiate $\gamma=\varphi_t(\zeta)$: $\dot\gamma=\partial_t\varphi_t|_\zeta+(d\varphi_t)_\zeta\dot\zeta=X(t,\gamma)+(d\varphi_t)_\zeta\dot\zeta$, and compare with $\dot\gamma=X+Y$. The cost identities are the definition of the pull-back metric.
+\end{pf}
+The control has been eliminated: \eqref{eq:ch10:drift} is a curve problem for $\zeta$ with the time-dependent metric $\tilde g_t=\varphi_t^*g$ and subbundle $\tilde D_t=(d\varphi_t)^{-1}D$.}
+\onp{\begin{itemize}
+    \item Interaction picture $\zeta=\varphi_t^{-1}(\gamma)$: $\dot\zeta=\tilde Y$, endpoints $x\to\varphi_1^{-1}(y)$; costs match under the pull-back metric $\tilde g_t=\varphi_t^*g$.
+    \item The control is eliminated: a curve problem with time-dependent metric $\tilde g_t$ and subbundle $\tilde D_t$.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Symmetric drift and the geodesic correspondence}
+\begin{defn}[Symmetry of the drift]\label{def:ch10:symmetry}
+For all $t$, with $X_t=X(t,\cdot)$: (i) $[X_t,\Gamma(D)]\subseteq\Gamma(D)$ (the drift is an infinitesimal symmetry of $D$); (ii) $\mathcal L_{X_t}g=\mu(t)\,g$ for a continuous $\mu$ of time alone (an infinitesimal homothety).
+\end{defn}
+\begin{lem}\label{lem:ch10:conformal}
+Under Definitions~\ref{def:ch10:flow} and \ref{def:ch10:symmetry}, $\tilde g_t=c(t)^2g$ with $c(t)^2=\exp\int_0^t\mu$, $\tilde D_t=D$, and $(\tilde g_t)_q=c(t)^2\gq$.
+\end{lem}
+\ona{Both conditions are infinitesimal and can be checked without integrating the flow. Setting $\tau(t)=\int_0^tc^{-2}$, $T=\tau(1)$ and $\hat u=\tau/T$, the time change absorbs the conformal factor.}
+\onp{\begin{itemize}
+    \item Symmetric drift ($[X,\Gamma(D)]\subseteq\Gamma(D)$, $\mathcal L_Xg=\mu g$) $\Rightarrow$ pull-back metric is $c(t)^2g$ and $\tilde D_t=D$.
+    \item Time change $\hat u=\tau/T$ with $\tau(t)=\int_0^t c^{-2}$ absorbs the conformal factor.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The geodesic correspondence and convergence of optimal controls}
+\mop{\footnotesize}
+\begin{propn}[Geodesic correspondence]\label{prop:ch10:correspondence}
+$\gamma(t)=\varphi_t(\xi(\hat u(t)))$, $Y=\dot\gamma-X(t,\gamma)$ is a bijection between admissible pairs for the soft problem and curves $\xi\in\Cxy'\cap H^1$ with $y'=\varphi_1^{-1}(y)$, under which $\int_0^1\gq(Y,Y)\,\mathrm{d}t=\tfrac2T\Ener{q}(\xi)$; $Y\in D$ iff $\xi$ is horizontal, and then $\int g(Y,Y)=\tfrac2T\Ener{\infty}(\xi)$.
+\end{propn}
+\begin{thm}[Convergence of optimal controls \cite{subRiemannian}]\label{thm:ch10:control}
+Under the standing assumptions: (i) each soft problem has a minimiser, corresponding to a minimising $\gq$-geodesic $\xi_q$ from $x$ to $y'$; (ii) along a subsequence $\xi_{q_j}\to\xi$ in $H^1$, where $\xi$ minimises $\Ener{\infty}$ and the pair obtained from it solves the hard problem, and $\gamma_{q_j}\to\gamma$ in $H^1$; (iii) the soft optimal values $\tfrac2T\min\Ener{q}$ increase to $\tfrac1T\dinf(x,y')^2$; (iv) the controls converge in $L^2$ along a Whitney embedding.
+\end{thm}
+\ona{If $\mu\equiv0$, i.e.\ $X_t$ is a Killing field preserving $D$, then $c\equiv1$, $T=1$, and the drift problem is literally the geodesic problem with the target rotated to $\varphi_1^{-1}(y)$. This is the operative case: a non-isometric homothety forces $(M,g)$ to be flat Euclidean space, so away from $\R^n$ condition (ii) is $\mu\equiv0$.}
+\onp{\begin{itemize}
+    \item Soft problem $=$ $\gq$-geodesic to the \alert{rotated target} $\varphi_1^{-1}(y)$; hard problem $=$ sub-Riemannian geodesic. Theorem~\ref{thm:ch10:penalised} transfers.
+\end{itemize}}
+\end{frame}
+
+\section{Gate synthesis with 2-local controls}
+
+\begin{frame}\ft{The quantum example}
+\ona{Let $M=\SU[2^n]$ with the bi-invariant metric induced by $\inner{A}{B}=-\Tr(AB)$ on $\liesu[2^n]$, and let $\mathfrak d$ be the real span of $-\imath P$ for Pauli strings $P$ with $\abs{\operatorname{supp}P}\le2$, the 2-local directions; $D_U=\mathfrak d\cdot U$ is right-invariant and bracket-generating because two-qubit interactions are universal. The control system}
+\begin{equation}\label{eq:ch10:qsystem}
+    \dot U=\big(A_d+A_c(t)\big)U,\qquad A_d=-\imath H_d,\quad A_c(t)=-\imath H_c(t)\in\mathfrak d,
+\end{equation}
+\ona{has $X(U)=A_dU$, $Y=A_cU$, and cost $\int_0^1\inner{A_c}{A_c}\,\mathrm{d}t$, the control energy of the complexity-geometry programme \cite{nielsen2006geometric,dowling2006,lawrence2025}. The assumptions of Theorem~\ref{thm:ch10:control} hold exactly: the flow is $\varphi_t=L_{\ee^{tA_d}}$, a left translation, hence an isometry of the bi-invariant metric ($\mu\equiv0$, $T=1$); and $(d\varphi_t)^{-1}D=(\Ad_{\ee^{-tA_d}}\mathfrak d)\cdot\zeta$, so condition (i) reads $[A_d,\mathfrak d]\subseteq\mathfrak d$, which holds whenever $H_d$ is \emph{1-local}: the commutator of a 1-local and a 2-local Pauli string is supported inside the latter's support. A 2-local drift generally fails: $[-\imath Z\!\otimes\!Z\!\otimes\!I,-\imath I\!\otimes\!X\!\otimes\!X]=2(-\imath Z\!\otimes\!Y\!\otimes\!X)$ is 3-local---the very mechanism that makes $\mathfrak d$ bracket-generating.}
+\ona{The soft problem penalises the non-2-local component, $\int(\inner{P_{\mathfrak d}A_c}{P_{\mathfrak d}A_c}+q\inner{P_{\mathfrak d^\perp}A_c}{P_{\mathfrak d^\perp}A_c})\,\mathrm{d}t$, exactly Nielsen's metric \eqref{eq:ch10:nielsen} under right invariance. It is solved by a $\gq$-geodesic $\xi_q$ from $x$ to $y'=\ee^{\imath H_d}y$ with physical trajectory $\gamma_q(t)=\ee^{-\imath H_dt}\xi_q(t)$. As $q\to\infty$ the $\xi_q$ subconverge in $H^1$ to a sub-Riemannian minimiser, the controls converge in $L^2$, the energies increase to $\dinf(x,\ee^{\imath H_d}y)^2$, and the non-2-local part of the optimal control vanishes at rate $\bigO{q^{-1/2}}$ whether or not a subsequence was selected.}
+\onp{\begin{itemize}
+    \item $\SU[2^n]$, Killing metric, $\mathfrak d=$ 2-local Paulis (bracket-generating). $\dot U=(A_d+A_c)U$, cost $\int\inner{A_c}{A_c}$.
+    \item Drift $=$ left translation $=$ isometry; $[A_d,\mathfrak d]\subseteq\mathfrak d$ iff $H_d$ is \alert{1-local} (2-local drifts fail: $[ZZI,IXX]\propto ZYX$).
+    \item Soft problem $=$ Nielsen's penalty metric; $q\to\infty$: controls $\to$ 2-local sub-Riemannian optimum, non-local part $\bigO{q^{-1/2}}$.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Penalised geodesics on $\SU[2]$: a numerical illustration}
+\ona{Figure~\ref{fig:ch10:penalised} shows the phenomenon on the smallest example: $\SU[2]$ with cheap directions $\mathfrak d=\operatorname{span}\{\sigma_x,\sigma_z\}$, penalised direction $\sigma_y$, and target $V=\ee^{-\imath\theta\sigma_y/2}$, $\theta=\pi/2$, a rotation about the expensive axis. For small $q$ the $\gq$-geodesic rotates directly about $\sigma_y$ (energy $q\theta^2/8$); beyond $q\approx7$ this becomes more expensive than the horizontal route, and the minimiser jumps to a path that generates the $y$-rotation from $x$- and $z$-rotations via the commutator. From then on the penalised component $a_y(t)$ decays like $q^{-1/2}$ and the energy increases to $\min\Ener{\infty}\approx2.15$, as Theorem~\ref{thm:ch10:penalised} predicts.}
+\ona{\begin{figure}[h]\centering
+\resizebox{0.34\linewidth}{!}{\input{figures/ch10_penalised_bloch.tex}}\hfill
+\resizebox{0.62\linewidth}{!}{\input{figures/ch10_penalised_controls.tex}}\\[1ex]
+\resizebox{0.62\linewidth}{!}{\input{figures/ch10_penalised_energy.tex}}
+\caption{Penalised geodesics on $\SU[2]$ computed by minimising the discretised energy with a stiff endpoint penalty (24 piecewise-constant steps). Top left: Bloch trajectories of $U(t)\ket0$ for $q=1$ (direct rotation about $y$), $q=16$ and $q=256$ (horizontal route). Top right: the penalised control component $a_y(t)$. Bottom: $\min\Ener{q}$ increasing to $\min\Ener{\infty}$, and $q\int g(\Pperp\dot\gamma_q,\Pperp\dot\gamma_q)$ tending to zero after the crossover. Toy computation, \texttt{code/ch10\_penalised.py}.}\label{fig:ch10:penalised}
+\end{figure}}
+\onp{\begin{center}
+\resizebox{!}{0.42\textheight}{\input{figures/ch10_penalised_bloch.tex}}\hspace{0.5em}
+\resizebox{!}{0.42\textheight}{\input{figures/ch10_penalised_controls.tex}}
+\end{center}
+\small $\SU[2]$, cheap $\{\sigma_x,\sigma_z\}$, expensive $\sigma_y$, target $\ee^{-\imath\pi\sigma_y/4}$. Small $q$: direct rotation about $y$; large $q$: horizontal route, $a_y=\bigO{q^{-1/2}}$.}
+\end{frame}
+
+\begin{frame}[fragile]\ft{Energies versus penalty, and the code}
+\onp{\begin{center}\resizebox{!}{0.28\textheight}{\input{figures/ch10_penalised_energy.tex}}\end{center}}
+\ona{The core of the computation is a few lines: a closed-form $2\times2$ exponential, the product of step propagators, and the penalised energy.}
+\ona{\lstinputlisting[style=python,firstline=31,lastline=49]{code/ch10_penalised.py}}
+\onp{\lstinputlisting[style=python,basicstyle=\ttfamily\tiny,firstline=31,lastline=44]{code/ch10_penalised.py}}
+\end{frame}
+
+\section{Trajectory length and complexity}
+
+\begin{frame}\ft{The punchline}
+\ona{Put the pieces together. \Chap~\ref{C.GeometryControl} showed that the minimal time to synthesise $V$ with controls of bounded strength confined to the available directions $\mathfrak d$ is the Carnot--Carath\'eodory distance $\dinf(\Id,V)$, the length of a sub-Riemannian geodesic. Nielsen's complexity $d_q(\Id,V)$ is the length of a penalised Riemannian geodesic. Theorem~\ref{thm:ch10:penalised} shows that $d_q\nearrow\dinf$ \emph{and} that the geodesics themselves converge, with the constraint violation vanishing at an explicit rate. Hence:}
+\begin{quote}
+\emph{The length of the time-optimal control trajectory with local controls is the sub-Riemannian limit of Nielsen's complexity distance, and every penalised geodesic is an approximately local control protocol of nearly optimal duration.}
+\end{quote}
+\ona{Nielsen's bounds \eqref{eq:ch10:lowerbound} therefore transfer to sub-Riemannian length: $C_\epsilon(V)\gtrsim\dinf(\Id,V)/n^2$, and a sub-Riemannian geodesic can be compiled into a circuit of polynomially related size. Earlier work of \citet{shizume} compared Riemannian and sub-Riemannian quantum geodesics by other means; the results here upgrade convergence of distances to strong convergence of trajectories and controls. Two practical remarks: sub-Riemannian geodesics are sparse (only $\binom n2+n$ Pauli coefficients for 2-local $\mathfrak d$ versus $4^n$), so the hard-constrained problem is the cheaper one numerically; and penalising some of the available directions while forbidding the rest distinguishes ``good'', ``bad'' and ``impossible'' Hamiltonians---the noise metrics of \Chap~\ref{C.GeometryControl}. When the drift is not symmetric (a 2-local $H_d$), the interaction picture yields a time-dependent metric; one then autonomises by adding time as a coordinate on $M\times\R$ constrained to $s(t)=t$, and the convergence theory goes through with existence of minimisers established by the direct method instead of Hopf--Rinow, at the price of losing the constant-speed statements.}
+\onp{\begin{itemize}
+    \item Min-time with bounded local controls $=\dinf(\Id,V)$ (sub-Riemannian geodesic length).
+    \item Nielsen complexity $=d_q(\Id,V)$; Theorem~\ref{thm:ch10:penalised}: $d_q\nearrow\dinf$ \alert{and} geodesics converge.
+    \item So $C_\epsilon(V)\gtrsim\dinf(\Id,V)/n^2$: \alert{trajectory length lower-bounds circuit size}; penalised geodesics are near-optimal, nearly local protocols.
+    \item Sub-Riemannian side is sparse ($\bigO{n^2}$ coefficients); non-symmetric drift: autonomise on $M\times\R$.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Summary}
+\begin{itemize}\setlength\itemsep{0.4em}
+    \item Circuit complexity: gate count; Solovay--Kitaev makes it gate-set independent; Nielsen bounds it by geodesic length in a penalty metric \eqref{eq:ch10:nielsen}.
+    \item Soft constraint $\gq$ vs hard constraint $D$: energies $\Ener{q}$, Carnot--Carath\'eodory $\dinf$; $d_q\to\dinf$ was known, curves were not.
+    \item $\Gamma$-convergence: minimisers of $\Gamma$-convergent functionals accumulate at minimisers of the limit.
+    \item Main theorem: penalised geodesics subconverge in $H^1$ to sub-Riemannian minimisers; full-sequence distance to the minimiser set $\to0$; violation $\le(2\min\Ener{\infty}-d_g^2)/(q-1)$.
+    \item Drift: geometric interaction picture; symmetric (Killing, $D$-preserving) drift reduces to geodesics with a rotated target; 1-local drifts qualify.
+    \item Punchline: min-time local control $=$ sub-Riemannian length $=$ limit of Nielsen complexity.
+\end{itemize}
+\ona{\todo{missing references: Solovay--Kitaev (Dawson--Nielsen 2006); Brown--Susskind ``Second law of quantum complexity'' (2018); Khaneja--Brockett--Glaser (2001).}}
+\end{frame}
+
+\biblio
+\end{document}

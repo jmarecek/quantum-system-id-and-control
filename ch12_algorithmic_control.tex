@@ -1,0 +1,252 @@
+%\documentclass[overheadsbeamer.tex]{subfiles}
+\documentclass[handoutsbeamer.tex]{subfiles}
+
+\begin{document}
+
+\ona{ \setcounter{chapter}{11} } % ONE LESS
+\lecture{Algorithmic Quantum Optimal Control}{Lect12}
+\chapter{Algorithmic Quantum Optimal Control}\label{C.AlgControl}
+
+\begin{frame}\ft{Outline}
+\ona{\Chap~\ref{C.GeometryControl} characterised optimal controls through the Pontryagin maximum principle and through geodesics. Apart from a handful of low-dimensional problems, neither characterisation can be worked out by hand, and this \chap{} is about computing controls numerically. We proceed from the general to the specific: black-box optimisers on a finite parametrisation of the control; shooting methods, which solve the two-point boundary value problem of the \PMP; gradient methods tailored to quantum dynamics (GRAPE and its relatives, Krotov), whose gradient turns out to be the \PMP\ costate in disguise; and finally global methods, which cast the control problem as a polynomial optimisation problem (QCPOP) and thereby connect back to the conic optimisation of Lecture~\ref{C.Motivation}. We close with a robust variant, noise-informed control, which turns the geodesic problem of \Chap~\ref{C.GeometryControl} into a standard optimal control problem with an extra penalty.}
+\onp{Outline of today's lecture:
+\begin{itemize}\setlength\itemsep{0.8em}
+    \item from the \PMP\ and geodesics to \alert{algorithms}: what has to be discretised;
+    \item black-box optimisers, gradient-free vs.\ gradient-based; software;
+    \item shooting methods: solving the \PMP\ boundary value problem;
+    \item GRAPE: the gradient from one forward and one backward propagation; GRAPE $=$ discretised \PMP; Krotov; exact gradients;
+    \item global optimisation: quantum control via polynomial optimisation (QCPOP), traps, computability;
+    \item noise-informed (robust) control without computing geodesics.
+\end{itemize}}
+\ona{\medskip\noindent\textit{Sources.} This \chap{} draws on \citep{ansel2024introduction,bondar2025globally,lawrence2026geometric}; passages from these papers are reproduced with light editing, whereas material from the tutorial of \citet{ansel2024introduction} is paraphrased.}
+\onp{\vfill{\scriptsize Sources: \citep{ansel2024introduction,bondar2025globally,lawrence2026geometric}.}}
+\end{frame}
+
+\section{What has to be computed}
+
+\begin{frame}\ft{The finite-dimensional problem}
+\ona{Every numerical method starts by replacing the control $u:[0,T]\to\R^m$ by finitely many numbers. Two parametrisations dominate. Piecewise-constant controls on $N$ slices of length $\Delta t=T/N$ give $u=(u_1,\dots,u_N)$ and a propagator that is a product of $N$ matrix exponentials, cf.\ \eqref{eq:pwc} of \Chap~\ref{C.Closed}. Alternatively, one expands $u$ in a fixed basis $\{f_k\}$, $u(t)=\sum_{k=0}^{m-1}x_kf_k(t)$ (Fourier modes, polynomials, splines), and optimises the coefficients $x$. In both cases the cost becomes an ordinary function $\costC(u)$ or $\costC(x)$ on $\R^N$ or $\R^m$, and the problem reads}
+\begin{equation}\label{eq:ch12:finite}
+    \min_{u\in\Omega\subseteq\R^N}\ \costC(u),\qquad \costC(u)=G\big(\psi(T;u)\big)+\int_0^T F_0(u(t))\,\mathrm{d}t ,
+\end{equation}
+\ona{with a terminal cost $G$ (typically an infidelity) and a running cost $F_0$ (typically a penalty on the pulse energy). What distinguishes the methods below is (i) whether they use gradients of $\costC$, (ii) how they compute them, and (iii) whether they look for a local or the global optimum.}
+\onp{\begin{itemize}
+    \item Piecewise constant: $u=(u_1,\dots,u_N)$, $U(T)=U_N\cdots U_1$, $U_n=\ee^{-\imath\Delta t\,H(u_n)}$.
+    \item Basis expansion: $u(t)=\sum_k x_k f_k(t)$ (Fourier/CRAB, polynomials/QCPOP).
+    \item Either way: a finite-dimensional problem $\min_{u\in\Omega}\costC(u)$.
+    \item Methods differ by: gradient or not; how the gradient is obtained; local vs.\ \alert{global}.
+\end{itemize}}
+\end{frame}
+
+\section{Black-box optimisation}
+
+\begin{frame}\ft{Gradient-free and gradient-based optimisers}
+\ona{Scientific computing environments (SciPy, MATLAB, Mathematica, Julia's Optim) provide optimisers that can be called as black boxes on \eqref{eq:ch12:finite}: one supplies the cost, the constraint set, an initial guess, and options. They fall into two families. Gradient-free methods explore the parameter space without derivatives; the Nelder--Mead simplex underlies CRAB \cite{calarco2011,doria_optimal_2011,caneva_chopped_2011}, where the control is expanded in a few randomised Fourier modes, and population methods (differential evolution, genetic algorithms, simulated annealing) move a swarm of candidate controls, which makes them natural for model-free closed-loop optimisation on an experiment \cite{rabitz1992}. Gradient-based methods move against the gradient of $\costC$; when the gradient is available analytically they scale to thousands of parameters, and they can be accelerated with quasi-Newton (BFGS) updates \cite{gill1972quasi}.}
+\ona{Practical experience \cite{kochroadmap}: gradient-free methods are the tool for few parameters ($\lesssim 20$), non-differentiable costs, or experiments in the loop; gradient methods for many parameters ($\gtrsim 100$) with a simulator; it pays to try several methods, since different methods land in different local optima. Reinforcement learning can be seen as a sample-based dynamic programming approach and fits into the same picture \cite{giannelli2022}.}
+\onp{\begin{itemize}
+    \item \textbf{Gradient-free}: Nelder--Mead simplex (CRAB, \cite{calarco2011}), evolutionary / swarm methods, simulated annealing; few parameters, non-smooth costs, experiment in the loop.
+    \item \textbf{Gradient-based}: steepest descent, conjugate gradients, quasi-Newton (BFGS); many parameters, analytic gradients (GRAPE, Krotov).
+    \item Rule of thumb: $\lesssim 20$ parameters $\to$ gradient-free; $\gtrsim 100$ $\to$ gradient-based; \alert{try several}.
+    \item Reinforcement learning $\approx$ sampled dynamic programming (Hamilton--Jacobi--Bellman).
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Software}
+\ona{Most packages implement GRAPE, often with one or two further algorithms. A non-exhaustive list: QuTiP \cite{johansson2012qutip} (GRAPE, CRAB), the Krotov package \cite{goerz2020}, DYNAMO \cite{DYNAMO} (GRAPE and Krotov, MATLAB), QuOCS \cite{rossignolo2023quocs} (GRAPE, dCRAB, open- and closed-loop), Quandary \cite{gunther2021quandary} (open systems, parallel, C++), QOPT \cite{teske2022qopt} (noise), QEngine \cite{sorensen2019qengine} and OCTBEC \cite{HOHENESTER2014194} (cold atoms), Spinach \cite{spinach} and SpinDrops \cite{Spindrops} (magnetic resonance), WavePacket \cite{schmidt2018wavepacket}, and the general-purpose optimal control solvers Bocop \cite{Bocop} and HamPath \cite{caillau2012differential} (shooting). For polynomial optimisation, TSSOS \cite{TSSOS,ChordalTSSOS} and HomotopyContinuation.jl \cite{HomotopyContinuation.jl} in Julia are the tools used for QCPOP below.}
+\onp{\begin{itemize}
+    \item Quantum: QuTiP (GRAPE, CRAB), Krotov, DYNAMO, QuOCS (dCRAB), Quandary (open systems), QOPT, QEngine/OCTBEC (BEC), Spinach/SpinDrops (NMR), WavePacket.
+    \item General optimal control: Bocop, HamPath (shooting, conjugate points).
+    \item Polynomial optimisation: TSSOS, HomotopyContinuation.jl (Julia).
+    \item In these notes: \texttt{numpy}/\texttt{scipy} scripts in \texttt{code/}.
+\end{itemize}}
+\end{frame}
+
+\section{Shooting methods}
+
+\begin{frame}\ft{Shooting: the \PMP\ as a boundary value problem}
+\ona{The \PMP\ of \Chap~\ref{C.GeometryControl} turns the optimal control problem into a two-point boundary value problem: state $\psi$ and costate $\chi$ obey Hamilton's equations for the Pontryagin Hamiltonian $\HP$, the control is eliminated through the maximisation condition $u(t)=u^*(\psi(t),\chi(t))$, the initial state is prescribed and the final costate is prescribed by the terminal cost. The only unknown is the initial costate $\chi(0)$. A shooting method treats $\chi(0)$ as the parameter: integrate the coupled equations forward, evaluate how far the final state misses its target (or how far the final costate misses its transversality condition), and adjust $\chi(0)$ with a root finder or a black-box optimiser. The name comes from aiming a projectile: the initial condition is the only thing one can change.}
+\begin{algorithm2e}[H]
+\KwIn{initial state $\psi_0$, terminal time $T$, guess $\chi_0$}
+\Repeat{$\|\psi(T)-\psi_{\mathrm{target}}\|<\text{tol}$}{
+integrate $\dot\psi=\partial_\chi\HP$, $\dot\chi=-\partial_\psi\HP$ with $u=u^*(\psi,\chi)$ from $(\psi_0,\chi_0)$ on $[0,T]$\;
+update $\chi_0$ by a Newton / quasi-Newton step on the shooting function $\chi_0\mapsto\psi(T)-\psi_{\mathrm{target}}$\;}
+\KwOut{$u(t)=u^*(\psi(t),\chi(t))$}
+\caption{Single shooting for the \PMP\ boundary value problem.}\label{alg:ch12:shooting}
+\end{algorithm2e}
+\ona{Shooting is very accurate when the extremals are regular (no switchings, no singular arcs) and gives the optimal control in closed form along the way. It struggles with bang-bang controls, where the shooting function is discontinuous and switching times are hard to detect \cite{bonnard2003singular}; multiple shooting, which splits $[0,T]$ into sub-intervals with matching conditions, and continuation in a parameter (HamPath, Bocop) mitigate this.}
+\onp{\begin{itemize}
+    \item Unknown: $\chi(0)$ only. Shooting function: $\chi(0)\mapsto$ miss at $T$; solve by Newton.
+    \item Very precise for \emph{regular} extremals; delivers $u$ in closed form along the extremal.
+    \item Hard for bang-bang/singular arcs (discontinuous shooting function); remedies: multiple shooting, continuation.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Example: time-optimal transfer on the Bloch sphere by shooting}
+\ona{For the driftless qubit $H=\tfrac{u_x}{2}\sigma_x+\tfrac{u_y}{2}\sigma_y$ with $u_x^2+u_y^2\le1$, the Bloch vector obeys $\dot x=u_yz$, $\dot y=-u_xz$, $\dot z=-u_yx+u_xy$, and the time-optimal transfer from $(1,0,0)$ to $(0,1,0)$ saturates the bound. With costate $p=(p_x,p_y,p_z)$ the Pontryagin Hamiltonian is $\HP=u_x(p_zy-p_yz)+u_y(p_xz-p_zx)+p_0$, and maximisation gives $u_x=(p_zy-p_yz)/h$, $u_y=(p_xz-p_zx)/h$ with $h$ the norm of the two brackets. Since the final time is free, $\HP=0$. The extremals can be integrated in closed form \cite{PRXQuantumsugny}: the minimum time is $T^\star=\pi\sqrt3/2$ and the optimal initial costate is $(p_x(0),1/\sqrt3,\pm1)$ with $p_x(0)$ arbitrary; the two signs give the two trajectories mirrored in the equator. A shooting iteration on $(p_y(0),p_z(0))$, normalising $p_0=-1$, converges to these values to high precision. Scanning $p(0)$ over the unit sphere and plotting the final distance to the target gives a global picture of the landscape of extremals. \Chap~\ref{C.Revisited} returns to this example.}
+\onp{\begin{itemize}
+    \item Driftless qubit, $\|u\|\le1$: $\HP=u_x(p_zy-p_yz)+u_y(p_xz-p_zx)+p_0$, $\HP=0$ (free time).
+    \item Maximisation: $u\propto$ the two brackets, $\|u\|=1$ (regular extremal).
+    \item Closed form \cite{PRXQuantumsugny}: $T^\star=\pi\sqrt3/2$, $p(0)=(\ast,1/\sqrt3,\pm1)$.
+    \item Shooting on $(p_y(0),p_z(0))$ recovers this to machine precision.
+\end{itemize}
+\todo{redraw: landscape of the miss distance over the sphere of initial costates}}
+\end{frame}
+
+\section{Gradient methods tailored to quantum dynamics}
+
+\begin{frame}\ft{Gradient descent on a piecewise-constant control}
+\ona{Take $u$ piecewise constant with $N$ slices and a terminal cost $\costC(u)=G(\psi(T))$. If $\costC$ is differentiable, the direction of steepest descent is $-\partial\costC/\partial u_n$, and the update}
+\begin{equation}\label{eq:ch12:gd}
+    u_n' = u_n-\epsilon\,\frac{\partial\costC(u)}{\partial u_n},\qquad n=1,\dots,N,
+\end{equation}
+\ona{decreases the cost for small enough $\epsilon>0$, since $\costC(u')=\costC(u)-\epsilon\|\partial_u\costC\|^2+\bigO{\epsilon^2}$. The step size is chosen by hand, by a line search, or replaced by conjugate-gradient or quasi-Newton (BFGS) directions; second-order variants exist \cite{grape2}. The expensive and interesting part is the gradient. Finite differences need $N+1$ propagations per gradient; the observation of GRAPE \cite{khaneja_optimal_2005} is that two suffice.}
+\onp{\begin{itemize}
+    \item $u_n'=u_n-\epsilon\,\partial\costC/\partial u_n$; step size by hand, line search, or BFGS.
+    \item Finite differences: $N+1$ propagations per gradient. \alert{GRAPE: two.}
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The GRAPE gradient}
+\ona{Let $H(t)=\Hdrift+u(t)\Hctrl[1]$ with $u$ piecewise constant, $U_n=\ee^{-\imath\Delta t(\Hdrift+u_n\Hctrl[1])}$, forward states $\ket{\psi_n}=U_n\cdots U_1\ket{\psi_0}$ and $\costC=G(\ket{\psi_N})$. Only $U_n$ depends on $u_n$, so by the chain rule}
+\begin{equation}\label{eq:ch12:chain}
+    \frac{\partial G}{\partial u_n}=\frac{\partial G}{\partial\ket{\psi_N}}\,U_N\cdots U_{n+1}\,\frac{\partial U_n}{\partial u_n}\,U_{n-1}\cdots U_1\ket{\psi_0}+\text{c.c.}
+\end{equation}
+\ona{The derivative of the exponential is given by the formula of \citet{wilcox1967exponential}, $\partial_\theta\ee^{tA}=\ee^{tA}\int_0^t\ee^{-sA}\partial_\theta A\,\ee^{sA}\,\mathrm{d}s$, whence $\partial_{u_n}U_n=-\imath\Delta t\,U_n\overline{H}_1$ with $\overline H_1$ the average of $\Hctrl[1]$ in the Heisenberg picture over the slice; for small $\Delta t$, $\overline H_1\approx\Hctrl[1]$ and $\partial_{u_n}U_n\approx-\imath\Delta t\,\Hctrl[1]U_n$. Define the backward-propagated costate $\bra{\chi_N}=\partial G/\partial\ket{\psi_N}$, $\bra{\chi_n}=\bra{\chi_N}U_N\cdots U_{n+1}$. Then}
+\begin{equation}\label{eq:ch12:grape}
+    \frac{\partial G}{\partial u_n}=2\Delta t\,\operatorname{Im}\braket{\chi_n|\Hctrl[1]|\psi_n},\qquad
+    \delta u_n=-\epsilon\,\operatorname{Im}\braket{\chi_n|\Hctrl[1]|\psi_n}.
+\end{equation}
+\ona{One forward propagation of $\psi$ and one backward propagation of $\chi$ give all $N$ components of the gradient. For $G_1=1-\abs{\braket{\psi_f|\psi_N}}^2$ the final costate is $\ket{\chi_N}=-\braket{\psi_f|\psi_N}\ket{\psi_f}$; for $G_2=1-\operatorname{Re}\braket{\psi_f|\psi_N}$ it is $-\tfrac12\ket{\psi_f}$. Several controls, density matrices (vectorised, \Chap~\ref{C.Open}) and unitary targets are handled identically.}
+\onp{\begin{itemize}
+    \item $\partial_{u_n}U_n\approx-\imath\Delta t\,\Hctrl[1]U_n$ (Wilcox formula, small $\Delta t$).
+    \item Costate $\bra{\chi_n}=\bra{\chi_N}U_N\cdots U_{n+1}$, $\bra{\chi_N}=\partial G/\partial\ket{\psi_N}$.
+    \item \alert{One forward, one backward sweep} gives the whole gradient.
+    \item $G_1=1-\abs{\braket{\psi_f|\psi_N}}^2$: $\ket{\chi_N}=-\braket{\psi_f|\psi_N}\ket{\psi_f}$.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}[fragile]\ft{GRAPE in twelve lines of Python}
+\ona{The following excerpt from \texttt{code/ch12\_grape.py} implements \eqref{eq:ch12:grape} for the transfer $\ket0\to\ket1$ under $H=\tfrac\Delta2\sigma_z+\tfrac{u}{2}\sigma_x$; \texttt{psi[n+1]} is $\ket{\psi_n}$ and \texttt{chi[n+1]} is $\ket{\chi_n}$ in the notation above.}
+\ona{\lstinputlisting[style=python,firstline=25,lastline=39]{code/ch12_grape.py}}
+\onp{\lstinputlisting[style=python,basicstyle=\ttfamily\scriptsize,firstline=25,lastline=39]{code/ch12_grape.py}}
+\end{frame}
+
+\begin{frame}\ft{GRAPE at work}
+\ona{Figure~\ref{fig:ch12:grape} shows the convergence of the infidelity and the resulting pulse for $\Delta=0.5$, $T=6$, $N=40$ slices, a constant initial guess and a small energy penalty $\tfrac{p_0}{2}\int u^2$, which adds $-\epsilon p_0u_n$ to the update. Convergence is fast and monotone once $\epsilon$ is small enough; the final infidelity is limited by the penalty.}
+\ona{\begin{figure}[h]\centering
+\resizebox{0.48\linewidth}{!}{\input{figures/ch12_grape_conv.tex}}\hfill
+\resizebox{0.48\linewidth}{!}{\input{figures/ch12_grape_pulse.tex}}
+\caption{GRAPE for the qubit transfer $\ket0\to\ket1$ with drift $\Delta=0.5$ and $N=40$ slices. Left: infidelity per iteration (log scale). Right: initial guess and optimised pulse. Generated by \texttt{code/ch12\_grape.py}.}\label{fig:ch12:grape}
+\end{figure}}
+\onp{\begin{center}
+\resizebox{0.48\linewidth}{!}{\input{figures/ch12_grape_conv.tex}}\hfill
+\resizebox{0.48\linewidth}{!}{\input{figures/ch12_grape_pulse.tex}}
+\end{center}
+Qubit transfer $\ket0\to\ket1$, $\Delta=0.5$, $N=40$, energy penalty $10^{-3}$ (\texttt{code/ch12\_grape.py}).}
+\end{frame}
+
+\begin{frame}\ft{GRAPE is the discretised maximum principle}
+\ona{Let $\Delta t\to0$. The first variation of the augmented cost $S$ from \Chap~\ref{C.GeometryControl} under a control variation $\delta u$ is $\delta S=-\int_0^T\partial_u\HP\,\delta u\,\mathrm{d}t$, so the choice $\delta u=\epsilon\,\partial_u\HP$ gives $\delta S=-\epsilon\int_0^T(\partial_u\HP)^2\mathrm{d}t<0$. With the Pontryagin Hamiltonian of the Schr\"odinger equation, $\HP=\operatorname{Im}\braket{\chi|H(u)|\psi}$, this is $\delta u=-\epsilon\operatorname{Im}\braket{\chi|\Hctrl[1]|\psi}$: exactly \eqref{eq:ch12:grape}. GRAPE is a time discretisation of a gradient flow on the \PMP; its costate is the adjoint state; the equivalence holds for the weak \PMP\ (open control set). The maximisation condition of the strong \PMP\ is what a converged GRAPE control satisfies.}
+\begin{propn}\label{prop:ch12:grape-pmp}
+The GRAPE update \eqref{eq:ch12:grape} is the Euler discretisation of the continuous-time gradient flow $\dot u=\epsilon\,\partial_u\HP(\psi,\chi,u)$ along the state and costate of the \PMP\ boundary value problem.
+\end{propn}
+\onp{\begin{itemize}
+    \item $\delta S=-\int_0^T\partial_u\HP\,\delta u\,\mathrm{d}t$ $\Rightarrow$ $\delta u=\epsilon\,\partial_u\HP$ decreases $S$.
+    \item $\HP=\operatorname{Im}\braket{\chi|H(u)|\psi}$ $\Rightarrow$ $\delta u=-\epsilon\operatorname{Im}\braket{\chi|\Hctrl[1]|\psi}$: this \emph{is} GRAPE.
+    \item GRAPE's costate $=$ \PMP\ adjoint state; converged GRAPE $=$ (weak) \PMP\ extremal.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Variants: Krotov, parametrised controls, exact gradients}
+\ona{\emph{Krotov's method} \cite{krotov1983iterative,koch2012,goerz2020} uses the same forward and backward propagations but updates the control sequentially slice by slice, using the already updated control for the forward propagation within the same iteration; with a suitable step-size functional it guarantees monotonic convergence. GRAPE updates all slices concurrently and is easier to combine with quasi-Newton acceleration; for a comparison see \cite{Jager2014,DYNAMO}.}
+\ona{\emph{Parametrised controls} \cite{skinner_optimal_2010}. If $u(t)=v(\{a_kf_k(t)\})$, e.g.\ a truncated Fourier series $u=a_0+\sum_k a_k\cos(k\omega t)+b_k\sin(k\omega t)$, the gradient with respect to the coefficients follows from the chain rule, $\partial G/\partial a_k=\sum_n(\partial G/\partial u_n)\,f_k(t_n)$: GRAPE on the slices, then one projection onto the basis. This is the gradient-based counterpart of CRAB, and it produces smooth, bandwidth-limited pulses.}
+\ona{\emph{Exact gradient} (auxiliary-matrix method). For the block matrix $\tilde H=\begin{pmatrix}H&0\\ \partial_uH&H\end{pmatrix}$ one has $\ee^{\alpha\tilde H}=\begin{pmatrix}\ee^{\alpha H}&0\\ \partial_u\ee^{\alpha H}&\ee^{\alpha H}\end{pmatrix}$ (Taylor series), so propagating the doubled system with $\tilde H$ from $(\Id,0)$ returns $U_n$ and $\partial_{u_n}U_n$ together, without the small-$\Delta t$ approximation $\overline H_1\approx\Hctrl[1]$.}
+\onp{\begin{itemize}
+    \item \textbf{Krotov}: sequential slice-by-slice update, monotone convergence by construction.
+    \item \textbf{Parametrised controls}: $\partial G/\partial a_k=\sum_n\partial_{u_n}G\,f_k(t_n)$; smooth pulses; gradient counterpart of CRAB.
+    \item \textbf{Exact gradient}: $\tilde H=\begin{pmatrix}H&0\\\partial_uH&H\end{pmatrix}$, $\ee^{\alpha\tilde H}=\begin{pmatrix}\ee^{\alpha H}&0\\\partial_u\ee^{\alpha H}&\ee^{\alpha H}\end{pmatrix}$.
+\end{itemize}}
+\end{frame}
+
+\section{Global optimisation: quantum control via polynomial optimisation}
+
+\begin{frame}\ft{Traps}
+\ona{All methods so far are local. Whether local is enough is the question of the control landscape (\Chap~\ref{C.GeometryControl}): without constraints on $u$ and with a controllable system, landscapes are trap-free, but bounded amplitudes, short horizons, and few parameters create local optima. A simple example due to \citet{pechen_are_2011}: a three-level system starts in $\ket1$, the observable $O$ takes the values $0.1,0,1$ on $\ket1,\ket2,\ket3$, and a constant control $\lambda$ on $[0,1]$ couples $\ket1\leftrightarrow\ket3$ and $\ket3\leftrightarrow\ket2$. For small $\abs\lambda$ population leaks into $\ket2$, where $O=0$, so the objective first decreases: $\lambda=0$ is a local maximum. A gradient method started near zero stays there.}
+\ona{\begin{figure}[h]\centering
+\resizebox{0.7\linewidth}{!}{\input{figures/ch12_landscape_traps.tex}}
+\caption{Objective $\langle O\rangle$ of the Pechen--Tannor problem as a function of the constant control $\lambda$ (drift $\operatorname{diag}(0,1,2)$). Crosses: local maxima; dot: global maximum. Generated by \texttt{code/ch12\_landscape\_traps.py}.}\label{fig:ch12:traps}
+\end{figure}}
+\onp{\begin{center}\resizebox{!}{0.5\textheight}{\input{figures/ch12_landscape_traps.tex}}\end{center}
+Pechen--Tannor three-level problem: $\lambda=0$ is a \alert{trap}; a gradient method started nearby never leaves it.}
+\end{frame}
+
+\begin{frame}\ft{QCPOP: quantum control as polynomial optimisation}
+\ona{The fixed-time gate synthesis problem, with $A(t)=-\imath(\Hdrift+E(t)V)$,}
+\begin{equation}\label{eq:ch12:qcc}
+    \min_{E(\cdot)}\ F[U(T),U^\star]\quad\text{s.t.}\quad \dot U=A(t)U,\ U(0)=\Id,
+\end{equation}
+\ona{with $F=\norm{U(T)-U^\star}^2$ (Hilbert--Schmidt) or $F=1-\abs{\Tr U(T)^\dagger U^\star}/N$, becomes a polynomial optimisation problem in three steps \cite{Magnus1954,Tal-Ezer_84}:}
+\begin{enumerate}
+    \item \textbf{Magnus expansion.} $U(T)=\lim_n\exp\Lambda_n$, $\Lambda_n=\sum_{k\le n}\Omega_k$, $\Omega_1=\int_0^TA$, $\Omega_2=\tfrac12\int_0^T\!\int_0^t\comm{A(t)}{A(s)}$, \dots; it converges if $\int_0^T\norm{A}\,\mathrm{d}t<\pi$ and $\exp\Lambda_n$ is unitary for every $n$, so $F\approx\norm{\ee^{\Lambda_n/2}-\ee^{-\Lambda_n/2}U^\star}^2$.
+    \item \textbf{Chebyshev expansion} of the exponential, $\ee^{\alpha\Lambda_n}\approx J_0(\alpha)\Id+2\sum_{k=1}^pJ_k(\alpha)T_k(\Lambda_n)$, with Bessel functions $J_k$ and matrix Chebyshev polynomials $T_{k+1}=2\Lambda_nT_k-T_{k-1}$.
+    \item \textbf{Series for the control}, $E(t)=\sum_{k=0}^{m-1}x_kt^k$ (or any basis).
+\end{enumerate}
+\ona{Then $\Omega_k$, $\Lambda_n$, $U(T)$ and finally $F$ are polynomials in $x\in\R^m$. The truncation orders $(n,p,m)$ characterise the approximation; empirically $n=3$, $p=5$ suffice. Minimum-time and state-transfer variants follow the same route. For a piecewise-constant control with $m$ segments the Magnus step is unnecessary: $U(T)=\prod_jU_j$ with $U_j=\ee^{-\imath(\Hdrift+E_jV)t_j}$, and Chebyshev expansion of each $U_j$ already gives a polynomial in $(E_1,\dots,E_m)$.}
+\onp{Three steps make $F$ a \alert{polynomial} in the control coefficients $x$: Magnus ($n$ terms) $\to$ Chebyshev ($p$ terms) $\to$ $E(t)=\sum_kx_kt^k$ ($m$ terms). Piecewise constant: skip Magnus. Empirically $n=3$, $p=5$.}
+\end{frame}
+
+\begin{frame}\ft{Solving the polynomial problem globally}
+\ona{A polynomial optimisation problem $\min\{f(x):g_i(x)\ge0\}$ is NP-hard in general, but two families of methods find global optima in practice (Lecture~\ref{C.Motivation}). The moment/SOS hierarchy \cite{Lasserre2001,parrilo2003semidefinite} replaces the problem by a sequence of semidefinite programs whose values $f_d^*$ increase monotonically to $f^*$ (Putinar's Positivstellensatz), generically with finite convergence; sparsity-exploiting variants (TSSOS \cite{TSSOS,ChordalTSSOS}) keep the SDP blocks small. Homotopy continuation \cite{HomotopyContinuation.jl} solves the first-order (Lagrange) system, a system of polynomial equations, by tracking all roots from a start system with known roots along $H(x,t)=tF(x)+(1-t)G(x)$; the BKK bound and polyhedral homotopies control the number of paths, and end-games and certification take care of singular endpoints. Empirically, homotopy continuation is preferable for the infidelity $1-\abs{\Tr U^\dagger U^\star}/N$, the SOS hierarchy for the Hilbert--Schmidt distance.}
+\onp{\begin{itemize}
+    \item \textbf{Moment/SOS hierarchy}: SDP relaxations $f_d^*\nearrow f^*$; TSSOS exploits sparsity.
+    \item \textbf{Homotopy continuation}: all roots of the Lagrange system; global optimum by a linear scan.
+    \item Rule of thumb: SOS for $\norm{U-U^\star}^2$; homotopy for $1-\abs{\Tr U^\dagger U^\star}/N$.
+    \item Cost: seconds for small systems; finds the trap-free global optimum in \emph{one} run.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{What QCPOP delivers}
+\ona{On the Pechen--Tannor problem, homotopy continuation returns \emph{all} extrema, so the trap at $\lambda=0$ is irrelevant. On a benchmark of 1000 target unitaries of a three-level system with two-segment piecewise-constant control, QCPOP matches or beats GRAPE and clearly beats CRAB (which is frequently trapped) at comparable run time \cite{Khaneja2005,doria_optimal_2011}. On the transfer between two linear resonators with a controlled coupling and a horizon $T=\tau/50$, where traps are so dense that gradient search needs path tracing with thousands of restarts \cite{jacobs_fast_2016}, QCPOP finds a three-segment control with $1\%$ infidelity in a single run and certifies that no two-segment control achieves it. Lecture~\ref{C.Revisited} shows these results in more detail.}
+\ona{Two by-products. \emph{Hamiltonian identification}: if $H=\sum_jc_jH_j+\lambda(t)V$ has unknown $c_j$, choose $\lambda$, measure the generated unitary $U^\star$, and minimise $\norm{U(T)-U^\star}^2$ over $c$; this is the same polynomial problem with the roles of control and parameters exchanged (\Chap~\ref{C.AlgTomography}). \emph{Computability}: deciding whether a digitised quantum control task is solvable exactly is not Turing-computable \cite{bondar_uncomputability_2020}, but as a polynomial optimisation problem it is computable on a Blum--Shub--Smale machine \cite{blum_theory_1989}, with run time governed by the convergence of the Magnus series and of the SOS hierarchy.}
+\onp{\begin{itemize}
+    \item Trap problem: all extrema in one run. Benchmark (1000 targets): QCPOP $\ge$ GRAPE $\gg$ CRAB.
+    \item Dense traps (resonator transfer, $T=\tau/50$): one run instead of thousands; certifies infeasibility of 2 segments.
+    \item Same machinery identifies Hamiltonian parameters (\Chap~\ref{C.AlgTomography}).
+    \item Computability: undecidable on a Turing machine, computable on a Blum--Shub--Smale machine.
+\end{itemize}}
+\end{frame}
+
+\section{Noise-informed control}
+
+\begin{frame}\ft{Robust control without computing geodesics}
+\ona{\Chap~\ref{C.GeometryControl} showed that, under a control-noise coupling described by a noise metric $\gLam$, the worst-case error of the random Schr\"odinger equation is minimised by a $\gLam$-geodesic. Geodesics are hard to compute in higher dimension and in the sub-Riemannian limit, and the argument does not include a drift. Both problems disappear if one minimises an \emph{upper bound} on the worst-case error instead. Given $\{H_j\}\subset\liesu$ and a target $V\in\SU$, we seek controls $u_j:[0,T]\to\R$ for $\dot U=-\imath(H_d+\sum_ju_jH_j)U$; the triangle inequality and the geometric error estimate give}
+\begin{equation}\label{eq:ch12:robust-bound}
+    \ess\sup_\omega\norm{U_S(T,\omega)-V}\ \le\ \norm{U_{0,S}(T)-V}+\int_0^T\sqrt{\gLam\big(H_{0,S}(t),H_{0,S}(t)\big)}\,\mathrm{d}t ,
+\end{equation}
+\ona{where $U_{0,S}$ is the noiseless propagator and $H_{0,S}$ the deterministic Hamiltonian. The first term is the error of the deterministic control problem, the second the error induced by the noise, i.e., the $\gLam$-length of the control path. The right-hand side no longer depends on $\omega$: the stochastic problem has been replaced by a deterministic \emph{robust counterpart}. Minimising the sum of squares}
+\begin{equation}\label{eq:ch12:c2}
+    c_2\big(H_{0,S}(\cdot)\big)=\norm{U_{0,S}(T)-V}^2+\Big[\int_0^T\sqrt{\gLam(H_{0,S},H_{0,S})}\,\mathrm{d}t\Big]^2
+\end{equation}
+\ona{is amenable to any of the local methods above and yields an upper bound on the true worst-case optimum. Because the noise term is a soft penalty on the control amplitudes weighted by direction, this is \emph{noise-informed} quantum control.}
+\onp{\begin{itemize}
+    \item Geodesics of $\gLam$ are hard; drift not included. Minimise an \alert{upper bound} instead.
+    \item Worst-case error $\le$ deterministic error $+$ $\gLam$-length of the control path \eqref{eq:ch12:robust-bound}.
+    \item Robust counterpart: minimise $c_2$ in \eqref{eq:ch12:c2} by GRAPE/BFGS; no $\omega$ left.
+    \item One-qubit example (Lecture~\ref{C.Revisited}): $\approx2.6$-fold reduction of the operator-norm error.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Summary}
+\begin{itemize}\setlength\itemsep{0.4em}
+    \item Discretise the control (slices or basis), then optimise a function on $\R^N$.
+    \item Black boxes: gradient-free for few parameters or experiments in the loop; gradient-based otherwise.
+    \item Shooting solves the \PMP\ boundary value problem in $\chi(0)$: precise for regular extremals.
+    \item GRAPE: gradient from one forward and one backward sweep, $\partial_{u_n}G=2\Delta t\operatorname{Im}\braket{\chi_n|\Hctrl[1]|\psi_n}$; it is the discretised \PMP\ gradient flow. Krotov, parametrised controls, exact gradients are refinements.
+    \item QCPOP: Magnus $+$ Chebyshev $+$ series control turn the problem into polynomial optimisation, solved globally by SOS hierarchies or homotopy continuation; traps become irrelevant.
+    \item Noise-informed control: replace the geodesic problem by a deterministic robust counterpart with a $\gLam$-length penalty.
+\end{itemize}
+\ona{Further reading: the tutorial \cite{kochroadmap} and the software list above; on QCPOP the globally optimal control paper and its notebooks; on penalty and noise metrics \Chaps~\ref{C.GeometryControl}--\ref{C.Complexity}.}
+\end{frame}
+
+\biblio
+\end{document}

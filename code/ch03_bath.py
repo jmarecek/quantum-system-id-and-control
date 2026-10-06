@@ -2,7 +2,7 @@
 
 A qubit (left) coupled to a bath of harmonic oscillators.  The bath modes have
 frequencies omega_k on a grid, and couplings g_k with g_k^2 = J(omega_k) d omega
-for the Ohmic spectral density J(omega) = eta omega exp(-omega / omega_c):
+for the Ohmic spectral density J(omega) = J_0 omega exp(-omega / omega_c):
 the line widths show g_k.  The reduced state rho_S = Tr_B rho_full keeps only
 what is inside the dashed window.  The inset shows J and the sampled modes.
 Writes figures/ch03_bath.tex.

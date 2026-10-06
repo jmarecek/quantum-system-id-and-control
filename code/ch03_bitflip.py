@@ -1,6 +1,6 @@
 """ch03_bitflip.py -- the bit-flip channel from a random Hamiltonian.
 
-With probability p the Hamiltonian H_1 = (pi/2) sigma_x acts for one unit of
+With probability p the noise Hamiltonian H^n = (pi/2) sigma_x acts for one unit of
 time (a rotation by pi about the x-axis), with probability 1-p nothing happens.
 Each sample path is a rotation; the average state has Bloch vector
 (x, (1-2p) y, (1-2p) z): the ball is squeezed into a cigar along the x-axis.
@@ -39,7 +39,7 @@ def main():
     b.append("\\node[dot, fill=ndGreen, minimum size=4.4pt] at %s {};" % V.pt(avg))
     x0 = V.R + 0.6
     b.append("\\node[note, anchor=west] (n) at (%.2f,2.0) {probability $1-p$:\\\\ nothing happens};" % x0)
-    b.append("\\node[note, anchor=west, text=ndRed] (f) at (%.2f,0.6) {probability $p$: $H_1=\\tfrac\\pi2\\sigx$,\\\\ a rotation by $\\pi$ about $x$};" % x0)
+    b.append("\\node[note, anchor=west, text=ndRed] (f) at (%.2f,0.6) {probability $p$: $H^{\\rm n}=\\tfrac\\pi2\\sigx$,\\\\ a rotation by $\\pi$ about $x$};" % x0)
     b.append("\\draw[pointer] (f.west) to[bend right=15] %s;" % V.pt(path[30]))
     b.append("\\node[note, anchor=west, text=ndGreen!60!black] (a) at (%.2f,-0.9) {the average: $(x,(1-2p)y,(1-2p)z)$,\\\\ on the chord, at weight $p$};" % x0)
     b.append("\\draw[pointer] (a.west) to[bend left=15] %s;" % V.pt(avg))

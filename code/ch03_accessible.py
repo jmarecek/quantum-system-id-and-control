@@ -1,8 +1,8 @@
 """ch03_accessible.py -- the accessible set, step by step.
 
 Three qubits, measured observable Z_1 (Pauli string ZII).  The iteration
-G_0 = {ZII},  G_j = [G_{j-1}, F] u G_{j-1}
-adds every Pauli string obtained by commuting an element of G_{j-1} with a
+M_0 = {ZII},  M_j = [M_{j-1}, F] u M_{j-1}
+adds every Pauli string obtained by commuting an element of M_{j-1} with a
 generator present in the Hamiltonian (two Pauli strings have a non-zero
 commutator iff they anticommute, and it is then proportional to their product).
   transverse-field Ising chain  X1, X2, X3, Z1Z2, Z2Z3  -> saturates at  6 of 63;
@@ -78,7 +78,7 @@ def main():
         b.append("\\draw[dashedink] (%.2f,%.3f) -- (%.2f,%.3f);" % (x0 - 0.2, H * 63, xe, H * 63))
         b.append("\\node[note, anchor=south] at (%.2f,%.3f) {all $N^2-1=63$ components};" % ((x0 + xe) / 2, H * 63 + 0.05))
         b.append("\\node[font=\\scriptsize, text=%s] at (%.2f,-0.75) {%s};" % (col, (x0 + xe) / 2, title))
-        b.append("\\node[note] at (%.2f,%.3f) {$J=%d$ of $63$};" % ((x0 + xe) / 2, H * 63 * 0.55, sizes[-1]))
+        b.append("\\node[note] at (%.2f,%.3f) {$\\tilde n=%d$ of $63$};" % ((x0 + xe) / 2, H * 63 * 0.55, sizes[-1]))
         x0 = xe + 1.6
     b.append("\\node[note, anchor=west] at (%.2f,1.8) {measured: $Z_1$;\\\\ step $j$: add the commutators\\\\ with the generators;\\\\ stop when nothing is new};" % (x0 - 0.8))
     b.append("\\node[font=\\scriptsize] at (%.2f,-1.25) {step $j$ of the iteration};" % ((x0 - 1.6) / 2))

@@ -1,8 +1,8 @@
 """ch03_rse.py -- the random Schroedinger equation for one qubit.
 
-Sample paths of  i d/dt psi = (H_0 + H_1(t, omega)) psi  with
+Sample paths of  i d/dt psi = (H_0 + H^n(t, xi)) psi  with
 H_0 = (omega/2) sigma_z + (u/2) sigma_x and a random dephasing term
-H_1 = (1/2) b(t, omega) sigma_z, b an Ornstein-Uhlenbeck process.
+H^n = (1/2) b(t, xi) sigma_z, b an Ornstein-Uhlenbeck process.
 Each path stays pure; the ensemble average is a mixed state.
 Writes figures/ch03_rse.tex.
 """

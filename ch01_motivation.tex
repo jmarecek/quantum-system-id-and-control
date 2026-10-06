@@ -429,7 +429,7 @@ For a \emph{single qubit} with Hamiltonian $H(t)=\tfrac{u_z(t)}{2}\sigma_z+\tfra
 \begin{frame}\ft{A landscape with a trap}
 \ona{\citet{pechen_are_2011} give a three-level example in which the trap is fully understood. The drift $\Hdrift$ has eigenstates $\ket1,\ket2,\ket3$, the system starts in $\ket1$, and the goal is to maximise the expectation of an observable $O$ that takes the values $0.1$, $0$, $1$ on the three states. The control Hamiltonian $V$ couples $\ket1\leftrightarrow\ket3$ and $\ket3\leftrightarrow\ket2$ only, and its amplitude $\lambda$ is held constant over the time $T=1$. For small $\abs\lambda$ the system leaks into $\ket2$, where $O=0$, before reaching $\ket3$, so the objective \emph{decreases} away from $\lambda=0$ before it increases: $\lambda=0$ is a local maximum, and a gradient method started near it never leaves.}
 \onp{\begin{itemize}
-    \item Pechen--Tannor \cite{pechen_are_2011}: three levels, $O(\ket1,\ket2,\ket3)=(0.1,0,1)$, start in $\ket1$.
+    \item \citet{pechen_are_2011}: three levels, $O(\ket1,\ket2,\ket3)=(0.1,0,1)$, start in $\ket1$.
     \item $V$ couples $1\leftrightarrow3$ and $3\leftrightarrow2$; one constant control $\lambda$.
     \item Small $\lambda$: leak into $\ket2$ first, so $O$ decreases: $\lambda=0$ is a \alert{trap}.
     \item Gradient methods started near $0$ never leave.
@@ -761,7 +761,7 @@ For any primal feasible $x$ and dual feasible $(y,s)$, $c^\top x\ge b^\top y$. I
     M(g_1,\dots,g_m)=\Big\{ s_0+\sum_{i=1}^m s_ig_i \ :\ s_0,s_i\in\Sigma_n\Big\},
 \end{equation}
 \ona{and $M$ is \emph{Archimedean} if $N-\sum_i x_i^2\in M$ for some $N>0$ (which forces $K$ to be compact).}
-\begin{thm}[Putinar \cite{putinar1993positive}]\label{thm:ch01:putinar}
+\begin{thm}[\citet{putinar1993positive}]\label{thm:ch01:putinar}
 If $M(g_1,\dots,g_m)$ is Archimedean and $f>0$ on $K$, then $f\in M(g_1,\dots,g_m)$, i.e.\ $f=s_0+\sum_i s_ig_i$ with each $s_i$ a sum of squares.
 \end{thm}
 \ona{\begin{exm}
@@ -789,7 +789,7 @@ $f=\big(\tfrac12+\tfrac12x\big)^2+\big(\tfrac12+\tfrac12x\big)^2(1-x^2)$ certifi
 \end{frame}
 
 \begin{frame}\ft{Convergence of the hierarchy}
-\begin{propn}[Nesterov, Parrilo, Lasserre \cite{nesterov2000squared,lasserre2001global,parrilo2000structured}]\label{prop:ch01:monotone}
+\begin{propn}[\citet{nesterov2000squared,lasserre2001global,parrilo2000structured}]\label{prop:ch01:monotone}
 The moment-SOS hierarchy produces a sequence of non-decreasing lower bounds: $f_d\le f_{d+1}\le f^*$.
 \end{propn}
 \begin{thm}[Convergence]\label{thm:ch01:lasserre}
