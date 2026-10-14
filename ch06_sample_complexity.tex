@@ -1,0 +1,168 @@
+%\documentclass[overheadsbeamer.tex]{subfiles}
+\documentclass[handoutsbeamer.tex]{subfiles}
+
+\begin{document}
+
+\ona{ \setcounter{chapter}{5} } % ONE LESS
+\lecture{Sample Complexity of Identification}{Lect06}
+\chapter{Sample Complexity of Identification}\label{C.SampleComplexity}
+
+\begin{frame}\ft{Outline}
+\ona{\Chaps~\ref{C.StateSpace} and~\ref{C.Frequency} answered the structural question: with exact expectation values, when is the model determined? But an experiment never returns an expectation value. It returns one outcome of one measurement on one copy of the state, and the copy is destroyed. Every number we have used so far, from $x_j=\Tr[F_j\rho]$ to the Hankel matrix, is an estimate from a finite number of \emph{shots}. This \chap{} asks how many shots are needed for a prescribed accuracy: the \emph{sample complexity} of estimation, tomography, and system identification. We give the elementary upper bounds (concentration inequalities), the information-theoretic lower bounds (Cram\'er--Rao and its quantum version), and the finite-sample theory of linear system identification that transfers to the coherence-vector model.}
+\onp{Outline of today's lecture:
+\begin{itemize}\setlength\itemsep{0.8em}
+    \item from shots to expectation values: Hoeffding and the $N^{-1/2}$ law;
+    \item quantum state tomography: $\bigO{d^2/\eps^2}$ copies, and why that is tight;
+    \item classical shadows: many observables from few copies;
+    \item Fisher information, Cram\'er--Rao, and the quantum Fisher information;
+    \item Heisenberg-limited Hamiltonian learning;
+    \item finite-sample identification of linear systems and the coherence-vector model;
+    \item propagating tomography error into the master equation.
+\end{itemize}}
+\ona{\medskip\noindent\textit{Sources.} This \chap{} draws on \citep{parvaiz2026survey,parvaiz2025identifiability,bondar2025globally}; passages from these papers are reproduced with light editing.}
+\onp{\vfill{\scriptsize Sources: \citep{parvaiz2026survey,parvaiz2025identifiability,bondar2025globally}.}}
+\end{frame}
+
+\section{From shots to expectation values}
+
+\begin{frame}\ft{Estimating one expectation value}
+\ona{Let $O$ be an observable with $\norm{O}_\infty\le1$ and eigenvalues $\pm1$, measured on $N$ independent copies of $\rho$. The outcomes $o_1,\dots,o_N\in\{\pm1\}$ are i.i.d.\ with mean $\Tr[O\rho]$, and the empirical mean $\hat o=\frac1N\sum_i o_i$ has variance $(1-\Tr[O\rho]^2)/N\le1/N$. Beyond the variance, we want a guarantee that holds with high probability:}
+\begin{thm}[Hoeffding]\label{thm:ch06:hoeffding}
+For i.i.d.\ $o_i\in[-1,1]$ with mean $\mu$, $\Prob\big(\abs{\hat o-\mu}\ge\eps\big)\le2\exp(-N\eps^2/2)$. Hence $N\ge\frac{2}{\eps^2}\ln\frac{2}{\delta}$ shots guarantee $\abs{\hat o-\mu}\le\eps$ with probability at least $1-\delta$.
+\end{thm}
+\ona{This is the $N^{-1/2}$ law, or \emph{standard quantum limit}: the error decreases as $1/\sqrt N$ and the number of shots as $1/\eps^2$. It is the price of destructive, probabilistic measurement, and it propagates into everything downstream: each entry of the coherence vector, each Markov parameter, each entry of the Hankel matrix carries an error of order $N^{-1/2}$. For a $\pm1$-valued observable the bound is essentially tight, since the variance of a single shot is $1-\mu^2$, close to $1$ unless the state is nearly an eigenstate. Figure~\ref{fig:ch06:shots} shows the law at work for a decay-rate estimate: the root-mean-square error of $\hat\gamma$ follows $N^{-1/2}$ over four orders of magnitude.}
+\onp{Error $\propto N^{-1/2}$, shots $\propto\eps^{-2}\ln(1/\delta)$: the \alert{standard quantum limit}. Every downstream quantity (coherence vector, Hankel matrix) inherits it.}
+\end{frame}
+
+\begin{frame}[fragile]\ft{A Monte-Carlo check}
+\ona{The script \texttt{code/ch06\_shots.py} prepares a qubit in the excited state, lets it relax at rate $\gamma$ so that $\langle\sigma_z\rangle(t)=1-2\ee^{-\gamma t}$, measures $\sigma_z$ with $N$ shots at each of $12$ times, fits $\gamma$ by least squares, and repeats $200$ times to estimate the root-mean-square error.}
+\ona{\lstinputlisting[style=python,firstline=22,lastline=36]{code/ch06_shots.py}}
+\onp{\lstinputlisting[style=python,basicstyle=\ttfamily\scriptsize,numbers=none,firstline=26,lastline=36]{code/ch06_shots.py}}
+\end{frame}
+
+\begin{frame}\ft{The $N^{-1/2}$ law, observed}
+\onp{Root-mean-square error of $\hat\gamma$ over $200$ repetitions versus shots per time point; dashed: $\propto N^{-1/2}$ (Figure~\ref{fig:ch06:shots}).
+\begin{center}\resizebox{!}{0.62\textheight}{\input{figures/ch06_shots.tex}}\end{center}}
+\ona{\begin{figure}[h]\centering\input{figures/ch06_shots.tex}
+\caption{Root-mean-square error of the least-squares estimate of a decay rate $\gamma=0.5$ from binomial estimates of $\langle\sigma_z\rangle$ at $12$ times, as a function of the number of shots $N$ per time, over $200$ Monte-Carlo repetitions; the dashed line is $\propto N^{-1/2}$. Generated by \texttt{code/ch06\_shots.py}.}\label{fig:ch06:shots}\end{figure}}
+\end{frame}
+
+\section{Quantum state tomography}
+
+\begin{frame}\ft{Sample complexity of tomography}
+\ona{Quantum state tomography (\Chap~\ref{C.AlgTomography}) estimates the full $\rho\in\Dens[\C^d]$, which has $d^2-1$ real parameters, from measurements on $N$ copies. The elementary approach measures each of the $d^2-1$ basis observables $F_j$ separately, $N/(d^2-1)$ shots each, and assembles $\hat\rho=\frac1d\Id+\sum_j\hat x_jF_j$. By Theorem~\ref{thm:ch06:hoeffding} each $\hat x_j$ has error $\bigO{\sqrt{d^2/N}}$, so the Hilbert--Schmidt error is $\norm{\hat\rho-\rho}_{2}=\bigO{\sqrt{d^4/N}}$ and, since $\norm{\cdot}_1\le\sqrt d\norm{\cdot}_2$, the trace-distance error is $\bigO{\sqrt{d^5/N}}$. Thus $N=\bigO{d^5/\eps^2}$ copies suffice for trace-distance accuracy $\eps$ with product (single-copy) measurements, and better single-copy schemes bring this down to $\bigO{d^3/\eps^2}$. Measuring many copies jointly (entangled measurements) does better still:}
+\begin{thm}[Sample complexity of tomography; \citealp{haah2016sample}, O'Donnell--Wright]\label{thm:ch06:tomography}
+There is a measurement on $N=\bigO{d^2/\eps^2}$ copies whose output $\hat\rho$ satisfies $\tracenorm{\hat\rho-\rho}\le\eps$ with high probability, and no procedure achieves this with $N=o(d^2/\eps^2)$ copies. For states of rank $r$, $N=\bigTheta{dr/\eps^2}$ copies are necessary and sufficient (up to logarithmic factors), and with single-copy measurements $\bigOmega{d^3/\eps^2}$ copies are necessary.
+\end{thm}
+\ona{Two remarks. The lower bound $\bigOmega{d^2/\eps^2}$ is a parameter-counting bound: $d^2-1$ parameters at accuracy $\eps$ each cannot be learned from fewer than $\sim d^2/\eps^2$ samples, and the argument is a packing argument plus Holevo's bound on the information carried by $N$ copies. The gap between $d^2$ and $d^3$ is the price of measuring copies one at a time, which is the realistic situation on most hardware. Since $d=2^q$ for $q$ qubits, full tomography is exponential in $q$ in either case: the identification results of \Chaps~\ref{C.StateSpace}--\ref{C.Frequency}, which take the coherence vector as input, inherit this cost, and the way out is structure: locality, sparsity, or low rank.}
+\onp{\begin{itemize}
+    \item Product measurements, na\"ive: $\bigO{d^5/\eps^2}$; best single-copy: $\bigTheta{d^3/\eps^2}$.
+    \item $d=2^q$: exponential either way; the escape is \alert{structure} (locality, sparsity, low rank).
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Classical shadows}
+\ona{Often one does not need $\rho$ but only the expectation values of $M$ observables $O_1,\dots,O_M$, for instance the $p$ measured observables at each of several times that feed the Hankel matrix. The classical-shadow protocol of \citet{Huang2020} applies a random unitary $U$ from a fixed ensemble (random Pauli rotations, or random Clifford circuits), measures in the computational basis, records the outcome $\ket{b}$, and stores the \emph{classical shadow} $\hat\rho=\mathcal M^{-1}(U^\dagger\ket b\bra bU)$, where $\mathcal M$ is the (known, invertible) average measurement channel. The shadow is an unbiased estimator of $\rho$, and $\Tr[O_k\hat\rho]$ is an unbiased estimator of $\Tr[O_k\rho]$ for every $k$ simultaneously.}
+\begin{thm}[\citealp{Huang2020}]\label{thm:ch06:shadows}
+With median-of-means post-processing, a number of shadows $N=\bigO{\log(M/\delta)\,\max_k\norm{O_k}_{\mathrm{shadow}}^2\,\eps^{-2}}$ suffices to estimate all $M$ expectation values to accuracy $\eps$ with probability $1-\delta$. For random Pauli measurements and $O_k$ acting on at most $w$ qubits, $\norm{O_k}^2_{\mathrm{shadow}}\le4^w\norm{O_k}_\infty^2$; for random Cliffords, $\norm{O_k}^2_{\mathrm{shadow}}\le3\Tr[O_k^2]$.
+\end{thm}
+\ona{The number of copies is logarithmic in the number of observables and independent of the dimension for local observables. For the identification problems of this course this is exactly what is needed: local Pauli readouts $\sigma^{k}_{x,y,z}$ at many times, all from the same pool of shots. The dependence on $\eps$ remains $\eps^{-2}$.}
+\onp{\begin{itemize}
+    \item Random rotation $+$ computational-basis measurement $\Rightarrow$ unbiased estimator $\hat\rho$ of $\rho$ (never stored as a matrix).
+    \item $\bigO{\log M\cdot 4^w/\eps^2}$ copies for $M$ $w$-local observables: \alert{independent of $d$}.
+    \item Ideal for local Pauli readouts at many times (Hankel data).
+\end{itemize}}
+\end{frame}
+
+\section{Lower bounds: Fisher information}
+
+\begin{frame}\ft{Cram\'er--Rao and the quantum Fisher information}
+\ona{Concentration inequalities give upper bounds. Lower bounds come from information theory. Let the outcome distribution $p_\theta(o)$ depend on a parameter $\theta\in\R^p$.}
+\begin{defn}[Fisher information]\label{def:ch06:fisher}
+$\CFI(\theta)_{ab}=\Expect_\theta\big[\partial_a\log p_\theta(o)\,\partial_b\log p_\theta(o)\big]$. For a quantum state $\rho_\theta$ measured with a POVM $\{E_o\}$, $p_\theta(o)=\Tr[E_o\rho_\theta]$; the \emph{quantum Fisher information} $\QFI(\theta)=\max_{\mathrm{POVM}}\CFI(\theta)$ (for a single parameter) is $\QFI=\Tr[\rho_\theta L_\theta^2]$ with the symmetric logarithmic derivative $L_\theta$ defined by $\partial_\theta\rho_\theta=\tfrac12\acomm{L_\theta}{\rho_\theta}$.
+\end{defn}
+\begin{thm}[Cram\'er--Rao; quantum Cram\'er--Rao]\label{thm:ch06:cramerrao}
+Any unbiased estimator $\hat\theta$ from $N$ independent shots satisfies $\Cov(\hat\theta)\succeq\big(N\CFI(\theta)\big)^{-1}\succeq\big(N\QFI(\theta)\big)^{-1}$. The classical bound is attained asymptotically by maximum likelihood; the quantum bound is attainable for a single parameter by measuring in the eigenbasis of $L_\theta$ \citep{HOLEVO_2019}.
+\end{thm}
+\ona{For a pure state $\ket{\psi_\theta}=\ee^{-\imath\theta H}\ket\psi$, $\QFI=4\Var_\psi(H)$; for the qubit decay of Figure~\ref{fig:ch06:shots}, $p_\theta$ is Bernoulli and $\CFI(\gamma)=\sum_t\frac{(\partial_\gamma z(t))^2}{1-z(t)^2}$, which reproduces the $N^{-1/2}$ envelope of the Monte-Carlo curve with the correct constant. The quantum Fisher information is a Riemannian metric on the manifold of states, the Bures metric of \Chap~\ref{C.GeometryStates}: distinguishability of neighbouring states and the cost of estimation are the same geometric quantity. The Cram\'er--Rao bound is a local statement; the identifiability conditions of \Chap~\ref{C.StateSpace} are the global prerequisite, since $\CFI$ is singular exactly along parameter directions that are locally unidentifiable.}
+\onp{Unitary family $\ee^{-\imath\theta H}\ket\psi$: $\QFI=4\Var_\psi(H)$. $\QFI$ is the Bures metric (\Chap~\ref{C.GeometryStates}); singular $\CFI$ $\Leftrightarrow$ locally unidentifiable direction.}
+\end{frame}
+
+\begin{frame}\ft{Heisenberg-limited Hamiltonian learning}
+\ona{The $N^{-1/2}$ law assumes independent shots on identically prepared copies. Time is a resource of a different kind: evolving for time $t$ under $\ee^{-\imath\theta Ht}$ multiplies the phase by $t$, so $\QFI=4t^2\Var_\psi(H)$ and the error in $\theta$ from a single shot scales as $1/t$. The \emph{Heisenberg limit} states that with total evolution time $T$ the error cannot be smaller than $\bigO{1/T}$, and it can be attained: robust phase estimation and its descendants estimate a frequency to accuracy $\eps$ with total time $T=\bigO{1/\eps}$ rather than $\bigO{1/\eps^2}$ \citep{Kimmel2017}. For many-body Hamiltonians $H=\sum_\alpha\theta_\alpha P_\alpha$ with $p$ local terms, one interleaves the evolution with random local Pauli twirls that isolate one term at a time (a Trotter-style ``Hamiltonian reshaping''), and learns all $p$ coefficients to accuracy $\eps$ with total time $\widetilde{O}(p/\eps)$ and $\widetilde{O}(p\,\mathrm{polylog}(1/\eps))$ experiments, independent of the system size beyond $p$ (Huang, Tong, Fang, Su 2023). Without the reshaping, i.e.\ learning from the natural dynamics with product-state preparations and local measurements, the standard-quantum-limit scaling $\bigO{p\,\mathrm{polylog}(p)/\eps^2}$ holds \citep{Bairey2019}, which is the regime of the identification methods of \Chaps~\ref{C.StateSpace}--\ref{C.Frequency}.}
+\onp{\begin{itemize}
+    \item Time as a resource: $\QFI\propto t^2$ $\Rightarrow$ error $\propto1/T$, the \alert{Heisenberg limit}.
+    \item Robust phase estimation attains $T=\bigO{1/\eps}$ per frequency \citep{Kimmel2017}.
+    \item Local $H=\sum_\alpha\theta_\alpha P_\alpha$: reshaping $\Rightarrow$ total time $\widetilde{O}(p/\eps)$ (Huang et al.\ 2023); natural dynamics: $\bigO{p\,\mathrm{polylog}(p)/\eps^2}$ \citep{Bairey2019}.
+\end{itemize}}
+\ona{\todo{Add a bib entry for Huang--Tong--Fang--Su (2023, Heisenberg-limited Hamiltonian learning) to refs.bib and cite it here.}}
+\end{frame}
+
+\section{Finite-sample identification of linear systems}
+
+\begin{frame}\ft{Learning a linear system from a single trajectory}
+\ona{Classical system identification traditionally gave asymptotic guarantees (consistency, asymptotic normality). The last decade produced \emph{finite-sample} bounds, sharp in the number of data points, for the discrete system $x_{k+1}=\mathbf Gx_k+w_k$ with process noise $w_k$ observed directly \citep{simchowitz2018learning,sarkar2019near} and for the partially observed system $y_k=\mathbf Cx_k+v_k$ \citep{oymak2019non,sarkar2019nonparametric,tsiamis2022statistical}. The typical statement for ordinary least squares from $K$ samples of a fully observed, stable system is}
+\begin{equation}\label{eq:ch06:ls}
+    \norm{\hat{\mathbf G}-\mathbf G}_{\infty}\;\le\;\bigO{\sigma_w\sqrt{\frac{n+\log(1/\delta)}{K\,\lambda_{\min}(\mathbf\Sigma_K)}}}\quad\text{with probability }1-\delta,
+\end{equation}
+\ona{where $\mathbf\Sigma_K$ is the empirical covariance of the states: the error decays as $K^{-1/2}$ and is governed by how well the trajectory excites every direction (the quantitative version of persistency of excitation, \Chap~\ref{C.Frequency}). For the partially observed case, \citet{oymak2019non} analyse Ho--Kalman on noisy Markov parameters: if the Hankel matrix $\Hankel$ is estimated with error $\norm{\hat\Hankel-\Hankel}\le\eps_H$ and its $n$-th singular value is $\sigma_n(\Hankel)$, then the realisation is recovered, up to a similarity transformation, with error $\bigO{\eps_H/\sigma_n(\Hankel)}$ times condition-number factors, and $\eps_H=\bigO{\sqrt{n/K}}$ for least-squares Markov parameters. \citet{tsiamis2022statistical} survey these results, and also exhibit systems that are identifiable but require exponentially many samples: structural identifiability does not imply practical identifiability.}
+\onp{\begin{itemize}
+    \item Fully observed: $\norm{\hat{\mathbf G}-\mathbf G}\lesssim\sigma_w\sqrt{(n+\log\frac1\delta)/(K\lambda_{\min}(\mathbf\Sigma_K))}$ \citep{simchowitz2018learning}.
+    \item Partially observed, Ho--Kalman: error $\lesssim\eps_H/\sigma_n(\Hankel)$, $\eps_H\sim\sqrt{n/K}$ \citep{oymak2019non}.
+    \item Identifiable $\neq$ learnable with few samples \citep{tsiamis2022statistical}.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Transfer to the coherence-vector model}
+\ona{The quantum setting differs in two ways from the classical one. First, the noise is not process noise but measurement noise of a very specific kind: each $y_k$ is an average of $N$ binomial shots, with variance at most $1/N$ and independent across times and observables (since each time point uses fresh copies). Second, there is no single trajectory: every time point $t_k$ is a separate experiment, prepared afresh. Hence the Markov parameters are estimated directly, with i.i.d.\ sub-Gaussian errors of scale $N^{-1/2}$, which is the most favourable case of the Ho--Kalman analysis. Combining Hoeffding for the $rs\,p$ entries of the Hankel matrix with the perturbation bound gives}
+\begin{propn}[Shots for Ho--Kalman on quantum data]\label{prop:ch06:hokalman}
+Let $\Hankel_{rs}(0)$ be formed from $p$ observables at $r+s-1$ times, each expectation estimated from $N$ shots. Then $\norm{\hat\Hankel-\Hankel}_2\le\sqrt{rsp}\,\sqrt{2\ln(2rsp/\delta)/N}$ with probability $1-\delta$, and the Ho--Kalman realisation satisfies $\norm{\hat{\mathbf G}_\tau-\mathbf T\mathbf G_\tau\mathbf T^{-1}}=\bigO{\norm{\hat\Hankel-\Hankel}/\sigma_n(\Hankel)}$. Consequently $N=\bigO{rsp\,\ln(rsp/\delta)/(\sigma_n(\Hankel)^2\eps^2)}$ shots per time point suffice for accuracy $\eps$ in the discrete generator.
+\end{propn}
+\ona{The quantity $\sigma_n(\Hankel)$, the smallest nonzero singular value, is the product of the conditioning of the observability and Krylov factors of Theorem~\ref{thm:ch05:hankelrank}; it is small when a mode is weakly observed (Figure~\ref{fig:ch04:singular} of \Chap~\ref{C.StateSpace}) or weakly excited, and then the shot count explodes even though the system is identifiable. The multirate reconstruction of $\mathbf A$ from $\hat{\mathbf G}_{\tau_j}$ adds a factor $1/\tau$ from the logarithm and a condition-number factor from the eigenvector matrix $\mathbf g$.}
+\onp{\begin{itemize}
+    \item Quantum data: no single trajectory, i.i.d.\ binomial errors of scale $N^{-1/2}$ on each Markov parameter (fresh copies per time).
+    \item $N=\bigO{rsp\ln(rsp/\delta)/(\sigma_n(\Hankel)^2\eps^2)}$ shots per time point.
+    \item $\sigma_n(\Hankel)$ small $\Leftrightarrow$ weakly observed or weakly excited mode: identifiable, yet expensive.
+\end{itemize}}
+\end{frame}
+
+\section{From the system matrix to the master equation}
+
+\begin{frame}\ft{Propagating the error into the reconstructed parameters}
+\ona{The identifiability statements of \Chap~\ref{C.StateSpace} are noiseless: they concern whether the parameters are determined by exact data. In practice the system matrix is estimated from tomographic data, and estimating each $x_j=\Tr[F_j\rho]$ from $S$ copies incurs a standard error $\bigO{S^{-1/2}}$, so that $\lVert\vecop{\tilde{\mathbf{A}}}-\vecop{\mathbf{A}}\rVert=\bigO{n\,S^{-1/2}}$ up to the conditioning of the sampling map. The numerical stability of the parameter reconstruction then depends on three factors: the accuracy with which we have identified $\mathbf{A}$, the numerical error when computing $\mathbf{M}$, and the condition number $\kappa (\mathbf{M}) = \norm{\mathbf{M}}\norm{\mathbf{M}^{-1}}$. Although $\mathbf{M}$ is constructed from the structure constants of the Lie algebra, these values may contain irrational numbers which need to be truncated, so we in fact invert $\tilde{\mathbf{M}} = \mathbf{M} + \Delta\mathbf{M}$. The error in the output parameter vector $\vec y =(\vec\theta,\vecop\Koss)$ is bounded by}
+\onp{\Chap~\ref{C.StateSpace} was noiseless. With $\lVert\vecop{\tilde{\mathbf A}}-\vecop{\mathbf A}\rVert=\bigO{nS^{-1/2}}$ from $S$ copies per expectation \citep{Parvaiz2025}:}
+\begin{equation}\label{eq:ch06:error_bound}
+    \norm{ \vec y - \tilde{\vec{y}} }  \leq \norm{ \tilde{\mathbf{M}}^{-1} } \norm{ \vecop{\tilde{\mathbf{A}}} - \vecop{\mathbf{A}} } +   \frac{\kappa(\mathbf{M})}{\frac{\norm{ \mathbf M}}{\norm{\Delta\mathbf M }} - \kappa(\mathbf M)} \norm{\mathbf{M}^{-1} }\norm{ \vecop{\mathbf{A}} },
+\end{equation}
+\ona{which is valid provided $\kappa(\mathbf{M})\lVert\Delta\mathbf{M}\rVert<\lVert\mathbf{M}\rVert$, i.e.\ as long as the truncation error does not exceed the distance of $\mathbf{M}$ to singularity. A similar analysis applies to the symmetric-Kossakowski algorithm, replacing $\mathbf{M}$ with $\mathbf{R}_{1}$ or  $\mathbf{R}_{3}$ and $\mathbf{A}$ with $\mathbf{A}^{(l)}$ or $\mathbf{A}^{(d)}$ respectively. Combined with the sampling error, the achievable precision of the reconstructed parameters therefore degrades as $\kappa(\mathbf{M})\,n\,S^{-1/2}$ \citep{Parvaiz2025}. Once the identifiability conditions are satisfied, one can increase the number of samples and gradually increase the precision of the identification method; the asymptotic \citep{JANSSON19981507,KNUDSEN200181} and finite-sample \citep{oymak19,xin22} theory of the previous section quantifies the rate. Since the reconstruction is linear, the projection of $\hat\Koss$ onto the positive semidefinite cone (\Chap~\ref{C.StateSpace}) is non-expansive and does not amplify \eqref{eq:ch06:error_bound}.}
+\onp{\begin{itemize}
+    \item First term: tomography error amplified by $\norm{\mathbf M^{-1}}$; second: truncation of irrational structure constants.
+    \item Net precision of $(\vec\theta,\Koss)$: $\kappa(\mathbf M)\,n\,S^{-1/2}$.
+    \item PSD projection of $\hat\Koss$ is non-expansive: no amplification.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Putting the pieces together}
+\ona{We can now give a complete, if crude, shot budget for the pipeline of \Chaps~\ref{C.StateSpace}--\ref{C.Frequency}: $N$ shots per expectation value, $p$ observables, $K$ times, $n+2$ sampling rates.}
+\begin{itemize}\setlength\itemsep{0.4em}
+    \item Expectation values: error $\eps_0=\bigO{\sqrt{\ln(pK/\delta)/N}}$ each (Hoeffding), total shots $N p K (n+2)$.
+    \item Discrete generator by Ho--Kalman: error $\eps_1=\bigO{\sqrt{rsp}\,\eps_0/\sigma_n(\Hankel)}$.
+    \item Continuous generator by multirate logarithm: error $\eps_2=\bigO{\kappa(\mathbf g)\,\eps_1/\tau_{\min}}$.
+    \item Master-equation parameters: error $\eps_3=\bigO{\kappa(\mathbf M)\,\eps_2}$ by \eqref{eq:ch06:error_bound}.
+\end{itemize}
+\ona{Every factor is a condition number of an object we met before: the observability/Krylov factors (\Chap~\ref{C.StateSpace}), the eigenvector matrix (\Chap~\ref{C.Frequency}), and the reconstruction map. Inverting, with $\kappa=\kappa(\mathbf M)\kappa(\mathbf g)/(\sigma_n(\Hankel)\tau_{\min})$, we need $N=\bigO{\kappa^2\,rsp\,\ln(pK/\delta)/\eps_3^2}$ shots per expectation value: the $\eps^{-2}$ of the standard quantum limit, times the square of the total conditioning. Lower bounds from Cram\'er--Rao show the $\eps^{-2}$ cannot be improved with independent shots; only coherent, time-as-resource protocols (Heisenberg-limited learning) change the exponent, and only for the Hamiltonian part. \Chap~\ref{C.AlgTomography} turns these estimates into algorithms; \Chap~\ref{C.Revisited} evaluates them on the running examples.}
+\onp{Total: $N=\bigO{\kappa^2\,rsp\,\ln(pK/\delta)/\eps^2}$ with $\kappa=\kappa(\mathbf M)\kappa(\mathbf g)/(\sigma_n(\Hankel)\tau_{\min})$. The $\eps^{-2}$ is the standard quantum limit; the $\kappa^2$ is the geometry of the problem.}
+\end{frame}
+
+\begin{frame}\ft{Summary}
+\begin{itemize}\setlength\itemsep{0.5em}
+    \item Shots to expectation values: $\eps^{-2}\ln(1/\delta)$ (Hoeffding); the $N^{-1/2}$ law is tight for independent shots (Cram\'er--Rao).
+    \item Tomography: $\bigTheta{d^2/\eps^2}$ copies with entangled measurements, $\bigTheta{d^3/\eps^2}$ single-copy; classical shadows give $M$ local observables for $\bigO{\log M/\eps^2}$ copies.
+    \item Time is a resource: Heisenberg-limited Hamiltonian learning reaches $\bigO{1/\eps}$ total time.
+    \item Finite-sample system identification: Ho--Kalman error $\propto\norm{\hat\Hankel-\Hankel}/\sigma_n(\Hankel)$; identifiable is not the same as cheaply learnable.
+    \item Master-equation reconstruction adds $\kappa(\mathbf M)$; the whole pipeline costs $\bigO{\kappa^2/\eps^2}$ shots.
+\end{itemize}
+\end{frame}
+
+\biblio
+\end{document}

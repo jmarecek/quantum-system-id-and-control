@@ -1,0 +1,548 @@
+%\documentclass[overheadsbeamer.tex]{subfiles}
+\documentclass[handoutsbeamer.tex]{subfiles}
+
+\begin{document}
+
+\ona{ \setcounter{chapter}{3} } % ONE LESS
+\lecture{Conditions for Observability and Controllability in State Space}{Lect04}
+\chapter{Conditions for Observability and Controllability in State Space}\label{C.StateSpace}
+
+\begin{frame}\ft{Outline}
+\ona{\Chaps~\ref{C.Closed} and~\ref{C.Open} turned quantum dynamics into state-space models: a bilinear system on the unitary group for closed systems, and a linear or bilinear system for the coherence vector of an open system. This \chap{} asks the two classical questions of systems theory about these models. \emph{Controllability}: which states can the inputs reach? \emph{Observability}: which states leave a trace in the outputs? Both are rank conditions in state space, and both are prerequisites for the third question, \emph{identifiability}: when do the measured data determine the model? We follow \citet{Parvaiz2025} and the survey in \citep{parvaiz2023generating}, and add the classical background needed.}
+\onp{Outline of today's lecture:
+\begin{itemize}\setlength\itemsep{0.8em}
+    \item linear systems: Kalman rank conditions for controllability and observability;
+    \item bilinear systems: two qubit examples, with and without a hidden state; span criteria, input--output equivalence, similarity;
+    \item closed systems: the Lie algebra rank condition (Jurdjevic--Sussmann);
+    \item open systems: observability of the coherence vector, accessible sets, informationally complete readout;
+    \item identifiability: from the system matrix back to the master equation.
+\end{itemize}}
+\ona{\medskip\noindent\textit{Sources.} This \chap{} draws on \citep{parvaiz2025identifiability,parvaiz2026survey}; passages from these papers are reproduced with light editing.}
+\onp{\vfill{\scriptsize Sources: \citep{parvaiz2025identifiability,parvaiz2026survey}.}}
+\end{frame}
+
+\section{Linear systems}
+
+\begin{frame}\ft{State-space models}
+\ona{The two relevant systems are the autonomous linear dynamical system (LDS) and the general bilinear dynamical system (BDS), which we describe here more formally in the state space representation. Typically, an LDS can be written in the form}
+\onp{Linear dynamical system (LDS):}
+\begin{equation}\label{eq:ch04:LDS}
+    \begin{aligned}
+        &\dot{\vec{x}}(t) = \mathbf{A} \vec{x}(t) + \mathbf{B} \vec{u}(t), \\
+        &\vec{y}(t) = \mathbf{C}\vec{x}(t) + \mathbf{D}\vec{u}(t),
+    \end{aligned}
+\end{equation}
+\ona{where $\vec{x}(t) \in \R^{n}$ is the state vector, $\vec{y}(t) \in \R^{p}$ is the observed vector, and $\vec u(t) \in \R^m$ is the input vector. $\mathbf{A} \in \R^{n \times n}, \mathbf{B} \in \R^{n\times m}, \mathbf{C} \in \R^{p\times n}, \mathbf{D} \in \R^{p\times m}$ represent the system, input, output, and feed-through matrices, respectively. The feed-through matrix is often neglected for physical systems and hence we set $\mathbf{D} = 0$. Note that autonomous systems, which do not have any inputs, can still be written in this form by choosing the input to be the Dirac delta with the initial state as the nonzero value at $t=0$, i.e., $\vec u(t)=\vec x(0)\delta(t)$ and $\mathbf B=\Id$. The quadruple $\Sigma=\{\mathbf A,\mathbf B,\mathbf C,\mathbf D\}$ is called a \emph{state-space realisation}.}
+\onp{\begin{itemize}
+    \item $\vec x\in\R^n$ state, $\vec u\in\R^m$ input, $\vec y\in\R^p$ output; $\mathbf D=0$ for us.
+    \item Autonomous system: $\vec u(t)=\vec x(0)\delta(t)$, $\mathbf B=\Id$.
+    \item $\Sigma=\{\mathbf A,\mathbf B,\mathbf C,\mathbf D\}$: a \alert{realisation}.
+    \item For an open quantum system: $\vec x$ is the coherence vector, $\vec y$ the vector of measured expectation values (\Chap~\ref{C.Open}).
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Prepare, evolve, measure}
+\ona{Figure~\ref{fig:ch04:blockdiagram} draws the model as a block diagram, the control engineer's view of a quantum experiment. The experimenter chooses how to prepare the system, how to drive it and what to measure; nature decides how the state evolves. Identification estimates the blocks given by nature from the signals that pass through the blocks we choose, and the rank conditions of this \chap{} say when the chosen blocks let enough of the others through. In a classical control loop one would also feed $\vec y$ back into $\vec u$; in most quantum experiments the loop is open, since measurement disturbs the state, and $\vec y$ is estimated from many repetitions.}
+\ona{\begin{figure}[H]\centering
+\resizebox{0.95\linewidth}{!}{\input{figures/ch04_blockdiagram.tex}}
+\caption{The bilinear state-space model of an open quantum system as a block diagram. Rose: the blocks chosen by the experimenter, namely the preparation $\mathbf B$, the controls $u_j$ and the readout $\mathbf C$. Blue: the blocks given by nature and to be identified, namely the generator $\mathbf A$ with the affine term $\vec\beta$, and the coupling matrices $\mathbf N_j$, which are known once the controls are calibrated. Without the lower loop the model is linear. Generated by \texttt{code/ch04\_blockdiagram.py}.}\label{fig:ch04:blockdiagram}
+\end{figure}}
+\onp{\begin{center}\resizebox{!}{0.78\textheight}{\input{figures/ch04_blockdiagram.tex}}\end{center}}
+\end{frame}
+
+\begin{frame}\ft{Controllability and observability}
+\begin{defn}[Controllability]\label{def:ch04:controllability}
+A system \eqref{eq:ch04:LDS} is controllable if for any given initial state $\vec x_0$ and final state $\vec{x}_{1}$ there exists a control $\vec u(\cdot) : [0, t] \rightarrow \R^{m}$ such that $\vec{x}(t) = \vec{x}_1$.
+\end{defn}
+\begin{defn}[Observability]\label{def:ch04:observability}
+A system \eqref{eq:ch04:LDS} is observable if for a given input $\vec u(\cdot)$ and output $\vec y(\cdot)$ on $[0,t]$ one can uniquely determine the initial state $\vec x(0)$.
+\end{defn}
+\ona{These concepts are prerequisites for identifiability and both are required to be satisfied for identifiability to hold. Controllability ensures that every degree of freedom of the state can be reached from an arbitrary admissible input, in order that the system parameters can influence the dynamics. Without this, regardless of experimental design, system parameters governing an unreachable subspace can never be excited and hence will not appear in the output trajectory. Similarly, the dual requirement of observability ensures that every degree of freedom leaves a trace in the measured output. Systems that satisfy both properties are referred to as \emph{minimal} \citep{Sarachik_1997}.}
+\onp{\begin{itemize}
+    \item Controllability: every direction of the state can be excited by the inputs.
+    \item Observability: every direction of the state leaves a trace in the outputs.
+    \item Both together $=$ \alert{minimal} realisation, the prerequisite of identifiability.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Kalman rank conditions}
+\ona{A practical way to determine the controllability and observability of a system is to compute the rank of the corresponding controllability and observability matrices, $\CM \in \R^{n\times nm}$ and $\OM \in \R^{np \times n}$, respectively. These are defined as follows}
+\onp{Test by rank:}
+\begin{equation}\label{eq:ch04:OMCM}
+        \OM^{(\text{lin})} = \begin{bmatrix}
+            \mathbf{C} \\ \mathbf{CA} \\ \vdots \\ \mathbf{C}\mathbf{A}^{n-1}
+        \end{bmatrix}\in\R^{np\times n}, \qquad
+        \CM^{(\text{lin})} = \begin{bmatrix}
+            \mathbf{B} & \mathbf{AB} & \cdots & \mathbf{A}^{n-1}\mathbf{B}
+        \end{bmatrix}\in\R^{n\times nm}.
+\end{equation}
+\begin{thm}[Kalman]\label{thm:ch04:kalman}
+System \eqref{eq:ch04:LDS} is controllable if and only if $\rank\CM^{(\mathrm{lin})}=n$, and observable if and only if $\rank\OM^{(\mathrm{lin})}=n$ \citep{KALMAN1960491,Antsaklis97}.
+\end{thm}
+\ona{\begin{pf}
+(Observability.) With $\vec u\equiv0$ the output is $\vec y(t)=\mathbf C\ee^{\mathbf At}\vec x(0)$. Differentiating $k$ times at $t=0$ gives $\vec y^{(k)}(0)=\mathbf C\mathbf A^{k}\vec x(0)$, so the output determines $\OM^{(\mathrm{lin})}\vec x(0)$; by Cayley--Hamilton, powers $\mathbf A^{k}$ with $k\ge n$ are linear combinations of lower powers, so nothing more is determined. The map $\vec x(0)\mapsto \vec y(\cdot)$ is therefore injective iff $\OM^{(\mathrm{lin})}$ has trivial kernel. (Controllability.) The reachable set from $0$ is $\{\int_0^t\ee^{\mathbf A(t-s)}\mathbf B\vec u(s)\,\mathrm{d}s\}$, which by the same Cayley--Hamilton argument is the column space of $\CM^{(\mathrm{lin})}$. With nonzero inputs one shifts by $\ee^{\mathbf At}\vec x_0$.
+\end{pf}
+Note that, if the initial state may be arbitrary and $n=p$, the matrix $\mathbf B$ may be taken to be the identity. This leads to controllability being trivially satisfied. Observe also the duality: $(\mathbf A,\mathbf C)$ is observable iff $(\mathbf A^{\top},\mathbf C^{\top})$ is controllable, since $\OM^{(\mathrm{lin})}(\mathbf A,\mathbf C)^{\top}=\CM^{(\mathrm{lin})}(\mathbf A^\top,\mathbf C^\top)$.}
+\onp{\begin{itemize}
+    \item Proof idea: $\vec y^{(k)}(0)=\mathbf C\mathbf A^k\vec x(0)$; Cayley--Hamilton stops at $k=n-1$.
+    \item Arbitrary state preparation $\Leftrightarrow$ $\mathbf B=\Id$ $\Rightarrow$ controllability for free.
+    \item Duality: $(\mathbf A,\mathbf C)$ observable $\Leftrightarrow$ $(\mathbf A^\top,\mathbf C^\top)$ controllable.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Reachable and unobservable subspaces}
+\ona{Figure~\ref{fig:ch04:kalman} shows the two rank conditions as subspaces of a three-dimensional state space. The column space of $\CM^{(\mathrm{lin})}$ is the set of states that the inputs can reach from rest. Here it is a plane, and no input can push the state off it. The kernel of $\OM^{(\mathrm{lin})}$ is the set of directions that leave no trace in the output. Here it is a line, and two initial states that differ along it produce exactly the same data. Controllability fails when the plane is not the whole space, and observability when the line is not just the origin. Data can only ever reveal the part of the system that is both reachable and observable, which is the minimal realisation of Theorem~\ref{thm:ch04:similarity}; here it is two-dimensional.}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch04_kalman.tex}}
+\caption{A linear system on $\R^3$ with $\rank\CM^{(\mathrm{lin})}=\rank\OM^{(\mathrm{lin})}=2$. (a) Inputs applied from $\vec x(0)=0$ (blue, green) never leave the reachable plane $\ran\CM^{(\mathrm{lin})}$ (shaded); two initial states that differ along the unobservable line $\ker\OM^{(\mathrm{lin})}$ (dashed) evolve differently (gold, red). (b) Their outputs coincide. Generated by \texttt{code/ch04\_kalman.py}.}\label{fig:ch04:kalman}
+\end{figure}}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch04_kalman.tex}}\end{center}
+Inputs never leave $\ran\CM$; initial states differing along $\ker\OM$ give the same data.}
+\end{frame}
+
+\section{Bilinear systems}
+
+\begin{frame}\ft{Bilinear dynamical systems}
+\ona{The second type of system naturally occurring in open quantum system identification is the bilinear dynamical system (BDS). More succinctly, the dynamics of the controlled quantum system can be written as}
+\onp{Controlled open quantum systems are \alert{bilinear} (\Chap~\ref{C.Open}):}
+\begin{equation}\label{eq:ch04:BDS}
+\begin{aligned}
+    \dot{\vec{x}}(t) &= \mathbf{A}\vec{x}(t) + \sum_{j}\mathbf{N}_{j}u_{j}(t) \vec{x}(t),\qquad
+    \vec{x}(0) = \vec{b} = \mathbf{B}\vec{x}_{0},\qquad
+    \vec{y}\left(t\right) =\mathbf{C}\vec{x}\left(t\right).
+\end{aligned}
+\end{equation}
+\ona{Here, the variables are the same as in \eqref{eq:ch04:LDS} with the addition of the bilinear coupling matrices $\mathbf{N}_j \in \R^{n\times n}$. This is a BDS of type II in the language of \citet{Sontag2009}, where the initial state is fixed, $\vec x(0) = \vec b$. Here $\mathbf{B}$ encodes the state-preparation map and, as in the linear case, enters only through the initial condition, which is why the direct driving term $\mathbf{B}\vec{u}$ of the general bilinear model is absent. The presence of $\mathbf{N}_{j}$ requires us to modify the definitions of controllability and observability \citep{Isidori1973, Sontag2009}. In the case of the BDS \eqref{eq:ch04:BDS}, this is given by the criteria}
+\onp{Span criteria replace the Kalman matrices \citep{Isidori1973,Sontag2009}:}
+\begin{equation}\label{eq:ch04:BDS_reach_and_obs}
+\begin{aligned}
+\linspan\left\{ \mathbf{A}_{i_{1}}\cdots \mathbf{A}_{i_{k}}\vec{b}:\mathbf{A}_{j}\in\left\{ \mathbf{A},\mathbf{N}_1,\dots\right\} ,k\leq n-1\right\}  &=\R^{n}, \\
+\linspan\left\{ (\mathbf{A}_{i_{1}}\cdots \mathbf{A}_{i_{k}})^{\top}\mathbf{C}_{r\cdot}^{\top}:\mathbf{A}_{j}\in\left\{ \mathbf{A},\mathbf{N}_1,\dots\right\} ,k\leq n-1,r \leq p \right\} &=\R^{n},
+\end{aligned}
+\end{equation}
+\ona{respectively, where $\mathbf{C}_{r\cdot}$ denotes the $r$-th row of the observation matrix. These criteria can be interpreted as the full rank of the matrices whose columns are the listed products; we denote these matrices $\CM^{(\mathrm{bi})}$ and $\OM^{(\mathrm{bi})}$. For $\mathbf N_j=0$ they reduce to \eqref{eq:ch04:OMCM}.}
+\onp{Full rank of $\CM^{(\mathrm{bi})}$, $\OM^{(\mathrm{bi})}$; for $\mathbf N_j=0$ back to Kalman.}
+\end{frame}
+
+\begin{frame}\ft{Example: a driven qubit, nothing hidden}
+\ona{The simplest bilinear system in this course is a single qubit driven by one control field. Its Hamiltonian, $H(t)=-\frac\omega2\sigma_z+\frac{u(t)}2\sigma_x$, has a drift, which makes the qubit precess about the $z$-axis at the frequency $\omega$, and a control term, which rotates it about the $x$-axis at a rate set by the amplitude $u(t)$ that we choose. The state is the Bloch vector $\vec r=(x,y,z)$ of \Chap~\ref{C.Closed}, which for one qubit is the coherence vector up to a factor $\sqrt2$, and the Schr\"odinger equation becomes}
+\onp{One qubit, $H(t)=-\frac\omega2\sigma_z+\frac{u(t)}2\sigma_x$; the state is the Bloch vector $\vec r=(x,y,z)$:}
+\begin{equation}\label{eq:ch04:driven}
+\dot{\vec r}=\big(\mathbf A+u(t)\,\mathbf N\big)\vec r,\qquad
+\mathbf A=\begin{pmatrix}0&\omega&0\\-\omega&0&0\\0&0&0\end{pmatrix},\qquad
+\mathbf N=\begin{pmatrix}0&0&0\\0&0&-1\\0&1&0\end{pmatrix},
+\end{equation}
+\ona{a bilinear system \eqref{eq:ch04:BDS} with one input, a state of dimension $n=3$, and no affine term. Both matrices are antisymmetric, because a closed system only rotates the Bloch vector: its length, the purity, never changes (Figure~\ref{fig:ch04:driven}(a)). Measuring $\sigma_x$, $\sigma_y$ and $\sigma_z$ gives $\vec y=\vec r$, so that $\mathbf C=\Id$ and nothing is hidden: the state is exactly what we can measure. The input enters multiplied by the state, and this is what makes the system bilinear rather than linear. In a linear system $\dot{\vec x}=\mathbf A\vec x+\mathbf B\vec u$, doubling the input doubles its effect on the state. Here, a resonant pulse ($\omega=0$) of area $uT$, applied to $\ket0$, leaves $\langle\sigma_z\rangle=\cos(uT)$: a pulse of area $\pi$ flips the qubit, and a pulse of twice that area brings it back (Figure~\ref{fig:ch04:driven}(b)).}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch04_driven.tex}}
+\caption{A driven qubit, the bilinear system \eqref{eq:ch04:driven}. (a) Trajectories from $\ket0$ for the constant controls $u=0.6$, $1.5$ and $4$, with $\omega=1$: rotations about tilted axes, which stay on the sphere (solid in front, dotted behind). (b) After a resonant pulse of area $uT$, $\langle\sigma_z\rangle=\cos(uT)$. Dashed: a response linear in the area, which agrees at $uT=0$ and $uT=\pi$ but would never come back. Generated by \texttt{code/ch04\_examples.py}.}\label{fig:ch04:driven}
+\end{figure}}
+\onp{\begin{center}\resizebox{0.92\linewidth}{!}{\input{figures/ch04_driven.tex}}\end{center}
+$\mathbf A,\mathbf N$ antisymmetric: rotations. $\mathbf C=\Id$: nothing hidden. Not linear in $u$: $\pi$ flips, $2\pi$ returns.}
+\end{frame}
+
+\begin{frame}\ft{Example: a qubit with a hidden defect}
+\ona{Now let the same qubit interact with a defect in its environment: a two-level system, such as a charge trap, that we neither drive nor measure, and which itself loses energy into a large bath at the rate $\kappa$ (\Chap~\ref{C.Open}). With an exchange coupling of strength $g$,}
+\onp{Qubit $S$, coupled to a defect $T$ that decays into a bath:}
+\begin{equation}\label{eq:ch04:hidden}
+H(t)=-\tfrac\omega2\big(\sigma_z^S+\sigma_z^T\big)+g\big(\sigma_+^S\sigma_-^T+\sigma_-^S\sigma_+^T\big)+\tfrac{u(t)}2\sigma_x^S,\qquad L=\sqrt\kappa\,\sigma_-^T .
+\end{equation}
+\ona{The state of qubit and defect together is the coherence vector of two qubits, with $15$ components, and the GKSL equation is again a bilinear system, $\dot{\vec x}=(\mathbf A+u\mathbf N)\vec x+\vec\beta$, now with an affine term from the dissipation. But we measure only the qubit. The three rows of $\mathbf C$ pick the components along $\sigma_x^S$, $\sigma_y^S$ and $\sigma_z^S$, and the other twelve, which describe the defect and its correlations with the qubit, form a \emph{hidden state}: they never appear in the output directly, but they shape its future. Starting with the qubit excited, the excitation passes to the defect and partly comes back before it is lost to the bath, so that the excited population of the qubit revives (Figure~\ref{fig:ch04:hidden}(b)). Since the qubit's state started from $\ket0$ never changes, this population is also the distinguishability of the two initial states, and its revival is the non-Markovian behaviour of \Chap~\ref{C.Open}. The best model of the qubit alone, an exponential decay, misses it, while the bilinear model with the hidden state reproduces it exactly: this is the Markovian embedding of \Chap~\ref{C.Open} again. Hidden does not mean unobservable. Through the dynamics, the readout of the qubit sees $8$ of the $16$ dimensions of the embedded state when $u\equiv0$, and $11$ when the control is used, since in a bilinear system the input also shapes what the output reveals. Computer scientists will recognise the hidden state of a hidden Markov model, or of a recurrent neural network: the observed sequence is generated by a larger state that is never observed directly.}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch04_hidden.tex}}
+\caption{A qubit with a hidden defect, the bilinear system with the Hamiltonian \eqref{eq:ch04:hidden}, $g=1$ and $\kappa=0.8$. (a) The qubit is driven and measured, the defect is neither; of the $15$ components of the coherence vector, $3$ are seen and $12$ are hidden. (b) Starting from $\ket1$ in the qubit and $\ket0$ in the defect, with $u=0$: the excited populations of the qubit (blue) and of the hidden defect (grey), and the best exponential fit to the qubit's population (red). Generated by \texttt{code/ch04\_examples.py}.}\label{fig:ch04:hidden}
+\end{figure}}
+\onp{\begin{center}\resizebox{0.95\linewidth}{!}{\input{figures/ch04_hidden.tex}}\end{center}
+\vspace{-1ex}{\small $15$ components: $3$ seen, $12$ \alert{hidden}. The qubit's population revives: memory in the hidden state. Observable through the qubit: $8$ of $16$ ($u=0$), $11$ with control.}}
+\end{frame}
+
+\begin{frame}\ft{Input--output equivalence and similarity}
+\ona{Two systems are said to be I/O indistinguishable under an input $\vec{u}$ if it leads to the same output response. If this is true for all inputs in some class $\mathcal{U}$, then we say these two systems are indistinguishable under $\mathcal{U}$ and write $\Sigma \underrel{\mathcal{U}}{\equiv} \widehat{\Sigma}$. If $\mathcal{U}$ is the set of all inputs, the two systems are \emph{input--output equivalent}. This is related to similarity: $\Sigma$ is similar to $\widehat{\Sigma}$ if one can convert between the two under a change of variables $\vec{x} = \mathbf{T}\widehat{\vec{x}}$ with $\mathbf T\in\R^{n\times n}$ invertible, written $\Sigma \sim\widehat{\Sigma}$. In terms of the system matrices,}
+\onp{Change of coordinates $\vec x=\mathbf T\widehat{\vec x}$ leaves the data unchanged:}
+\begin{equation}\label{eq:ch04:similarity}
+        \widehat{\mathbf A} = \mathbf{T}^{-1} \mathbf A \mathbf{T}, \qquad
+        \widehat{\mathbf N}_j = \mathbf{T}^{-1} \mathbf{N}_j \mathbf{T}, \qquad
+        \widehat{\vec{b}} = \mathbf{T}^{-1}\vec{b}, \qquad
+        \widehat{\mathbf{C}}  = \mathbf{C} \mathbf{T}.
+\end{equation}
+\begin{thm}[Minimal realisations are unique up to similarity]\label{thm:ch04:similarity}
+For minimal systems, i.e., having full-rank controllability and observability matrices, I/O equivalence implies and is implied by similarity: $\Sigma \equiv \widehat{\Sigma}  \iff \Sigma \sim \widehat{\Sigma}$. For bilinear systems see \citet{Sontag2009}; for linear systems \citet{Sontag1998}.
+\end{thm}
+\ona{This theorem is the reason why controllability and observability matter for identification: any algorithm that fits the data returns \emph{some} realisation, and Theorem~\ref{thm:ch04:similarity} says that all of them are related by a coordinate change, provided the true system was minimal. Section~\ref{sec:ch04:identifiability} shows how the coordinate change is eliminated in the quantum setting.}
+\onp{Any data-fitting algorithm returns \emph{a} realisation; minimality says all of them differ only by $\mathbf T$.}
+\end{frame}
+
+\section{Controllability of closed systems}
+
+\begin{frame}\ft{The Lie algebra rank condition}
+\ona{For closed systems (\Chap~\ref{C.Closed}) the state is the propagator $U\in\Un[d]$, and the model $\dot U=-\imath(\Hdrift+\sum_k u_k\Hctrl)U$ is a right-invariant bilinear system on a compact Lie group. Linear rank conditions do not apply directly, since the state space is a manifold, but their role is played by the \emph{dynamical Lie algebra} $\mathfrak{g}=\Lie\{-\imath\Hdrift,-\imath\Hctrl[1],\dots,-\imath\Hctrl[m]\}$ (Definition~\ref{def:dla} in \Chap~\ref{C.Closed}). Note the analogy with \eqref{eq:ch04:BDS_reach_and_obs}: iterated products of the generators are replaced by iterated commutators. Figures~\ref{fig:ch02:lie} and~\ref{fig:ch02:closure} of \Chap~\ref{C.Closed} show both ingredients: a loop of two flows that fails to close, by a step in the direction of their bracket, and the dimension of the span of brackets growing level by level until it saturates.}
+\onp{Closed system $\dot U=-\imath(\Hdrift+\sum_k u_k\Hctrl)U$; dynamical Lie algebra $\mathfrak g=\Lie\{-\imath\Hdrift,-\imath\Hctrl[1],\dots\}$: iterated \alert{commutators} instead of products.}
+\begin{thm}[Jurdjevic--Sussmann]\label{thm:ch04:js}
+Let the controls be piecewise constant and unbounded. The reachable set $\Reach$ from $\Id$ is the connected Lie subgroup $\ee^{\mathfrak g}$ of $\Un[d]$ with Lie algebra $\mathfrak g$. In particular, the system is \emph{operator controllable} ($\Reach=\SU[d]$ up to phase) if and only if $\mathfrak g\supseteq\liesu[d]$, i.e.\ $\dim\mathfrak g\ge d^2-1$ \citep{DAlessandro2021}.
+\end{thm}
+\ona{\begin{pf}[Sketch]
+With piecewise-constant controls the propagator is a product of exponentials $\ee^{X_k t_k}$, $X_k=-\imath(\Hdrift+\sum_j u_j^{(k)}\Hctrl[j])\in\mathfrak g$, so $\Reach$ is contained in the group $G=\ee^{\mathfrak g}$ generated by $\mathfrak g$ and is a semigroup in $G$. The key facts are: (i) the identity $\ee^{sX}\ee^{sY}\ee^{-sX}\ee^{-sY}=\ee^{s^2[X,Y]+O(s^3)}$ shows that directions in $[\mathfrak g,\mathfrak g]$ are approximately reachable, so $\Reach$ has non-empty interior in $G$; (ii) on a \emph{compact} group, every one-parameter semigroup $\{\ee^{Xt}:t\ge0\}$ has $\ee^{-Xt}$ in its closure, so the closure of $\Reach$ is a closed subgroup of $G$ with non-empty interior, hence equals $G$; (iii) a semigroup with non-empty interior that is dense in a connected group is the whole group. For $\mathfrak g=\liesu[d]$ or $\lieu[d]$ one obtains all of $\SU[d]$ or $\Un[d]$.
+\end{pf}
+This is the theorem announced as Theorem~\ref{thm:js-preview} in \Chap~\ref{C.Closed}. For a single qubit, $\{-\imath\sigma_z,-\imath\sigma_x\}$ generates $\liesu[2]$ because $\comm{\sigma_z}{\sigma_x}=2\imath\sigma_y$; for two qubits, Exercise~\ref{exe:su4} asked you to verify that a $ZZ$ drift together with local $X$ and $Y$ controls generates $\liesu[4]$. The dimension of $\mathfrak g$ is computed numerically by repeatedly commuting and testing linear independence, exactly as in the snippet below. Pure-state controllability, i.e., reaching every unit vector rather than every unitary, is weaker; it holds iff the group $\ee^{\mathfrak g}$ acts transitively on the unit sphere, which happens for $\liesu[d]$ and also for $\mathfrak{sp}(d/2)$ \citep{DAlessandro2021}.}
+\onp{\begin{itemize}
+    \item Proof: commutators are approximately reachable ($\ee^{sX}\ee^{sY}\ee^{-sX}\ee^{-sY}\approx\ee^{s^2[X,Y]}$); compactness turns the reachable semigroup into a group.
+    \item Qubit: $\comm{\sigma_z}{\sigma_x}=2\imath\sigma_y$ $\Rightarrow$ $\liesu[2]$. Two qubits: $ZZ$ drift $+$ local $X,Y$ $\Rightarrow$ $\liesu[4]$ (dimension 15).
+    \item Pure-state controllability is weaker (transitivity on the sphere).
+\end{itemize}}
+\end{frame}
+
+\begin{frame}[fragile]\ft{Computing the Lie closure and the observability matrix}
+\ona{The abstract rank conditions become two short loops. The Lie closure repeatedly commutes the current generators and keeps the results that increase the rank of the (real) span; the observability matrix is a stack of $\mathbf C\mathbf A^k$. The script \texttt{code/ch04\_observability.py} implements both and reproduces the numbers quoted in this \chap{}.}
+\ona{\lstinputlisting[style=python,firstline=65,lastline=95]{code/ch04_observability.py}}
+\onp{\lstinputlisting[style=python,basicstyle=\ttfamily\tiny,numbers=none,firstline=75,lastline=95]{code/ch04_observability.py}}
+\onp{Output: $\dim\Lie\{\imath Z,\imath X\}=3$, $\dim\Lie\{\imath ZZ,\imath X_1,\imath Y_1,\imath X_2,\imath Y_2\}=15$.}
+\end{frame}
+
+\begin{frame}\ft{Open systems: accessibility rather than controllability}
+\ona{The identifiability of Markovian open quantum systems was also considered by \citet{Burgarth_2014}. They build on their previous work \citep{Burgarth_2012}, where they treat closed quantum systems as a black box that is known to be unitary and found that they are identifiable up to unitary equivalence if controllability is satisfied. In the open case, the unitary constraint is removed and dynamics are governed by a driven Lindblad equation $\dot \rho(t) = \Lind_0(\rho(t)) + \sum_{k} u_{k}(t) \Lind_{k}(\rho(t))$ with Lindblad super-operators $\Lind_k$. Because Markovian open systems are irreversible, operator controllability is not useful here, and instead one considers the concept of operator \emph{accessibility}, which states that all directions can be explored even when the dynamics are irreversible \citep{Dirr08}. By expressing the density matrix in an orthogonal Hermitian basis, they arrive at the affine LDS form $\dot{\vec x}=\mathbf A\vec x+\vec\beta$ with $ \mathbf{A} = \mathbf{A}_0 + \sum_{k} u_{k}(t)\mathbf{A}_k$ and $\vec \beta = \vec \beta_0 + \sum_{k} u_k(t)\vec\beta_k$. These define the generators of the system's Lie algebra as the set $\big\{\big(\begin{smallmatrix}\mathbf{A}_{k} & \vec\beta_k \\ \mathbf{0} & 0\end{smallmatrix}\big) \big\}_{k}$, and the system is accessible if this Lie algebra is the full algebra of affine maps}
+\onp{Irreversible dynamics: replace controllability by \alert{accessibility} \citep{Dirr08,Burgarth_2014}. Affine generators $\big(\begin{smallmatrix}\mathbf A_k&\vec\beta_k\\ \mathbf 0&0\end{smallmatrix}\big)$ must generate}
+\begin{equation}\label{eq:ch04:affine_lie}
+    \mathfrak{l}
+= \left\{\,
+\begin{pmatrix}
+    \mathbf{X} & \vec{x} \\
+    \mathbf{0} & 0
+\end{pmatrix}
+\,\middle|\,
+\mathbf{X} \in \R^{n \times n},\;
+\vec{x} \in \R^{n}
+\,\right\}.
+\end{equation}
+\ona{When accessibility is satisfied, the authors show that this guarantees rank conditions which ensure the system is identifiable up to similarity transform. They further exhibit two valid Lindblad generators related by an admissible similarity transform, both of which remain Lindbladian but whose Kossakowski spectra differ, and a pure unitary generator for which the same similarity transform leads to a nonphysical Kossakowski spectrum. Hence, not all similarity transforms preserve the Lindblad structure, and additional physical constraints may restrict the set of admissible transformations. We return to this in Section~\ref{sec:ch04:identifiability}.}
+\onp{\begin{itemize}
+    \item Accessibility $\Rightarrow$ identifiable up to similarity.
+    \item Similarity transforms need not preserve the Lindblad structure: a genuine ambiguity, resolved below by fixing the frame.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Accessible, but not controllable}
+\ona{Figure~\ref{fig:ch04:accessibility} shows the difference between accessibility and controllability for a single qubit. With dissipation, the controls can still steer the state in every direction, so that the set of reachable states has interior, but they cannot undo the dissipation. Dephasing is unital (\Chap~\ref{C.Open}), so the length of the Bloch vector, and with it the purity, can never increase: the reachable states stay inside the sphere through the initial state. Amplitude damping is not unital and moves the centre of the ball, so purer states become reachable, but only towards the ground state, which is the mechanism behind reset. In neither case can the controls reach every state, so controllability fails, while accessibility, which asks only for interior, holds.}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch04_accessibility.tex}}
+\caption{Bloch vectors reached at time $T=3$ from the mixed state $\vec r_0=(0.6,0,0)$ by $900$ random piecewise-constant controls with $u_x^2+u_y^2\le4$, under (a) dephasing and (b) amplitude damping towards $\ket0$, both at the rate $0.5$. Dashed: the sphere $\abs{\vec r}=\abs{\vec r_0}$. In both cases the reached states fill a region with non-empty interior, but not the whole ball. Generated by \texttt{code/ch04\_accessibility.py}.}\label{fig:ch04:accessibility}
+\end{figure}}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch04_accessibility.tex}}\end{center}
+Interior: \alert{accessible}. Not the whole ball: \alert{not controllable}.}
+\end{frame}
+
+\section{Observability of open quantum systems}
+
+\begin{frame}\ft{The coherence vector and its readout}\mop{\small}
+\ona{Recall from \Chap~\ref{C.Open} the representation used throughout: with an orthonormal basis $\mathcal F=\{F_j\}_{j=1}^{n}$, $n=N^2-1$, of traceless Hermitian $N\times N$ matrices (a basis of $\liesu[N]$ up to a factor $\imath$), the state is $\rho = \frac{1}{N}\Id +  \sum_{j=1}^{n} x_{j}F_{j}$ with coherence vector $x_j=\Tr[F_j\rho]$, and the GKSL equation becomes}
+\onp{\Chap~\ref{C.Open}: $\rho=\frac1N\Id+\sum_j x_jF_j$, $x_j=\Tr[F_j\rho]$, GKSL becomes}
+\begin{equation}\label{eq:ch04:BLDS}
+        \dot{\vec{x}}(t) = \underbrace{(\mathbf{A}^{(l)} + \mathbf{A}^{(d)})}_{\mathbf{A}}\vec{x}(t) + \vec{\beta} + \sum_{j=1}^{n}\mathbf{N}_{j}u_{j}(t) \vec{x},
+        \qquad
+        \mathbf{A}^{(l)}_{jk} = -\sum_{l} \theta_{l}f_{jkl},\quad
+        (\mathbf{N}_j)_{kl}=-f_{jkl},
+\end{equation}
+\ona{where $H=\sum_j\theta_jF_j$, $f_{jkl}$ are the antisymmetric structure constants $[F_j,F_k]=\imath\sum_l f_{jkl}F_l$, and $\mathbf A^{(d)}$, $\vec\beta$ are linear in the Kossakowski matrix $\Koss$. The affine term is removed by the embedding $\vec x\to(\vec x,1)^\top$, $\mathbf A\to\big(\begin{smallmatrix}\mathbf A&\vec\beta\\ \mathbf 0&0\end{smallmatrix}\big)$, making all matrices $N^2\times N^2$. In practice, for large quantum systems one might only have access to a set of local observables $\{O_{j}\}$ and the output vector obtained would correspond to their expectation values $\vec{y}(t) = [\langle O_{1}\rangle, \dots ]^{\top}$. Since observables are Hermitian, we can decompose them in the same basis, $O_{j} = \sum_{k=1}^{n} o^{(j)}_{k}F_{k}$, hence the $j$'th row of the output matrix $\mathbf{C}$ consists of the elements $o^{(j)}_{k}$. It is not required that all basis generators appear in the decomposition of the set of observables, so we collect the unique basis elements present in a set $\mathcal{M} = \{ F_{v_{1}}, F_{v_{2}}, \dots \}$.}
+\onp{\begin{itemize}
+    \item Affine embedding $\vec x\to(\vec x,1)$ removes $\vec\beta$; all matrices $N^2\times N^2$.
+    \item Measured observables $O_j=\sum_k o^{(j)}_kF_k$ $\Rightarrow$ rows of $\mathbf C$ are the \emph{known} coefficients $o^{(j)}_k$.
+    \item $\mathbf C$ is chosen by the experimenter, not estimated.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Informationally complete readout is static observability}
+\ona{If the measured observables span all of $\mathcal F$, i.e.\ $\rank\mathbf C=n$, then $\vec x=\mathbf C^{+}\vec y$ can be read off at a single time: the readout is \emph{informationally complete} in the sense of quantum state tomography (\Chap~\ref{C.AlgTomography}), and observability holds trivially, without using the dynamics. The interesting case is $\rank\mathbf C<n$, where the dynamics must propagate information from unmeasured to measured components. Then $\OM^{(\mathrm{lin})}$ of \eqref{eq:ch04:OMCM} decides: the state is observable iff every coherence-vector direction is eventually coupled into a measured observable by $\mathbf A$. Figure~\ref{fig:ch04:observability} shows this for the two-qubit example of Section~\ref{sec:ch04:example}: measuring $\sigma_z$ on one or both qubits only ever observes a $5$-dimensional subspace (the populations and the exchange coherences), whereas adding a single transverse observable on one qubit reaches $13$ dimensions, and only a full Pauli readout gives $16$.}
+\onp{\begin{itemize}
+    \item $\rank\mathbf C=n$: informationally complete $\Leftrightarrow$ observable at a single time (tomography).
+    \item $\rank\mathbf C<n$: the dynamics must couple unmeasured into measured components; test $\rank\OM^{(\mathrm{lin})}$.
+\end{itemize}
+\begin{center}\resizebox{!}{0.5\textheight}{\input{figures/ch04_observability.tex}}\end{center}}
+\ona{\begin{figure}[H]\centering\resizebox{0.95\linewidth}{!}{\input{figures/ch04_observability.tex}}
+\caption{Dimension of the observable subspace $\linspan\{\mathbf C,\mathbf C\mathbf A,\dots,\mathbf C\mathbf A^{k}\}$ of the (embedded, 16-dimensional) two-qubit model of Section~\ref{sec:ch04:example} for several readouts, Only an informationally complete readout observes the full state. Generated by \texttt{code/ch04\_observability.py}.}\label{fig:ch04:observability}\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{The accessible set and the reduced system}
+\ona{The size of the system matrices can be too large for efficient computation, however we only need the dynamics governing the evolution of the observables that are being measured. The dimensions of the system matrices can then be greatly reduced since it is likely that these evolutions do not couple all the matrices in $\mathcal{M}$ to those in the full basis. Inspired by control theory for classical nonlinear systems, an iterative procedure is used to find the finite set of generators $\mathcal M_{j}$ required to describe the dynamics of these observables,}
+\onp{Only the part of $\mathcal F$ coupled to $\mathcal M$ by the dynamics matters:}
+\begin{equation} \label{eq:ch04:accessible_set}
+\begin{aligned}
+    \mathcal M_{0} &= \mathcal{M},\qquad \mathcal M_{j} = [\mathcal M_{j-1}, \mathcal F] \cup \mathcal M_{j-1},\\
+    [\mathcal M_{j-1}, \mathcal F] &= \{ F_{k}   \mid   \Tr[F^{\dagger}_k[F,F']] \neq 0,\ F \in \mathcal M_{j-1},\ F' \in \mathcal F  \}.
+\end{aligned}
+\end{equation}
+\ona{This set is known as the \emph{accessible set} and is obtained when the procedure saturates, which will always occur since $\liesu[N]$ is finite-dimensional. Writing reduced vectors $\tilde{x}$ of dimension $\tilde n \leq n$ with reduced matrix ${\tilde{\mathbf{A}}} \in \R^{\tilde n \times \tilde n}$ allows us to rewrite \eqref{eq:ch04:BLDS} as $\dot{\tilde x} = \tilde{\mathbf{A}}\tilde{x}$. Here, only those parameters appearing in the reduced system can be identified. Practically, the consequence is that parameters associated with inaccessible degrees of freedom remain undetermined and irrelevant for the prediction of the measured outputs. In \eqref{eq:ch04:accessible_set}, $\mathcal F$ may, and in practice should, be replaced by the generators actually present in the Hamiltonian and the jump operators; commutators with the whole basis would make every set accessible after a few steps. The commutator rule captures the couplings due to the Hamiltonian. With dissipation, one reads all couplings, including those of the dissipator, off the non-zero pattern of $\mathbf A$: the accessible set consists of the components from which a path in this \emph{coupling graph} leads to a measured one. Observability of the full system requires that the accessible set is the whole basis $\mathcal F$. The converse holds for generic parameters, but not always: exact relations between the couplings can hide combinations of components even inside the accessible set, so that the rank test of $\OM^{(\mathrm{lin})}$ has the last word (Figure~\ref{fig:ch04:coupling}).}
+\onp{\begin{itemize}
+    \item Saturates in finitely many steps; gives the reduced system $\dot{\tilde x}=\tilde{\mathbf A}\tilde x$.
+    \item Parameters supported outside the accessible set are \alert{not identifiable} and irrelevant for predicting the data.
+    \item Full observability needs the accessible set to be all of $\mathcal F$; the rank of $\OM$ has the last word.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The coupling graph}
+\ona{Figure~\ref{fig:ch04:coupling} computes the accessible set of the two-qubit example of Section~\ref{sec:ch04:example} as a search on its coupling graph. The graph falls into two sectors that never exchange information: the populations together with the exchange components, and the single-qubit coherences. Measuring $\sigma_z^1$, seven components have a path to the measured one, but $\OM^{(\mathrm{lin})}$ has rank $5$ only, because the four exchange components enter only through the combinations $XX+YY$ and $XY-YX$. Up to constants, these are the exchange operator $\sigma_+^1\sigma_-^2+\sigma_-^1\sigma_+^2$ and the excitation current between the qubits. This is the gap between the graph-based accessible set and the rank test. The component along $ZZ$ is driven by $ZI$ and $IZ$, but never drives them, so it stays invisible. Adding $\sigma_x^1$ opens the second sector, and $15$ components can reach the readout, but the rank is $13$; only a richer readout observes everything (Figure~\ref{fig:ch04:observability}).}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch04_coupling.tex}}
+\caption{The coupling graph of the two-qubit example: one vertex per component of the coherence vector, labelled by its Pauli string, and $II$ for the constant of the affine embedding, with an arrow from $F$ to $F'$ whenever the component along $F$ appears in the equation for the component along $F'$. Rose: the components with a path to the measured $\sigma_z^1$ (red ring). Gold: the sector reached by adding $\sigma_x^1$ (gold ring). Generated by \texttt{code/ch04\_coupling.py}.}\label{fig:ch04:coupling}
+\end{figure}}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch04_coupling.tex}}\end{center}
+Graph search: an upper bound. $\sigma_z^1$: $7$ reachable, $\rank\OM=5$.}
+\end{frame}
+
+\begin{frame}\ft{Example: a damped qubit}
+\ona{For a single qubit with $H=-\frac\omega2\sigma_z$, so that $\ket0$ is the ground state, amplitude damping towards $\ket0$ at the rate $\gamma_1$ and dephasing at the rate $\gamma_\phi$, the coherence vector is the Bloch vector scaled by $1/\sqrt2$, and \eqref{eq:ch04:BLDS} gives the Bloch equations \eqref{eq:ch03:bloch-open} of \Chap~\ref{C.Open}, $\dot x=\omega y-x/T_2$, $\dot y=-\omega x-y/T_2$, $\dot z=-(z-1)/T_1$, with $1/T_1=\gamma_1$ and $1/T_2=\gamma_1/2+\gamma_\phi$. The transverse block $(x,y)$ and the longitudinal block $(z,1)$ decouple. Measuring $\sigma_z$ alone observes only the longitudinal block; measuring $\sigma_x$ alone observes the transverse block, since the rotation by $\omega$ feeds $y$ into $x$; both together observe everything. Figure~\ref{fig:ch04:singular} shows the singular values of $\OM^{(\mathrm{lin})}$ in the three cases. The smallest nonzero singular value, here $s_4\approx0.2$, quantifies how well-conditioned the inversion from data to state is; \Chap~\ref{C.SampleComplexity} turns this into a statement about the number of measurement shots needed.}
+\onp{\begin{itemize}
+    \item $\dot x=\omega y-x/T_2$, $\dot y=-\omega x-y/T_2$, $\dot z=-(z-1)/T_1$: two decoupled blocks.
+    \item $\sigma_z$ alone sees $(z,1)$; $\sigma_x$ alone sees $(x,y)$ thanks to the rotation; both see all.
+    \item Small singular values of $\Obsv$ $\Rightarrow$ ill-conditioned $\Rightarrow$ many shots (\Chap~\ref{C.SampleComplexity}).
+\end{itemize}
+\begin{center}\resizebox{!}{0.45\textheight}{\input{figures/ch04_singular.tex}}\end{center}}
+\ona{\begin{figure}[H]\centering\resizebox{0.9\linewidth}{!}{\input{figures/ch04_singular.tex}}
+\caption{Singular values of the Kalman observability matrix of the embedded ($4$-dimensional) damped-qubit model for three choices of readout ($\omega=1$, $\gamma_1=0.2$, $\gamma_\phi=0.1$). Zero singular values, which belong to unobservable directions, are drawn as open circles on the lower axis. Generated by \texttt{code/ch04\_observability.py}.}\label{fig:ch04:singular}\end{figure}}
+\end{frame}
+
+\section{Identifiability}\label{sec:ch04:identifiability}
+
+\begin{frame}\ft{Three questions}
+\ona{Controllability, observability and identifiability are easily confused, since all three are decided by rank conditions. Figure~\ref{fig:ch04:threemaps} sets them side by side as properties of three maps. Controllability asks whether the map from inputs to states is onto, that is, whether every state can be reached. Observability asks whether the map from initial states to outputs is one-to-one, that is, whether different states always give different data. Identifiability asks the same question one level up, about the map from the parameters of the model to its input--output behaviour: do different parameters always give different data? The first two are questions about the states of a given model; the third is a question about the model itself, and it can fail even when the first two hold. In the language of automata, observability asks whether the states of a machine can be told apart by experiments, and identifiability whether two different machines could have produced the same table of inputs and outputs.}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch04_threemaps.tex}}
+\caption{Three questions, three maps. Controllability: is the map from inputs to states onto? The reachable states form the blue band, and a state outside it is marked. Observability: is the map from initial states to outputs one-to-one? Two states that differ along $\ker\OM$ give the same output. Identifiability: is the map from parameters to input--output behaviour one-to-one? All parameters on the red curve give the same behaviour. Generated by \texttt{code/ch04\_threemaps.py}.}\label{fig:ch04:threemaps}
+\end{figure}}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch04_threemaps.tex}}\end{center}
+Controllability: \alert{onto}. Observability and identifiability: \alert{one-to-one}, on states and on parameters.}
+\end{frame}
+
+\begin{frame}\ft{Structural identifiability}
+\ona{Identifiability analysis can be separated into two categories, structural and practical. The latter focuses on the ability to reliably estimate parameters in practice from finite, noisy experimental data, taking into account limitations such as measurement noise, limited sampling, and experimental design; this is the subject of \Chap~\ref{C.SampleComplexity}. It can only be considered once structural identifiability has been established. Hence, we focus here on structural identifiability, which asks whether the system is identifiable in principle under noise-free data: whether the outputs of a model, $f(\vec \theta, t)$, are unique for different parameter vectors $\vec \theta$. The model is globally identifiable if this holds for the full parameter set and locally identifiable if it holds in a neighbourhood of $\vec\theta$. Otherwise, if $f(\vec \theta_1, t) = f(\vec \theta_2, t)$, the parameters are I/O indistinguishable.}
+\onp{\begin{itemize}
+    \item \alert{Structural}: noise-free data; do different parameters give different outputs? (this \chap{})
+    \item \alert{Practical}: finite noisy data (\Chap~\ref{C.SampleComplexity}).
+\end{itemize}}
+\onp{Standing assumptions (Definition~\ref{def:ch04:standing}): time-independent GKSL, known basis $\{F_j\}$, arbitrary preparation ($\mathbf B=\Id$), known readout $\mathbf C$, calibrated controls.}
+\ona{\begin{defn}[Standing assumptions]\label{def:ch04:standing}
+(i) The dynamics is the time-independent GKSL equation with traceless $H$;
+(ii) the basis $\{F_j\}_{j=1}^{n}$ and hence the structure constants $f_{jkl}$, $g_{jkl}$ are known;
+(iii) the state is the coherence vector, affinely embedded;
+(iv) \emph{preparation}: arbitrary initial states can be prepared, i.e.\ $\mathbf B=\Id_n$;
+(v) \emph{readout}: the data are estimates of $\langle O_1\rangle,\dots,\langle O_p\rangle$ of known observables at discrete times, so $\mathbf C$ is known;
+(vi) \emph{controls}: the control Hamiltonians are known, that is, calibrated (\Chap~\ref{C.Open}), so that the matrices $\mathbf N_j$ are known.
+\end{defn}}
+\begin{defn}[Two notions of identifiability]\label{def:ch04:ident}
+The open quantum system is \emph{system identifiable} if $(\mathbf A,\vec\beta)$ is uniquely determined by the input--output data, and \emph{master-equation reconstructible} if, in addition, the GKSL parameters $(\vec\theta,\Koss)$ are uniquely determined by $(\mathbf A,\vec\beta)$.
+\end{defn}
+\end{frame}
+
+\begin{frame}\ft{Identifiability in the parameter plane}
+\ona{Figure~\ref{fig:ch04:valley} shows what a failure of identifiability looks like, for the damped qubit of Figure~\ref{fig:ch04:singular} with $\omega$ known and the two rates $\gamma_1$ and $\gamma_\phi$ unknown. The cost is the squared difference between the data of the true qubit and the data predicted by candidate rates, for three prepared states. Reading only $\sigma_x$, the data depend on the rates only through the dephasing rate $1/T_2=\gamma_1/2+\gamma_\phi$, so the cost has a flat valley: every pair on the red line fits the data exactly, and no amount of noise-free data can choose between them. The system is not observable either, since $\sigma_x$ never sees $z$, which alone carries $\gamma_1$. Reading $\sigma_z$ as well breaks the tie: the cost becomes a bowl with a unique minimum, and the rates are structurally identifiable. With finitely many shots, the fitted rates scatter around the truth. The scatter, largest for $\gamma_\phi$, measures practical identifiability, the subject of \Chap~\ref{C.SampleComplexity}. Computer scientists know flat valleys from neural networks, whose loss does not change when hidden units are permuted, so that their weights are not identifiable either.}
+\ona{\begin{figure}[H]\centering
+\resizebox{0.95\linewidth}{!}{\input{figures/ch04_valley.tex}}
+\caption{The least-squares cost of fitting the damping and dephasing rates of a qubit ($\omega=1$ known; true rates $0.2$ and $0.1$, black dot) to data from three prepared states, as contours: (a) reading $\sigma_x$ only, where the minimum is the whole red line $\gamma_1/2+\gamma_\phi=1/T_2$; (b) reading $\sigma_x$ and $\sigma_z$, where it is a single point. Blue: estimates from $60$ data sets with $50$ shots per expectation value. Generated by \texttt{code/ch04\_valley.py}.}\label{fig:ch04:valley}
+\end{figure}}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch04_valley.tex}}\end{center}
+$\sigma_x$ only: the rates enter only as $1/T_2=\gamma_1/2+\gamma_\phi$, a \alert{flat valley}. Adding $\sigma_z$: a bowl.}
+\end{frame}
+
+\begin{frame}\ft{Three different properties}
+\ona{The three properties are logically independent, as Figure~\ref{fig:ch04:distinct} shows for six experiments, with every entry computed. Preparing only $\ket1$ makes the system uncontrollable, although the readout sees everything: the transverse components are never excited, so $\omega$ and $\gamma_\phi$ never leave a trace in the data. Reading only $\sigma_z$ makes it unobservable, although every state can be prepared, with the same consequence. Reading only $\sigma_x$ gives the valley of Figure~\ref{fig:ch04:valley}, and reading $\sigma_x$ and $\sigma_z$ identifies everything. Even a controllable and observable system need not be identifiable. If neither the preparation nor the readout is known, the data determine $\mathbf A$ only up to a similarity, a $16$-dimensional ambiguity for the embedded qubit, which is known in quantum characterisation as the gauge freedom of gate-set tomography. And for two qubits read out completely, an arbitrary Kossakowski matrix cannot be recovered, since $\mathbf R_2$ is rank-deficient, although one supported where the physical one is can. Identifiability therefore needs controllability and observability of the part of the system on which the parameters act, and, in addition, a fixed frame and an injective map from the parameters to the matrices.}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch04_distinct.tex}}
+\caption{Controllability, observability and identifiability in six experiments, all computed: the rank of $[\mathbf B,\mathbf A\mathbf B,\mathbf A^2\mathbf B,\mathbf A^3\mathbf B]$ for the prepared states and of $\OM$ for the readout of the embedded qubit, and the rank of the Jacobian of the sampled outputs with respect to $(\omega,\gamma_1,\gamma_\phi)$; for the black box, the dimension of the similarity ambiguity; for two qubits, the rank of $\mathbf R_2$ (Section~\ref{sec:ch04:example}). Generated by \texttt{code/ch04\_distinct.py}.}\label{fig:ch04:distinct}
+\end{figure}}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch04_distinct.tex}}\end{center}
+Three different questions: each can fail while the others hold.}
+\end{frame}
+
+\begin{frame}\ft{From the system matrix back to the master equation}\mop{\footnotesize}
+\ona{Assume the system matrix is known as the result of some identification procedure (\Chap~\ref{C.AlgTomography}). The system matrix is of the form $\mathbf{A}(\vec\theta,\Koss) = \mathbf{A}^{(l)}(\vec{\theta}) + \mathbf{A}^{(d)}(\Koss)$, linear in $\vec\theta$ and in $\Koss$. To discuss the recovery of the parameters of the original GKSL equation, consider the map $\phi:\R^{n}\times\Herm[n]\rightarrow\R^{n\times n}$, $\phi(\vec{\theta},\Koss)=\mathbf{A}^{(l)}(\vec{\theta})+\mathbf{A}^{(d)}(\Koss)$, and the map $\hat{\phi}:\Herm[n]\rightarrow\R^{n}$ producing $\vec\beta$, $\hat{\phi}(\Koss)=\big(\frac{\imath}{N}\sum_{k,l=1}^{n}\gamma_{kl}f_{jkl}\big)_{j=1}^{n}$. We are interested in the conditions under which $\phi$ and $\hat{\phi}$ can be inverted, which amounts to the unique reconstruction of $\vec{\theta}$ and $\Koss$ from known values of $\mathbf{A}$ and $\vec{\beta}$. Let $\Gamma :  \{1, \dots , n^{2} \} \rightarrow  \{  (j,k) : j,k \in \{1, \dots, n\}  \}$ be a bijective indexing used to vectorise $\mathbf{A}^{(l)}, \mathbf{A}^{(d)}$ and $\Koss$, and define}
+\onp{$\mathbf A=\mathbf A^{(l)}(\vec\theta)+\mathbf A^{(d)}(\Koss)$ is \alert{linear} in the unknowns. Vectorise with an index map $\Gamma:\{1,\dots,n^2\}\to\{(j,k)\}$:}
+\begin{equation}\label{eq:ch04:T1T2}
+\mathbf{R}_{1}= - \begin{pmatrix}f_{\Gamma(1)1} & \cdots & f_{\Gamma(1)n}\\
+\vdots & \ddots & \vdots\\
+f_{\Gamma(n^{2})1} & \cdots & f_{\Gamma(n^{2})n}
+\end{pmatrix} \in \R^{n^2 \times n}, \qquad
+\mathbf{R}_{2}= -\begin{pmatrix}D_{\Gamma(1)}^{(\Gamma(1))} & \cdots & D_{\Gamma(n^{2})}^{(\Gamma(1))} \\
+\vdots & \ddots & \vdots\\
+D_{\Gamma(1)}^{(\Gamma(n^{2}))} & \cdots & D_{\Gamma(n^{2})}^{(\Gamma(n^{2}))}
+\end{pmatrix}\in \C^{n^2 \times n^2},
+\end{equation}
+\ona{where $D^{(j,k)}_{lm}$ is the dissipation tensor of \Chap~\ref{C.Open}, so that $\vecop{\mathbf A^{(l)}}=\mathbf R_1\vec\theta$ and $\vecop{\mathbf A^{(d)}}=\mathbf R_2\vecop{\Koss}$. Furthermore, define}
+\begin{equation}\label{eq:ch04:M}
+\mathbf{M}=\left[\begin{array}{cc}
+\mathbf{R}_{1} & \mathbf{R}_{2}\\
+0 & -\frac{\imath}{N}\mathbf{R}_1^{\top}
+\end{array}\right]\in\C^{\left(n+n^{2}\right)\times\left(n+n^{2}\right)}.
+\end{equation}
+\onp{so that $\vecop{\mathbf A^{(l)}}=\mathbf R_1\vec\theta$, $\vecop{\mathbf A^{(d)}}=\mathbf R_2\vecop{\Koss}$, $\vec\beta=-\frac{\imath}{N}\mathbf R_1^\top\vecop\Koss$.}
+\end{frame}
+
+\begin{frame}\ft{General reconstruction}
+\begin{thm}[General parameter reconstruction]\label{thm:ch04:general}
+If $\mathbf{M}$ is invertible, then $\vec{\theta}$ and $\Koss$ are uniquely determined from the values of $\mathbf{A}$ and $\vec{\beta}$, namely $(\vec\theta,\vecop\Koss)^\top=\mathbf M^{-1}(\vecop{\mathbf A},\vec\beta)^\top$ \citep{Parvaiz2025}.
+\end{thm}
+\ona{\begin{pf}
+After a successful identification procedure, we obtain the system matrix $\mathbf{A}$ and the vector $\vec{\beta}$. Vectorising the whole problem by considering $\phi$ and $\hat{\phi}$ leads to
+\begin{equation*}\begin{pmatrix}A_{\Gamma(1)}\\
+\vdots\\
+A_{\Gamma(n^{2})}\\
+\beta_{1}\\
+\vdots\\
+\beta_{n}
+\end{pmatrix}=\mathbf M\begin{pmatrix}\theta_{1}\\
+\vdots\\
+\theta_{n}\\
+\gamma_{\Gamma(1)}\\
+\vdots\\
+\gamma_{\Gamma(n^{2})}
+\end{pmatrix},
+\end{equation*}
+with $\mathbf R_1$, $\mathbf R_2$ as in \eqref{eq:ch04:T1T2}. From this it is clear that the invertibility of $\mathbf{M}$ is equivalent to the claim.
+\end{pf}
+An interesting consequence is that the uniqueness of the reconstruction depends only on the structure constants. If we restrict ourselves to the Lie algebra $\liesu[2^{q}]$, which is the relevant one for $q$-qubit systems, a basis can always be chosen (e.g.\ the generalised Pauli basis) such that at least $\mathbf{R}_1$ is of full column rank. To see this, note that in the Pauli basis each pair $(j,k)$ has at most one $l$ with $f_{jkl}\neq0$ (\Chap~\ref{C.GeometryStates}), so each row of $\mathbf{R}_1$ has at most one non-zero entry; furthermore, $\liesu[2^{q}]$ is simple, meaning that it has no nontrivial centre, which implies that each column of $\mathbf{R}_1$ has at least one nonzero element. Combining these two facts shows that $\rank\mathbf{R}_1=n$. The (pseudo)invertibility of ${\mathbf{R}_{2}}$ is not guaranteed for all $\liesu[2^{q}]$; however $\mathbf{R}_{2}$ does not need to be full rank for $\mathbf{M}$ to be invertible. If $\mathbf{M}$ is not invertible, one may still check if ${\mathbf{R}_{1}}$ has full column rank and, if $\vec{\beta} \in \ran  {\mathbf{R}_{1}}$, recover the $\gamma$ elements present in $\vec\beta$ through the pseudoinverse.}
+\onp{\begin{itemize}
+    \item Whether reconstruction is unique depends \alert{only on the structure constants}.
+    \item Pauli basis of $\liesu[2^q]$: each row of $\mathbf R_1$ has at most one nonzero entry, each column at least one (simplicity) $\Rightarrow$ $\rank\mathbf R_1=n$: the Hamiltonian is always recoverable.
+    \item $\mathbf R_2$ need not be full rank for $\mathbf M$ to be invertible.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Symmetric Kossakowski matrix}
+\ona{In some situations the Kossakowski matrix $\Koss$ is symmetric, $\gamma_{jk}=\gamma_{kj}$ (this further implies that $\Koss$ is real, since it is also Hermitian). Such systems constitute a subclass of unital dynamics: $\vec{\beta}$ depends only on $\mathrm{Im}\,\Koss$, so a real $\Koss$ forces $\vec{\beta}=0$. The coherence vector representation then simplifies substantially: firstly $\vec{\beta}=0$, and secondly}
+\onp{Symmetric (hence real) $\Koss$: $\vec\beta=0$ and}
+\begin{equation}\label{eq:ch04:symmetric_a_d}
+   \mathbf{A}^{(d)}_{jk}=-\frac{1}{2}\sum_{l,m,p=1}^{n}\gamma_{lm}f_{jmp}f_{klp}\eqqcolon-\sum_{l,m}\gamma_{lm}\tilde{D}_{lm}^{(j,k)},
+\end{equation}
+\ona{so $\mathbf{A}^{(d)}$ is symmetric as well. Since $\mathbf{A}^{(l)}$ is always anti-symmetric, we can distinguish the two components of the identified system matrix as its symmetric and anti-symmetric parts. Furthermore, there are at most $n(n+1)/2$ unknown elements in $\Koss$ rather than $n^{2}$, which allows a transformation merging the columns of $\mathbf{R}_2$ belonging to $\gamma_{lm}$ and $\gamma_{ml}$; the resulting matrix $\mathbf{R}_{3}\in\R^{n^{2} \times n(n+1)/2}$ is the \emph{symmetric reduction} of $\mathbf{R}_{2}$.}
+\begin{thm}[Reconstruction for symmetric $\Koss$]\label{thm:ch04:symmetric}
+Assume $\Koss$ is symmetric. Then $\vec{\theta}$ and $\Koss$ are uniquely reconstructible from $\mathbf{A}$ if $\mathbf{R}_{1}$ and $\mathbf{R}_{3}$ have full column rank and
+$\vecop{\mathbf A^{(l)}}\in\ran\mathbf{R}_{1}$, $\vecop{\mathbf A^{(d)}}\in\ran\mathbf{R}_{3}$, where
+$\mathbf{A}^{(d)}=\frac12(\mathbf A+\mathbf{A}^{\top})$ and $\mathbf{A}^{(l)}=\frac12(\mathbf A-\mathbf{A}^\top)$.
+\end{thm}
+\ona{\begin{pf}
+Since the symmetric/antisymmetric decomposition is unique, $\mathbf A^{(d)}$ and $\mathbf A^{(l)}$ are computed from $\mathbf A$ as stated. Vectorising \eqref{eq:ch04:BLDS} with $\Gamma$ gives $\vecop{\mathbf A^{(l)}}=\mathbf R_1\vec\theta$ and $\vecop{\mathbf A^{(d)}}=\mathbf R_2\vecop\Koss$; using the symmetry of $\Koss$ once more, we pass to a basis of the space in which $\gamma_{ij}=\gamma_{ji}$, so that the second equation reads $\vecop{\mathbf A^{(d)}}=\mathbf R_3(\gamma_{\Gamma(1)},\dots,\gamma_{\Gamma(n(n+1)/2)})^\top$. The range conditions make both equations solvable and full column rank makes the solutions unique. For $q$-qubit systems in the generalised Pauli basis, $\rank\mathbf R_1=n$ holds automatically, so only the rank of $\mathbf{R}_{3}$ has to be verified. Note that $\mathbf R_3$ is rectangular for every $n\ge2$, so the relevant object is the left inverse $\mathbf{R}_{3}^{+}=(\mathbf{R}_{3}^{\top}\mathbf{R}_{3})^{-1}\mathbf{R}_{3}^{\top}$.
+\end{pf}
+The reconstruction map is linear and therefore does not enforce the physicality constraint $\Koss\succeq0$ required for CP-divisible evolution. This is in fact useful: the reconstructed $\hat\Koss$ provides an independent validity certificate, in that $\hat\Koss\not\succeq0$ signals either a non-Markovian (or non-CP) underlying evolution or an identification error exceeding the noise floor. When the negative eigenvalues are small, one may project onto the positive semidefinite cone, $\Koss^{\star}=\arg\min_{\Koss\succeq0}\lVert\Koss-\hat\Koss\rVert_{F}=\sum_{i}\max(\lambda_{i},0)v_{i}v_{i}^{\top}$, a non-expansive map that does not amplify the error.}
+\onp{\begin{itemize}
+    \item $\mathbf A^{(l)}$ antisymmetric, $\mathbf A^{(d)}$ symmetric: split $\mathbf A$ by (anti)symmetrisation.
+    \item Qubits, Pauli basis: only $\rank\mathbf R_3=n(n+1)/2$ needs checking.
+    \item Linear reconstruction ignores $\Koss\succeq0$: $\hat\Koss\not\succeq0$ is a \alert{certificate} of non-Markovianity or of estimation error; project onto the PSD cone otherwise (Lecture~\ref{C.Motivation}).
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Gauge fixing: the role of the measurement frame}
+\ona{Classical identification procedures return a realisation of the input--output map, not a distinguished matrix triple: any $(\hat{\mathbf A},\hat{\mathbf B},\hat{\mathbf C})=(\mathbf T\mathbf A\mathbf T^{-1},\mathbf T\mathbf B,\mathbf C\mathbf T^{-1})$ with $\mathbf T$ invertible produces identical data. This is the sense in which the Lindblad generator is determined by input--output data only up to a similarity transformation \citep{Burgarth_2014}. The reconstruction maps $\phi$ and $\hat\phi$, however, are defined with respect to the canonical coherence-vector basis $\{F_j\}$: applying $\mathbf M^{-1}$ to a similarity-transformed system matrix would yield parameters $(\vec\theta,\Koss)$ that differ from the physical ones and need not correspond to a valid GKSL generator at all. Master-equation reconstruction is therefore well posed only once the frame is fixed. In our setting, the frame is fixed by the experimental design itself: the output matrix $\mathbf C$ is not estimated but \emph{chosen}, and the preparation map is $\mathbf B=\Id_n$.}
+\onp{\begin{itemize}
+    \item Data determine $\mathbf A$ only up to $\mathbf T\mathbf A\mathbf T^{-1}$ \citep{Burgarth_2014}.
+    \item But $\mathbf C$ is \emph{chosen} (known coefficients) and $\mathbf B=\Id$ (arbitrary preparation).
+\end{itemize}}
+\begin{propn}[Gauge fixing]\label{prop:ch04:gauge}
+Let the embedded system be minimal, $\mathbf B=\Id_n$, and the readout tomographically complete, so that (after a permutation of outputs) $\mathbf C=\Id_n$. Then the only similarity transformation consistent with the known $(\mathbf B,\mathbf C)$, i.e.\ satisfying $\mathbf T\mathbf B=\mathbf B$ and $\mathbf C\mathbf T^{-1}=\mathbf C$, is $\mathbf T=\Id_n$. Consequently the identified system matrix coincides with $\mathbf A$ in the canonical coherence-vector frame, and the inversion of $\mathbf M$ (respectively $\mathbf R_1$, $\mathbf R_3$) is unambiguous.
+\end{propn}
+\ona{\begin{pf}
+For minimal realisations, input--output equivalence holds if and only if the realisations are related by a unique similarity transformation $\mathbf T$ (Theorem~\ref{thm:ch04:similarity}). Imposing $\mathbf T\mathbf B=\mathbf B$ with $\mathbf B=\Id_n$ forces $\mathbf T=\Id_n$.
+\end{pf}}
+\ona{\begin{rmk}[Partial readout]\label{rmk:ch04:partial}
+When the readout is not tomographically complete, only the restriction of the dynamics to the accessible set \eqref{eq:ch04:accessible_set} is identifiable. Within the accessible subspace the argument applies verbatim; parameters supported outside it remain gauge freedom, consistent with the equivalence classes of Lindblad generators of \citet{Burgarth_2014}.
+\end{rmk}}
+\end{frame}
+
+\begin{frame}\ft{Main results: autonomous systems}
+\ona{In practice we only have access to discrete-time data. A single discrete system sampled uniformly from a continuous one does not determine the continuous generator, because the matrix logarithm is multi-valued \citep{Ding2009,chen20}; \Chap~\ref{C.Frequency} discusses this aliasing in the frequency domain. Using several sampling rates with pairwise irrational ratios removes the ambiguity.}
+\begin{thm}[Autonomous OQS: identifiability from multirate sampling]\label{thm:ch04:auto}
+Let Definition~\ref{def:ch04:standing} hold with $u\equiv 0$, and suppose that (i) $\OM^{(\mathrm{lin})}$ and $\CM^{(\mathrm{lin})}$ are full rank, and (ii) the output is sampled at $n+2$ uniform rates $\{\tau_i\}_{i=0}^{n+1}$ whose pairwise ratios satisfy $\tau_i/\tau_j\notin\mathbb{Q}$ for $i\neq j$. Then the data uniquely determine $(\mathbf A,\vec\beta)$ in the canonical coherence-vector frame. If, in addition, $\mathbf M$ is invertible, then $(\vec\theta,\Koss)$ are uniquely reconstructible and the reconstructed GKSL equation generates measurement dynamics identical to the original. If $\Koss$ is symmetric, invertibility of $\mathbf M$ may be replaced by the conditions of Theorem~\ref{thm:ch04:symmetric}.
+\end{thm}
+\ona{\begin{cor}[Closed autonomous systems]\label{cor:ch04:autoclosed}
+A closed system corresponds to $\Koss=0$. Under (i)--(ii), the LDS form is identifiable, and if $\mathbf R_1$ is full rank the Hamiltonian parameters $\vec\theta$ are uniquely reconstructible. For qubit systems in the generalised Pauli basis this is always the case.
+\end{cor}}
+\ona{This follows because an uncontrolled OQS has $\CM^{(\mathrm{lin})}$ of full rank whenever $\rank\mathbf B=n$. Observability, however, is not automatic: $\OM^{(\mathrm{lin})}$ can have full rank only if the measured observables generate the whole basis $\mathcal F$ under the accessible-set construction, and its rank decides. When they do not, the identification is to be understood on the reduced system, and only those parameters supported on the accessible set are recoverable. Sample complexity is deferred to \Chap~\ref{C.SampleComplexity}.}
+\onp{\begin{itemize}
+    \item Controllability is free ($\mathbf B=\Id$); observability is the real condition (accessible set $=\mathcal F$, and full rank).
+    \item Multirate sampling with irrational ratios: undoes the aliasing of $\log\ee^{\mathbf A\tau}$ (\Chap~\ref{C.Frequency}).
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Main results: driven systems}
+\ona{Controlled open quantum systems are represented by a BDS and, unlike the LDS case, a non-uniform sampling rate is not needed to reconstruct the continuous form from the discrete representation. \citet{Sontag2009} showed that bilinear systems are only directly identifiable by using a class of input pulses $\mathcal{V}_{\alpha}$ of fixed amplitude $\alpha \in \R$ but varying widths $\tau \geq 0$; simple constant or step pulses do not suffice:}
+\onp{Driven systems: no multirate sampling needed, but the \alert{inputs} must be rich enough \citep{Sontag2009}:}
+\begin{equation}\label{eq:ch04:pulses}
+        \vec{u}_{\tau,\alpha}(t) = \begin{cases}
+            \alpha & 0 \leq t < \tau, \\
+            0 & t \geq \tau,
+        \end{cases}
+        \qquad
+    \mathcal{V}_{\alpha} = \{ \vec{u}_{\tau, \alpha} \mid \tau \geq 0 \},\quad \alpha\neq0.
+\end{equation}
+\onp{\begin{itemize}
+    \item $\mathbf N_j$ are known once the controls are calibrated (structure constants): only $\mathbf A$, $\vec\beta$ are unknown.
+    \item Widths $\tau$ must range over a set of positive measure; a fixed lattice of widths and times is not enough.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Main results: driven systems (continued)}
+\begin{thm}[Driven OQS: identifiability under the input class $\mathcal V_\alpha$]\label{thm:ch04:driven}
+Let Definition~\ref{def:ch04:standing} hold and let the system be probed with inputs from $\mathcal V_\alpha$. Suppose $\OM^{(\mathrm{bi})}$ and $\CM^{(\mathrm{bi})}$ are full rank, i.e.\ the bilinear system is minimal. Then (i) input--output indistinguishability under $\mathcal V_\alpha$ implies input--output equivalence under all admissible inputs, and, the matrices $\mathbf N_j$ being known by Definition~\ref{def:ch04:standing}(vi) and the frame being fixed by Proposition~\ref{prop:ch04:gauge}, the data uniquely determine $(\mathbf A,\vec\beta)$; (ii) uniform sampling suffices; (iii) if $\mathbf M$ is invertible, $(\vec\theta,\Koss)$ are uniquely reconstructible; if $\Koss$ is symmetric, this may be replaced by the conditions of Theorem~\ref{thm:ch04:symmetric}.
+\end{thm}
+\ona{\begin{pf}[Sketch]
+Statement (i) is the transfer of the main result of \citet{Sontag2009} to the embedded system: for a generic class of bilinear systems, $\sigma \underrel{\mathcal{V}_{\alpha}}{\equiv} \widehat{\sigma} \iff \sigma \equiv \widehat{\sigma}$. Minimality guarantees that input--output equivalence coincides with similarity (Theorem~\ref{thm:ch04:similarity}), and the gauge is fixed by Proposition~\ref{prop:ch04:gauge}. Statements (ii)--(iii) follow as in Theorem~\ref{thm:ch04:auto}. Sontag et al.\ further show that finitely many (width, observation-time) pairs suffice, chosen from a generic set; confining both pulse widths and observation instants to a fixed lattice is insufficient, and whether uniformly spaced observation times alone suffice, with the widths varied freely, appears to be open.
+\end{pf}
+Note also that the bilinear coupling matrices $\mathbf N_j$ do not need to be identified once the control Hamiltonians are calibrated, since they are then composed only of the antisymmetric structure constants; otherwise, for instance because of cross-talk, the map from the physical controls to the $u_j$ becomes part of the identification problem (\Chap~\ref{C.Open}). The closed-system variant reads: the BDS form of a closed controlled system is identifiable if the controllability and observability matrices are full rank and the pulse conditions are satisfied; if $\mathbf R_1$ is full rank, a Hamiltonian generating the dynamics is uniquely reconstructible.}
+\onp{Minimality $+$ rich inputs $+$ fixed frame $\Rightarrow$ $(\mathbf A,\vec\beta)$ unique $\Rightarrow$ invert $\mathbf M$.}
+\end{frame}
+
+\begin{frame}\ft{Persistency of excitation}
+\ona{Theorem~\ref{thm:ch04:driven} asks the inputs to be rich enough. The classical form of this requirement is \emph{persistency of excitation}. Collect the samples $u_0,\dots,u_{T-1}$ of an input in its Hankel matrix $H_L(u)$, whose $j$-th column is the window $(u_j,\dots,u_{j+L-1})$; the input is persistently exciting of order $L$ if $H_L(u)$ has full row rank (Figure~\ref{fig:ch04:hankel}(a)). A sum of $k$ sinusoids at distinct frequencies is persistently exciting of order $2k$, since each frequency contributes two independent directions, a cosine and a sine. Willems' fundamental lemma \citep{Willems2005} explains why this matters: if a linear system of order $n$ is controllable and its input is persistently exciting of order $L+n$, then the data Hankel matrix $\left[\begin{smallmatrix}H_L(u)\\ H_L(y)\end{smallmatrix}\right]$ has rank $mL+n$, and its columns span every trajectory of length $L$ that the system can produce: the data are the model. Figure~\ref{fig:ch04:hankel}(b) shows this for a system of order $3$. One or two sinusoids leave the data Hankel matrix rank-deficient, and only a richer input reaches the full rank $mL+n=9$. The rank is not all that counts: the smallest non-zero singular value measures how well the input excites the weakest direction, and with noisy data it sets the error of the identified model \citep{Coulson2022quantitative}. This quantitative notion returns in \Chap~\ref{C.SampleComplexity}. For open quantum systems, the excitation takes three forms: enough prepared initial states in the autonomous case ($\mathbf B=\Id$), pulses of varying width \eqref{eq:ch04:pulses} for bilinear systems, which must excite the products of $\mathbf A$ and the $\mathbf N_j$ as well, and enough sampling rates to avoid aliasing.}
+\ona{\begin{figure}[H]\centering
+\resizebox{0.95\linewidth}{!}{\input{figures/ch04_hankel.tex}}
+\caption{(a) A signal $u_k$ and its Hankel matrix $H_L(u)$ for $L=6$: each window of $L$ samples becomes a column, so that the matrix is constant along anti-diagonals (blue positive, red negative). (b) The singular values of the data Hankel matrix of a minimal system of order $n=3$ driven by one sinusoid, by two sinusoids and by a random input: the rank is $2+3$, $4+3$, and the full $mL+n=9$. Generated by \texttt{code/ch04\_hankel.py}.}\label{fig:ch04:hankel}
+\end{figure}}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch04_hankel.tex}}\end{center}
+\vspace{-1ex}{\small $u$ persistently exciting of order $L+n$ $\Rightarrow$ $\rank\left[\begin{smallmatrix}H_L(u)\\ H_L(y)\end{smallmatrix}\right]=mL+n$: the data are the model \citep{Willems2005}.}}
+\end{frame}
+
+\begin{frame}\ft{The ladder of conditions}
+\ona{Figure~\ref{fig:ch04:ladder} collects the conditions of this \chap{} into a ladder from the measured data down to the master equation. Each rung is a question; answering yes moves one step down, and the example on the right shows what goes wrong when the answer is no. The first two rungs make the system minimal. Together with rich enough data, they determine $(\mathbf A,\vec\beta)$ up to a similarity; fixing the frame removes the similarity; and an invertible $\mathbf M$ turns $(\mathbf A,\vec\beta)$ into the parameters $(\vec\theta,\Koss)$ of the master equation.}
+\ona{\begin{figure}[H]\centering
+\resizebox{0.95\linewidth}{!}{\input{figures/ch04_ladder.tex}}
+\caption{The conditions of this \chap{} as a ladder from the data to the master equation. Blue: the questions. Sand: what is determined after each stage. Red: an example in which the answer is no. Generated by \texttt{code/ch04\_ladder.py}.}\label{fig:ch04:ladder}
+\end{figure}}
+\onp{\begin{center}\resizebox{!}{0.85\textheight}{\input{figures/ch04_ladder.tex}}\end{center}}
+\end{frame}
+
+\begin{frame}\ft{Example: two coupled qubits}\label{sec:ch04:example}
+\ona{Here we consider a 2-qubit system adapted from \citet{Zhang2015}. Such systems are the smallest open quantum systems in which non-trivial effects such as correlated noise and cross-decoherence can be studied, and they are the building blocks of quantum computation, since all universal gate sets require at least one non-local 2-qubit gate. The system is described by}
+\onp{Smallest system with cross-decoherence; the setting of two-qubit gate calibration \citep{Zhang2015}:}
+\begin{equation}\label{eq:ch04:twoqubit}
+\begin{aligned}
+\dot \rho= & -\imath[H, \rho]+\sum_{k=1}^2 \frac{g_{k}^{z}}{2}\left(\sigma_z^k \rho \sigma_z^k-\rho\right)\\
+ & +\sum_{k=1}^2 \Big[2 g_k^{-}\left(\sigma_{-}^k \rho \sigma_{+}^k-\tfrac{1}{2} \acomm{\sigma_{+}^k \sigma_{-}^k}{\rho}\right)
+ +2 g_k^{+}\left(\sigma_{+}^k \rho \sigma_{-}^k-\tfrac{1}{2} \acomm{\sigma_{-}^k \sigma_{+}^k}{\rho}\right)\Big],
+\end{aligned}
+\end{equation}
+with $H = -\frac{\omega_1}{2}\sigma^{1}_{z} - \frac{\omega_2}{2}\sigma^{2}_{z} + \delta(\sigma^1_{+}\sigma^2_{-} + \sigma^1_{-}\sigma^{2}_{+})$; $\sigma_j^k$ acts on qubit $k$.
+\ona{The Hamiltonian is characterised by only $3$ parameters, $\omega_1, \omega_2$ and $\delta$, whereas in general, since $n = 15$, there could be that many. The rates $g^{z}_{k}, g^{-}_k, g^+_k$ are the decoherence rates associated with the Lindblad operators $\sigma_{z}^k$ and $\sigma_{\mp}^{k} = \frac{1}{2}(\sigma^k_x \pm \imath\,\sigma^k_{y})$; as in \Chap~\ref{C.Open}, $\sigma_-^k=\ket0\bra1$ lowers qubit $k$ to its ground state $\ket0$. In the normalised tensor-product Pauli basis $F=\tfrac12\sigma_a\otimes\sigma_b$ of $\liesu[4]$, with ordering $(\sigma_x^k,\sigma_y^k,\sigma_z^k)$ within each qubit, the Kossakowski matrix is block diagonal, $\Koss = \Koss^{(1)}\oplus\Koss^{(2)}\oplus 0_{9\times9}$, with single-qubit blocks
+\begin{equation}\label{eq:ch04:kossblock}
+\Koss^{(k)} =
+2\begin{pmatrix}
+ g_k^-+g_k^+ & -\,{\imath}\left(g_k^--g_k^+\right) & 0\\
+ {\imath}\left(g_k^--g_k^+\right) & g_k^-+g_k^+ & 0\\
+ 0 & 0 & g_k^{{z}}
+\end{pmatrix}.
+\end{equation}
+The $9\times9$ block spanned by the correlation generators vanishes because the dissipation is purely local. The Kossakowski matrix is Hermitian but not real-symmetric in general: the transverse coherences are purely imaginary and proportional to $g_k^--g_k^+$, vanishing only in the unital case $g_k^+=g_k^-$. Explicit computation shows that $\mathbf{R}_{2}$ is \emph{not} of full rank for $\liesu[4]$, so the unrestricted inverse problem---recovering an arbitrary Hermitian $\Koss\in\Herm[15]$ from $\mathbf{A}^{(d)}$ alone---is underdetermined. This is the generic situation: physical generators are sparse in the operator basis, and it is the restricted map that governs identifiability in practice. Restricting the columns of $\mathbf{R}_{2}$ to the ten entries in the support of the physically realised $\Koss$ yields a $225\times 10$ matrix of full column rank $10$. Since the linear map taking the six rates $\{g_k^{-},g_k^{+},g_k^{z}\}$ to these ten entries is injective, all six decoherence parameters are uniquely recoverable, alongside the three Hamiltonian parameters guaranteed by the full column rank of $\mathbf{R}_{1}$. The example therefore exercises both halves of the framework: the unconditional guarantee for the Hamiltonian part, and the support-restricted rank test for the dissipative part.}
+\onp{\begin{itemize}
+    \item $\Koss$ Hermitian, not real: $\mathrm{Im}\,\Koss\propto g_k^--g_k^+$ (pump--loss asymmetry).
+    \item $\mathbf R_2$ is rank-deficient on all of $\Herm[15]$, but full column rank ($10$) on the physical support $\Rightarrow$ all six rates and three Hamiltonian parameters are recoverable.
+    \item Observability depends on the readout: Figure~\ref{fig:ch04:observability}.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Summary}
+\begin{itemize}\setlength\itemsep{0.5em}
+    \item Linear systems: controllability and observability are rank conditions on $\CM$, $\OM$; bilinear systems: span criteria; minimal realisations are unique up to similarity.
+    \item Closed systems: controllability $\Leftrightarrow$ the dynamical Lie algebra is $\liesu[d]$ (Jurdjevic--Sussmann); open systems: accessibility replaces controllability.
+    \item Observability of the coherence vector: informationally complete readout is the static case; otherwise the accessible set decides, and parameters outside it are invisible.
+    \item Identifiability: fix the frame ($\mathbf B=\Id$, $\mathbf C$ known), sample at irrational rate ratios (autonomous) or use pulses of varying width (driven), then invert the \emph{linear} map $\mathbf M$ from $(\mathbf A,\vec\beta)$ to $(\vec\theta,\Koss)$.
+    \item Next: the same conditions seen through transfer functions and Hankel matrices (\Chap~\ref{C.Frequency}), and how many shots they cost (\Chap~\ref{C.SampleComplexity}).
+\end{itemize}
+\end{frame}
+
+\biblio
+\end{document}
