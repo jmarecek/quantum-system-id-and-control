@@ -1,0 +1,503 @@
+%\documentclass[overheadsbeamer.tex]{subfiles}
+\documentclass[handoutsbeamer.tex]{subfiles}
+
+\begin{document}
+
+\ona{ \setcounter{chapter}{4} } % ONE LESS
+\lecture{Conditions for Observability and Controllability in the Frequency Domain}{Lect05}
+\chapter{Conditions for Observability and Controllability in the Frequency Domain}\label{C.Frequency}
+
+\begin{frame}\ft{Outline}
+\ona{In \Chap~\ref{C.StateSpace} we characterised controllability, observability and identifiability by the ranks of certain matrices built from a state-space realisation $(\mathbf A,\mathbf B,\mathbf C)$. A realisation, however, is not what an experiment provides. An experiment provides a time series of expectation values, and what is invariant in such a series is its \emph{transfer function}, which records the frequencies and decay rates that are present and the weight attached to each. In this \chap{} we take up the frequency-domain point of view. The reader who has not met the Fourier or the Laplace transform need not be alarmed: the first section builds both from Euler's formula and the picture of a complex number as a vector in the plane. We then find that the poles of the transfer function are eigenvalues of the Lindbladian, that the Hautus test replaces the Kalman matrices by a condition at each eigenvalue separately, that the rank of the Hankel matrix of the data is the dimension of a minimal realisation, and that the algorithm of Ho and Kalman recovers a realisation from that matrix. The same point of view explains why sampling at a single uniform rate loses information, which is the phenomenon of aliasing, and why the multirate condition of \Chap~\ref{C.StateSpace} restores it.}
+\onp{Outline of today's lecture:
+\begin{itemize}\setlength\itemsep{0.6em}
+    \item frequencies from first principles: modes as rotating vectors, the $\lambda$-plane, the Fourier transform;
+    \item Laplace transform and transfer function of the vectorised master equation;
+    \item poles $=$ eigenvalues of the Lindbladian: frequencies and decay rates;
+    \item Hautus (PBH) tests, Kalman decomposition, minimal realisations;
+    \item Markov parameters, the Hankel matrix, and the Ho--Kalman / ERA algorithm;
+    \item sampling, aliasing, and the multirate condition;
+    \item identifiability as the transfer function being determined by data.
+\end{itemize}}
+\ona{\medskip\noindent\textit{Sources.} This \chap{} draws on \citep{parvaiz2026survey,parvaiz2025identifiability}, on which several of its passages are based.}
+\onp{\vfill{\scriptsize Sources: \citep{parvaiz2026survey,parvaiz2025identifiability}.}}
+\end{frame}
+
+\section{Exponentials and frequencies}\label{sec:ch05:complex}
+
+\begin{frame}\ft{Modes as rotating vectors}
+\ona{We shall need only one function in this \chap{}, the complex exponential, and it is best understood through a picture. A complex number $z=a+\imath b$ may be drawn as a point of the plane, or as the vector from the origin to that point, with the real part $a$ measured horizontally and the imaginary part $b$ vertically. Euler's formula $\ee^{\imath\theta}=\cos\theta+\imath\sin\theta$ tells us that multiplication by $\ee^{\imath\theta}$ rotates a vector through the angle $\theta$ and leaves its length unaltered. Thus, for real $\omega$, $\ee^{\imath\omega t}$ is a vector of unit length turning anticlockwise with angular velocity $\omega$, and for complex $\lambda=\alpha+\imath\omega$ we have}
+\onp{A complex number is a vector in the plane, and multiplication by $\ee^{\imath\theta}=\cos\theta+\imath\sin\theta$ rotates it through $\theta$. For $\lambda=\alpha+\imath\omega$:}
+\begin{equation}\label{eq:ch05:phasor}
+    \ee^{\lambda t}=\ee^{\alpha t}\,\ee^{\imath\omega t}=\ee^{\alpha t}\big(\cos\omega t+\imath\sin\omega t\big),\qquad
+    \frac{\mathrm d}{\mathrm dt}\,\ee^{\lambda t}=\lambda\,\ee^{\lambda t}.
+\end{equation}
+\ona{This is the same rotating vector, but its length now varies like $\ee^{\alpha t}$, and when $\alpha<0$ its tip runs inwards along a spiral (Figure~\ref{fig:ch05:phasor}(a)). Its real part, which is its projection on the horizontal axis, is $\ee^{\alpha t}\cos\omega t$, a damped oscillation (Figure~\ref{fig:ch05:phasor}(b)); nearly every signal in this course has that form. The second identity in \eqref{eq:ch05:phasor} says that the velocity of the tip is the vector itself multiplied by $\lambda$, that is to say rotated through $\arg\lambda$ and stretched by the factor $\abs{\lambda}$. When $\alpha=0$ the velocity is perpendicular to the vector and the tip moves on a circle. When $\alpha<0$ the velocity makes more than a right angle with the vector, and the tip moves inwards. That the derivative of an exponential is a constant multiple of it is the fact on which the rest of the \chap{} depends, for it turns a linear differential equation into an algebraic one as soon as the solution is written as a sum of exponentials.}
+\onp{\begin{itemize}
+    \item The tip turns with angular velocity $\omega$, and its distance from the origin varies like $\ee^{\alpha t}$.
+    \item Its projection on the real axis is the damped oscillation $\ee^{\alpha t}\cos\omega t$.
+    \item \alert{Differentiation is multiplication by $\lambda$.}
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Modes as rotating vectors}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch05_phasor.tex}}
+\caption{The mode $\ee^{\lambda t}$ with $\lambda=-\Gamma+\imath\omega$, $\Gamma=0.5$, $\omega=3$. (a) The vector $\ee^{\lambda t}$ in the complex plane, shown in blue at the times $t_0,\dots,t_3$; its tip describes a spiral. The velocity $\lambda\ee^{\lambda t}$ (red, drawn at one third of its length) is obtained from the vector by a rotation through $\arg\lambda\approx99.5^\circ$ and a dilation by $\abs\lambda$, and so points slightly inwards. (b) The projection on the real axis, $\mathrm{Re}\,\ee^{\lambda t}=\ee^{-\Gamma t}\cos\omega t$ (gold), plotted against $t$ between the envelopes $\pm\ee^{-\Gamma t}$. Generated by \texttt{code/ch05\_phasor.py}.}\label{fig:ch05:phasor}
+\end{figure}}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch05_phasor.tex}}\end{center}}
+\end{frame}
+
+\begin{frame}\ft{The $\lambda$-plane}
+\ona{Since a mode $\ee^{\lambda t}$ is determined by the complex number $\lambda$, its behaviour may be read off from the position of $\lambda$ in the complex plane, which we shall call the \emph{$\lambda$-plane} (Figure~\ref{fig:ch05:lambdaplane}). The real part $\alpha=\mathrm{Re}\,\lambda$ governs growth and decay. Points to the left of the imaginary axis give modes that decay, and the further to the left, the faster the decay; points on the imaginary axis give modes of constant amplitude; points to the right give modes that grow. The imaginary part $\omega=\mathrm{Im}\,\lambda$ governs oscillation. Points on the real axis give modes that do not oscillate at all, and the further a point lies from the real axis, the more rapid the oscillation. All the eigenvalues of a Lindbladian lie in the closed left half-plane (Figure~\ref{fig:ch03:spectrum} of \Chap~\ref{C.Open}), since no physical evolution can make an expectation value grow without bound.}
+\ona{An expectation value is real, whereas $\ee^{\lambda t}$ is in general complex. The two are reconciled by the identity $\cos\omega t=\frac12(\ee^{\imath\omega t}+\ee^{-\imath\omega t})$, which expresses a real oscillation as the sum of two vectors turning in opposite senses, whose imaginary parts cancel. In the same way the non-real eigenvalues of a real matrix $\mathbf A$ occur in conjugate pairs $\lambda,\bar\lambda$, placed symmetrically about the real axis, and each such pair contributes a single real damped oscillation to the data.}
+\onp{\begin{itemize}
+    \item Horizontal position: decay or growth. Vertical position: frequency.
+    \item Lindbladians: closed left half-plane. Real data: \alert{conjugate pairs} $\lambda,\bar\lambda$.
+\end{itemize}
+\begin{center}\resizebox{!}{0.62\textheight}{\input{figures/ch05_lambdaplane.tex}}\end{center}}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch05_lambdaplane.tex}}
+\caption{The $\lambda$-plane. Beside each marked point $\lambda$ is a sketch of $\mathrm{Re}\,\ee^{\lambda t}$ for $0\le t\le6$. On the negative real axis the modes decay without oscillating, the more quickly the further one goes to the left; on the imaginary axis they oscillate with constant amplitude, the more rapidly the higher one goes; between the two they are damped oscillations. The point in the right half-plane (grey, with its sketch reduced to fit) gives a growing mode, which no Lindbladian possesses. In red are the eigenvalues $0$, $-\gamma_1$ and $-\Gamma\pm\imath\omega$ of the example of this section, the last two forming a conjugate pair. The two axes are drawn to different scales. Generated by \texttt{code/ch05\_lambdaplane.py}.}\label{fig:ch05:lambdaplane}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{An example: the damped qubit}
+\ona{We shall use one example throughout the \chap{}. It is a single qubit with the Hamiltonian $\frac\omega2\sigma_z$, which precesses about the $z$-axis with angular frequency $\omega=3$, subject to amplitude damping at the rate $\gamma_1=0.2$ towards the ground state $\ket0$ (for which, as in \Chap~\ref{C.Open}, the Bloch vector points upwards) and to pure dephasing at the rate $\gamma_\phi=0.4$. In the affine embedding of \Chap~\ref{C.Open}, with $\vec x=(\langle\sigma_x\rangle,\langle\sigma_y\rangle,\langle\sigma_z\rangle,1)$, the equation of motion is}
+\onp{Qubit precessing at $\omega=3$, damping $\gamma_1=0.2$ towards $\ket0$, dephasing $\gamma_\phi=0.4$; $\vec x=(\langle\sigma_x\rangle,\langle\sigma_y\rangle,\langle\sigma_z\rangle,1)$:}
+\begin{equation}\label{eq:ch05:example}
+    \dot{\vec x}=\mathbf A\vec x,\qquad
+    \mathbf A=\begin{pmatrix}-\Gamma&-\omega&0&0\\ \omega&-\Gamma&0&0\\ 0&0&-\gamma_1&\gamma_1\\ 0&0&0&0\end{pmatrix},\qquad
+    \Gamma=\tfrac{\gamma_1}2+\gamma_\phi=0.5 .
+\end{equation}
+\ona{The eigenvalues of $\mathbf A$ are $0$, which belongs to the steady state and comes from the embedding; $-\gamma_1=-0.2$, which governs the relaxation of $\langle\sigma_z\rangle$ on the time scale $T_1=5$; and $-\Gamma\pm\imath\omega=-0.5\pm3\imath$, which govern the damped precession of $\langle\sigma_x\rangle$ and $\langle\sigma_y\rangle$ on the time scale $T_2=1/\Gamma=2$. The qubit is prepared in the pure state with the Bloch vector $(\sin\frac{2\pi}3,0,\cos\frac{2\pi}3)\approx(0.87,0,-0.5)$, which lies below the equator, so that every mode is excited. We measure $\sigma_x$, or $\sigma_z$, or the Pauli operator $\sigma_n$ along $\vec n=(1,0,1)/\sqrt2$, midway between the $x$- and $z$-axes, and we sample at intervals $\tau=0.25$. The data are shown in Figure~\ref{fig:ch05:timeseries}. The expectation $\langle\sigma_x\rangle$ oscillates with period $2\pi/\omega$ within an envelope that decays at the rate $\Gamma$, whereas $\langle\sigma_z\rangle$ rises to $1$ at the rate $\gamma_1$ and does not oscillate.}
+\onp{\begin{itemize}
+    \item Eigenvalues: $0$ (steady state), $-\gamma_1=-0.2$, $-\Gamma\pm\imath\omega=-0.5\pm3\imath$.
+    \item Start below the equator; measure $\sigma_x$, $\sigma_z$, or $\sigma_n$ with $\vec n=(1,0,1)/\sqrt2$; sample at intervals $\tau=0.25$.
+\end{itemize}}
+\ona{\begin{figure}[H]\centering\resizebox{\linewidth}{!}{\input{figures/ch05_timeseries.tex}}
+\caption{The data for the example \eqref{eq:ch05:example}: $\langle\sigma_x\rangle(t)$ in blue and $\langle\sigma_z\rangle(t)$ in red, with the samples taken at intervals $\tau=0.25$ marked by beads. The oscillation of $\langle\sigma_x\rangle$ decays within the envelope $\pm0.87\,\ee^{-\Gamma t}$ (dashed), while $\langle\sigma_z\rangle$ relaxes to its value in the ground state at the smaller rate $\gamma_1$. Generated by \texttt{code/ch05\_spectrum.py}.}\label{fig:ch05:timeseries}\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{The example: its data}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch05_timeseries.tex}}\end{center}
+$\langle\sigma_x\rangle$ oscillates with period $2\pi/\omega$ and decays at the rate $\Gamma$; $\langle\sigma_z\rangle$ rises to $1$ at the rate $\gamma_1$.}
+\end{frame}
+
+\begin{frame}\ft{The output as a sum of modes}
+\ona{If $\mathbf A$ is diagonalisable with eigenvalues $\lambda_1,\dots,\lambda_n$, every output of $\dot{\vec x}=\mathbf A\vec x$ is a linear combination of the corresponding modes,}
+\onp{Each output is a linear combination of modes, one for each eigenvalue:}
+\begin{equation}\label{eq:ch05:sum}
+    y(t)=\sum_{i=1}^n r_i\,\ee^{\lambda_it},
+\end{equation}
+\ona{in which the coefficients $r_i$, given explicitly in \eqref{eq:ch05:modes} below, depend on the measurement and on the initial state. Figure~\ref{fig:ch05:modes} decomposes $\langle\sigma_n\rangle(t)$ in this way into a constant, which comes from $\lambda=0$, a slow decay, which comes from $-\gamma_1$, and a damped oscillation, which comes from the conjugate pair $-\Gamma\pm\imath\omega$. The problem of identification is the converse one: we are given the sum and must find the terms. The frequency domain, to which we now turn, is the natural setting for that problem, because there the terms appear separately rather than added together.}
+\onp{\begin{center}\resizebox{!}{0.62\textheight}{\input{figures/ch05_modes.tex}}\end{center}}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch05_modes.tex}}
+\caption{The data $\langle\sigma_n\rangle(t)$ for the example, with $\vec n=(1,0,1)/\sqrt2$, written as the sum \eqref{eq:ch05:sum} of three terms, each already multiplied by its coefficient $r_i$: a constant from the steady state $\lambda=0$, a decay from the relaxation $\lambda=-\gamma_1$, and a damped oscillation from the precession $\lambda=-\Gamma\pm\imath\omega$. The small diagrams on the left mark in red the eigenvalue responsible for each term. Identification asks for the terms, that is, for each $\lambda_i$ and $r_i$, given only the samples of the sum (red dots). Generated by \texttt{code/ch05\_modes.py}.}\label{fig:ch05:modes}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{The Fourier transform}
+\ona{Suppose that we have recorded a signal $y(t)$ and wish to know which frequencies it contains. A simple device answers the question. Multiply $y(t)$ by $\ee^{-\imath\nu t}$, a vector turning clockwise with a trial angular velocity $\nu$, and follow the product in the complex plane. Any part of $y$ that oscillates with the frequency $\nu$ is turned back as fast as it turns, so that the product keeps roughly the same direction and its contributions accumulate. Any part that oscillates with another frequency continues to turn, and its contributions cancel in the course of each revolution. The sum of all the contributions,}
+\onp{Multiply the signal by $\ee^{-\imath\nu t}$ and integrate:}
+\begin{equation}\label{eq:ch05:fourier}
+    \hat y(\nu)=\int_0^\infty y(t)\,\ee^{-\imath\nu t}\,\mathrm dt,\qquad
+    \int_0^\infty\ee^{\lambda t}\,\ee^{-\imath\nu t}\,\mathrm dt=\frac1{\imath\nu-\lambda}\quad(\mathrm{Re}\,\lambda<0),
+\end{equation}
+\ona{is the \emph{Fourier transform} of $y$. It is large when $\nu$ is one of the frequencies present in $y$ and small otherwise (Figure~\ref{fig:ch05:winding}), and the graph of $\abs{\hat y(\nu)}$ against $\nu$ is called the \emph{spectrum} of $y$. For a single mode the integral is given by the second formula in \eqref{eq:ch05:fourier}, and its modulus $1/\abs{\imath\nu-\lambda}$ has a simple geometrical meaning: it is the reciprocal of the distance from the point $\imath\nu$ of the imaginary axis to the point $\lambda$. It is therefore greatest when $\nu=\mathrm{Im}\,\lambda$, where it equals $1/\abs{\mathrm{Re}\,\lambda}$, so that a slowly decaying mode gives a high peak. If the trial frequency $\imath\nu$ is replaced by a complex number $s=\sigma+\imath\nu$ we obtain the Laplace transform $\hat y(s)=\int_0^\infty y(t)\ee^{-st}\,\mathrm dt$ of the next section, and for a single mode $\hat y(s)=1/(s-\lambda)$, which becomes infinite at $s=\lambda$.}
+\onp{\begin{itemize}
+    \item At the frequency of the signal the contributions accumulate; at other frequencies they cancel.
+    \item For one mode $\abs{\hat y(\nu)}=1/\mathrm{dist}(\imath\nu,\lambda)$; with complex $s$ in place of $\imath\nu$ we obtain the Laplace transform.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The Fourier transform}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch05_winding.tex}}
+\caption{The Fourier transform as winding. (a) The signal $y(t)=\ee^{-\Gamma t}\cos\omega t$ wound about the origin at the trial frequency $\nu$, that is, the curve $y(t)\ee^{-\imath\nu t}$. The arrow is the sum of all its points, $\hat y(\nu)=\int_0^\infty y(t)\ee^{-\imath\nu t}\,\mathrm dt$. Away from $\omega$ the contributions cancel. At $\nu=\omega$ the rotation of the signal is undone, the curve stays in the right half-plane, and the arrow is long. (b) The length $\abs{\hat y(\nu)}$ as a function of $\nu$, which is the spectrum; it has a peak at $\omega$ whose width is determined by $\Gamma$. Generated by \texttt{code/ch05\_winding.py}.}\label{fig:ch05:winding}
+\end{figure}}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch05_winding.tex}}\end{center}}
+\end{frame}
+
+\section{Transfer functions}
+
+\begin{frame}\ft{From the time domain to the Laplace domain}
+\ona{The Laplace transform is the construction of Figure~\ref{fig:ch05:winding} with a complex trial frequency $s$, and its most useful property is the one illustrated in Figure~\ref{fig:ch05:phasor}: the transform of $\dot f$ is $s\hat f(s)-f(0^-)$, so that differentiation becomes multiplication by $s$. Consider the linear model of an autonomous open quantum system (\Chap~\ref{C.Open}), after the affine embedding, with the initial state entering as an impulse,}
+\onp{Autonomous open system, coherence vector, initial state as an impulse:}
+\begin{equation}\label{eq:ch05:lds}
+    \dot{\vec x}(t)=\mathbf A\vec x(t)+\mathbf B\vec u(t),\qquad \vec y(t)=\mathbf C\vec x(t),\qquad \vec u(t)=\vec x_0\,\delta(t),\ \mathbf B=\Id .
+\end{equation}
+\ona{On taking Laplace transforms, $\hat f(s)=\Laplace\{f\}(s)=\int_0^\infty\ee^{-st}f(t)\,\mathrm{d}t$, the differential equation becomes the algebraic equation $s\hat{\vec x}(s)-\vec x(0^-)=\mathbf A\hat{\vec x}(s)+\mathbf B\hat{\vec u}(s)$, and with $\vec x(0^-)=0$ we obtain}
+\begin{equation}\label{eq:ch05:tf}
+    \hat{\vec y}(s)=\TF(s)\,\hat{\vec u}(s),\qquad \TF(s)=\mathbf C(s\Id-\mathbf A)^{-1}\mathbf B\in\C^{p\times m}(s).
+\end{equation}
+\begin{defn}[Transfer function]\label{def:ch05:tf}
+$\TF(s)=\mathbf C(s\Id-\mathbf A)^{-1}\mathbf B$ is the transfer function of \eqref{eq:ch05:lds}. It is a matrix of strictly proper rational functions of $s$, and it is invariant under similarity: $\mathbf C\mathbf T^{-1}(s\Id-\mathbf T\mathbf A\mathbf T^{-1})^{-1}\mathbf T\mathbf B=\TF(s)$.
+\end{defn}
+\ona{For the impulsive input the output is simply $\vec y(t)=\mathbf C\ee^{\mathbf At}\vec x_0$, whose transform is $\TF(s)\vec x_0$. The transfer function is thus that part of the model which is determined by input--output data, and Theorem~\ref{thm:ch04:similarity} of \Chap~\ref{C.StateSpace}, that minimal realisations are unique up to similarity, says that a minimal triple $(\mathbf A,\mathbf B,\mathbf C)$ is determined by $\TF$ up to a change of coordinates. The frequency response is $\TF(\imath\omega)$, the transfer function evaluated on the imaginary axis; for a stable system it is the Fourier transform of the impulse response.}
+\onp{\begin{itemize}
+    \item $\TF$ is \alert{invariant under similarity}, and is what the data determine.
+    \item Impulse response $\vec y(t)=\mathbf C\ee^{\mathbf At}\vec x_0$; frequency response $\TF(\imath\omega)$.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The response to a sinusoid}
+\ona{The transfer function is most easily understood by driving the system at a single frequency. Adding a weak field $\frac{u(t)}2\sigma_x$ to the Hamiltonian of our example gives a bilinear system in the sense of \Chap~\ref{C.StateSpace}, but near the ground state, where $\langle\sigma_z\rangle\approx1$, the system is linear to first order in $u$: $\dot{\vec x}=\mathbf A\vec x+\vec b\,u(t)$ with $\vec b=(0,-1,0,0)^\top$. Let $u(t)=\epsilon\sin\nu t=\epsilon\,\mathrm{Im}\,\ee^{\imath\nu t}$, and look for a solution of the same form, $\vec x(t)=\vec x_{\mathrm{ss}}+\epsilon\,\mathrm{Im}(\hat{\vec x}\,\ee^{\imath\nu t})$, about the steady state $\vec x_{\mathrm{ss}}=(0,0,1,1)$. Since differentiation multiplies $\ee^{\imath\nu t}$ by $\imath\nu$, the differential equation reduces to the linear equation $\imath\nu\hat{\vec x}=\mathbf A\hat{\vec x}+\vec b$, whence $\hat{\vec x}=(\imath\nu\Id-\mathbf A)^{-1}\vec b$, and the measured value of $\sigma_x$ is}
+\onp{Weak drive near the ground state: $\dot{\vec x}=\mathbf A\vec x+\vec b\,u$, $\vec b=(0,-1,0,0)^\top$. With $u=\epsilon\sin\nu t$, after the transients:}
+\begin{equation}\label{eq:ch05:response}
+    y(t)=\epsilon\abs{\TF(\imath\nu)}\sin\big(\nu t+\arg\TF(\imath\nu)\big),\qquad \TF(\imath\nu)=\mathbf C(\imath\nu\Id-\mathbf A)^{-1}\vec b=\frac{\omega}{(\imath\nu+\Gamma)^2+\omega^2} .
+\end{equation}
+\ona{Once the transients have died away, then, a sinusoidal input produces a sinusoidal output of the same frequency, multiplied by the \emph{gain} $\abs{\TF(\imath\nu)}$ and shifted by the \emph{phase} $\arg\TF(\imath\nu)$ (Figure~\ref{fig:ch05:response}). The graph of the gain against $\nu$ is what a spectroscopist measures. The qubit responds strongly only when it is driven near its own frequency $\omega$, and the width of the resonance is governed by the decay rate $\Gamma$; indeed $\abs{\TF(\imath\nu)}^2$ falls to half its maximum over a full width of about $2\Gamma$.}
+\onp{\begin{itemize}
+    \item The output has the same frequency, multiplied by the \alert{gain} $\abs{\TF(\imath\nu)}$ and shifted by the \alert{phase} $\arg\TF(\imath\nu)$.
+    \item The gain against $\nu$ is the resonance curve of spectroscopy: a peak at $\omega$ of width about $2\Gamma$.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The response to a sinusoid}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch05_response.tex}}\end{center}}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch05_response.tex}}
+\caption{The response \eqref{eq:ch05:response} of the example to a weak drive $\frac{u(t)}2\sigma_x$ near the ground state, with $\sigma_x$ measured. (a) After the transient, the input $\epsilon\sin\nu t$ with $\nu=2.6$ produces an output of the same frequency, with gain $\abs{\TF(\imath\nu)}=0.83$ and phase lag $-\arg\TF(\imath\nu)=46^\circ$. (b) The gain as a function of the driving frequency, with a resonance at the frequency $\omega$ of the pole; $\abs{\TF}^2$ falls to half its maximum over a full width of about $2\Gamma$. Generated by \texttt{code/ch05\_response.py}.}\label{fig:ch05:response}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{Poles are eigenvalues of the Lindbladian}
+\ona{Write $(s\Id-\mathbf A)^{-1}=\operatorname{adj}(s\Id-\mathbf A)/\det(s\Id-\mathbf A)$. The denominator is the characteristic polynomial of $\mathbf A$, so that every pole of $\TF$ is an eigenvalue of $\mathbf A$. Conversely, an eigenvalue is a pole unless it is cancelled by a zero common to every entry of the adjugate, and we shall see in the next section that this happens for the unobservable and the uncontrollable modes and for no others. If $\mathbf A$ is diagonalisable, with eigenpairs $(\lambda_i,\vec v_i)$ and left eigenvectors $\vec w_i$, then}
+\onp{Partial fractions ($\mathbf A$ diagonalisable, right and left eigenvectors $\vec v_i,\vec w_i$):}
+\begin{equation}\label{eq:ch05:modes}
+    \TF(s)=\sum_{i=1}^{n}\frac{(\mathbf C\vec v_i)(\vec w_i^{\dagger}\mathbf B)}{s-\lambda_i},\qquad
+    \vec y(t)=\sum_{i=1}^{n}(\mathbf C\vec v_i)(\vec w_i^{\dagger}\vec x_0)\,\ee^{\lambda_it}.
+\end{equation}
+\ona{The eigenvalues $\lambda_i=\alpha_i+\imath\omega_i$ of $\mathbf A$ are the natural modes of the system and describe its relaxation and its oscillations: the real part $\alpha_i\le0$ is a decay rate and the imaginary part $\omega_i$ a frequency. For a Markovian open system the non-real eigenvalues occur in conjugate pairs, and the embedded system has in addition the eigenvalue $0$, which belongs to the steady state. For a closed system $\mathbf A=\mathbf A^{(l)}$ is antisymmetric, every $\alpha_i$ vanishes, and the frequencies are the Bohr frequencies $E_a-E_b$ of the Hamiltonian. For our example \eqref{eq:ch05:example} the eigenvalues are $-\Gamma\pm\imath\omega$ (transverse), $-\gamma_1$ (longitudinal) and $0$, and the coefficients in \eqref{eq:ch05:sum} are $r_i=(\mathbf C\vec v_i)(\vec w_i^\dagger\vec x_0)$.}
+\ona{The term \emph{pole} is explained by Figure~\ref{fig:ch05:surface}. Above each point $s$ of the complex plane we erect a height equal to $\abs{\TF(s)}$. The resulting surface rises to infinity above each eigenvalue, much as a tent rises above its poles. The frequency response of Figure~\ref{fig:ch05:response} is the section of this surface along the imaginary axis $s=\imath\nu$. A pole close to the axis lifts the section into a high and narrow resonance; a pole far from it produces only a low, broad hump.}
+\onp{\begin{itemize}
+    \item $\lambda_i=\alpha_i+\imath\omega_i$: decay rates and frequencies of the data.
+    \item Closed system: $\mathbf A$ antisymmetric, $\alpha_i=0$, and the $\omega_i$ are Bohr frequencies.
+    \item The example: $-\Gamma\pm\imath\omega$, $-\gamma_1$, $0$.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The origin of the word `pole'}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch05_surface.tex}}
+\caption{The gain $\abs{\TF(s)}$ of the driven qubit of Figure~\ref{fig:ch05:response}, drawn as a surface over the left half of the complex $s$-plane, with the scale of $\mathrm{Re}\,s$ enlarged. The surface rises above the two poles $-\Gamma\pm\imath\omega$, where $\TF$ is infinite (the peaks have been truncated). Its front edge, the section along the imaginary axis $s=\imath\nu$ (red), is the frequency response of Figure~\ref{fig:ch05:response}(b). Generated by \texttt{code/ch05\_surface.py}.}\label{fig:ch05:surface}
+\end{figure}}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch05_surface.tex}}\end{center}
+{\small $\abs{\TF(s)}$ is infinite at the poles; its section along $s=\imath\nu$ is the frequency response.}}
+\end{frame}
+
+\begin{frame}\ft{Poles and peaks}
+\ona{For a recorded output we cannot drive the system at every frequency, but we can apply the construction of Figure~\ref{fig:ch05:winding} to the record itself. The discrete Fourier transform of the samples $y_k=\vec y(k\tau)$, $k=0,\dots,K-1$, is $\hat y_\ell=\sum_k y_k\ee^{-2\pi\imath k\ell/K}$, taken at the angular frequencies $\nu_\ell=2\pi\ell/(K\tau)$, and $\tau\hat y_\ell$ approximates the integral \eqref{eq:ch05:fourier}. For a sum of damped exponentials \eqref{eq:ch05:sum} each mode contributes $r_i/(\imath\nu-\lambda_i)$, so that near $\nu=\omega_i$}
+\onp{Each mode contributes a \alert{Lorentzian} peak to the squared spectrum:}
+\begin{equation}\label{eq:ch05:lorentz}
+    \abs{\hat y(\nu)}^2\approx\frac{\abs{r_i}^2}{(\nu-\omega_i)^2+\alpha_i^2}.
+\end{equation}
+\ona{This is a \emph{Lorentzian} peak, centred at $\omega_i$, with half-width $\abs{\alpha_i}$ at half its height and with height $\abs{r_i}^2/\alpha_i^2$. Figure~\ref{fig:ch05:spectrum} shows how the poles determine the peaks. If the $\lambda$-plane is turned through a right angle, so that its imaginary axis becomes the frequency axis of the spectrum, each pole stands at the height $\abs{\alpha_i}$ above that axis and produces directly beneath it a peak of half-width $\abs{\alpha_i}$. The nearer the pole to the axis, the sharper the peak; the steady state $\lambda=0$ lies on the axis and gives a line of zero width. To read the eigenvalues off the positions and widths of the peaks is the simplest method of identification in the frequency domain. Its accuracy is limited by the resolution $2\pi/(K\tau)$ and by the Nyquist frequency $\pi/\tau$, above which peaks are folded back into the band; this is aliasing, to which we return below. The Hankel methods of the next section do the same work with far fewer data, because they make use of the fact that $\TF$ is rational.}
+\onp{\begin{itemize}
+    \item Centre $\omega_i$, half-width $\abs{\alpha_i}$, height $\abs{r_i}^2/\alpha_i^2$.
+    \item Resolution $2\pi/(K\tau)$; Nyquist frequency $\pi/\tau$. The Hankel methods below need far fewer samples.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Poles and peaks}
+\ona{\begin{figure}[H]\centering\resizebox{\linewidth}{!}{\input{figures/ch05_spectrum.tex}}
+\caption{Poles and peaks for the example. Above: the $\lambda$-plane turned through $90^\circ$, so that each pole stands above the frequency axis at the height $-\mathrm{Re}\,\lambda$. Below: the squared spectra $\abs{\hat y(\nu)}^2$ of $\langle\sigma_x\rangle$ (blue) and of $\langle\sigma_z\rangle-1$ (red), each scaled to unit height; the curves are computed in closed form, the beads by the discrete Fourier transform of $256$ samples. Each pole produces a peak whose half-width at half height (brackets) is $-\mathrm{Re}\,\lambda$, namely $\Gamma=0.5$ for the transverse pair and $\gamma_1=0.2$ for the relaxation. Generated by \texttt{code/ch05\_spectrum.py}.}\label{fig:ch05:spectrum}\end{figure}}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch05_spectrum.tex}}\end{center}}
+\end{frame}
+
+\begin{frame}\ft{Resolution and the length of the record}
+\ona{Two modes whose frequencies differ by $\delta$ interfere, and their sum waxes and wanes with the beat period $2\pi/\delta$. A record shorter than about one beat period does not contain enough of the signal to distinguish them, and in the spectrum the two peaks merge into one. More generally, a record of length $K\tau$ blurs the spectrum over a width of about $2\pi/(K\tau)$, which is the spacing of the frequencies $\nu_\ell$ of the discrete Fourier transform (Figure~\ref{fig:ch05:beats}). To resolve two frequencies a distance $\delta$ apart one therefore needs a record of length at least about $2\pi/\delta$, however finely it is sampled. Faster sampling raises a different limit, the Nyquist frequency, which is the subject of Section~\ref{sec:ch05:sampling}.}
+\onp{\begin{itemize}
+    \item Two frequencies $\delta$ apart beat with period $2\pi/\delta$.
+    \item A record of length $K\tau$ resolves $\delta\gtrsim2\pi/(K\tau)$: one must record for longer, not sample faster.
+\end{itemize}
+\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch05_beats.tex}}\end{center}}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch05_beats.tex}}
+\caption{The resolution of two nearby frequencies. (a) The signal $y(t)=\cos 3t+\cos 3.4t$, which beats with period $2\pi/0.4\approx16$, sampled at intervals $\tau=0.25$ over a short record ($K=32$, $K\tau=8$) and a long one ($K=160$, $K\tau=40$). (b) The squared modulus of the transform of each record, normalised. The short record gives a single broad peak, since the two frequencies are closer than its resolution $2\pi/(K\tau)=0.79$; the long record, whose resolution is $0.16$, gives two. The dots are the values of the discrete Fourier transform, spaced $2\pi/(K\tau)$ apart. Generated by \texttt{code/ch05\_beats.py}.}\label{fig:ch05:beats}
+\end{figure}}
+\end{frame}
+
+\section{Tests in the frequency domain}
+
+\begin{frame}\ft{The Hautus (Popov--Belevitch--Hautus) test}
+\begin{thm}[Hautus]\label{thm:ch05:hautus}
+$(\mathbf A,\mathbf C)$ is observable if and only if
+$\rank\begin{bmatrix}\lambda\Id-\mathbf A\\ \mathbf C\end{bmatrix}=n$ for every eigenvalue $\lambda$ of $\mathbf A$.
+Dually, $(\mathbf A,\mathbf B)$ is controllable if and only if $\rank\begin{bmatrix}\lambda\Id-\mathbf A & \mathbf B\end{bmatrix}=n$ for every eigenvalue $\lambda$.
+\end{thm}
+\ona{\begin{pf}
+If the rank falls at some $\lambda$, there is $\vec v\neq0$ with $\mathbf A\vec v=\lambda\vec v$ and $\mathbf C\vec v=0$; then $\mathbf C\mathbf A^k\vec v=\lambda^k\mathbf C\vec v=0$ for all $k$, so that $\vec v\in\ker\OM^{(\mathrm{lin})}$ and the system is not observable. Conversely, $\ker\OM^{(\mathrm{lin})}$ is invariant under $\mathbf A$, since if $\mathbf C\mathbf A^k\vec v=0$ for all $k$ then the same holds for $\mathbf A\vec v$. If it is not trivial, it therefore contains an eigenvector $\vec v$ of $\mathbf A$, which satisfies $\mathbf C\vec v=0$ and makes the rank fall at its eigenvalue. The statement about controllability follows by duality.
+\end{pf}
+The test, due to Popov, Belevitch and Hautus in the late 1960s, is the Kalman test examined one eigenvalue at a time. A mode is unobservable if and only if its eigenvector is annihilated by $\mathbf C$, that is, if and only if the factor $\mathbf C\vec v_i$ in \eqref{eq:ch05:modes} vanishes and the pole $\lambda_i$ cancels from $\TF$. In our example with $\sigma_z$ alone measured, the transverse eigenvectors satisfy $\mathbf C\vec v=0$, so that the poles $-\Gamma\pm\imath\omega$ do not appear in $\langle\sigma_z\rangle(t)$ at all, and no quantity of data on $\sigma_z$ will reveal $\omega$ or $\Gamma$. With $\sigma_x$ alone measured the position is reversed: the eigenvectors belonging to $0$ and $-\gamma_1$ point along the $z$-axis, and $\gamma_1$ cannot be seen. The geometry is shown in Figure~\ref{fig:ch05:hautus}. The transverse modes rotate the Bloch vector in the equatorial plane, a motion with no component along the $z$-axis, while the longitudinal modes move it along the $z$-axis, a motion with no component along the $x$-axis. A mode is invisible when the direction of measurement is perpendicular to its eigenvector, and its pole is then absent from the data. This is the frequency-domain counterpart of Figure~\ref{fig:ch04:singular} of \Chap~\ref{C.StateSpace}.}
+\onp{\begin{itemize}
+    \item Unobservable mode $\Leftrightarrow$ eigenvector with $\mathbf C\vec v=0$ $\Leftrightarrow$ pole cancels from $\TF$.
+    \item The example with $\sigma_z$ measured: the poles $-\Gamma\pm\imath\omega$ are absent from the data, so $\omega$ and $\Gamma$ cannot be identified. With $\sigma_x$ measured, $\gamma_1$ cannot be seen.
+    \item The Kalman test, one eigenvalue at a time.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{An unobservable mode}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch05_hautus.tex}}
+\caption{The Hautus test for the example, started from the state $\vec x_0$. (a) The Bloch vector rotates and shrinks in the equatorial plane (blue; the transverse modes $-\Gamma\pm\imath\omega$) while it rises along the $z$-axis (red; the modes $0$ and $-\gamma_1$). The eigenvectors of the rotation are perpendicular to the $z$-axis, and those of the rise are perpendicular to the $x$-axis. (b) For each measurement, the poles that appear in the data (filled) and those that cancel because $\mathbf C\vec v_i=0$ (a pole with a zero upon it), together with the data: $\langle\sigma_x\rangle$ oscillates, and $\langle\sigma_z\rangle$ merely relaxes. Generated by \texttt{code/ch05\_hautus.py}.}\label{fig:ch05:hautus}
+\end{figure}}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch05_hautus.tex}}\end{center}
+{\small With $\sigma_z$ measured the rotation cannot be seen; with $\sigma_x$ measured the rise cannot be seen. The Hautus rank falls at the cancelled poles.}}
+\end{frame}
+
+\begin{frame}\ft{The Kalman decomposition}
+\ona{By a similarity transformation any realisation can be brought to a block form in which the state is split into four parts: the part that is controllable and observable ($co$), controllable but not observable ($c\bar o$), observable but not controllable ($\bar co$), and neither ($\bar c\bar o$). In this order,}
+\onp{Four blocks: $co$, $c\bar o$, $\bar co$, $\bar c\bar o$; after a similarity transformation,}
+\begin{equation}\label{eq:ch05:kalmanform}
+\begin{gathered}
+    \mathbf T\mathbf A\mathbf T^{-1}=\begin{pmatrix}\mathbf A_{co}&0&\mathbf A_{13}&0\\ \mathbf A_{21}&\mathbf A_{c\bar o}&\mathbf A_{23}&\mathbf A_{24}\\ 0&0&\mathbf A_{\bar co}&0\\ 0&0&\mathbf A_{43}&\mathbf A_{\bar c\bar o}\end{pmatrix},\qquad
+    \mathbf T\mathbf B=\begin{pmatrix}\mathbf B_{co}\\ \mathbf B_{c\bar o}\\ 0\\ 0\end{pmatrix},\\
+    \mathbf C\mathbf T^{-1}=\begin{pmatrix}\mathbf C_{co}&0&\mathbf C_{\bar co}&0\end{pmatrix}.
+\end{gathered}
+\end{equation}
+\ona{The input reaches only the first two blocks, and the output depends only on the first and the third. The zero blocks ensure that nothing passes from the uncontrollable part into the controllable part, or from the unobservable part into the observable part. If the blocks are drawn as boxes, and the non-zero blocks of $\mathbf A$, $\mathbf B$ and $\mathbf C$ as arrows between them (Figure~\ref{fig:ch05:kalman}), the only path from $u$ to $y$ passes through $\vec x_{co}$. Only this block contributes to $\TF(s)$, and the remaining blocks account for the cancelled poles of the Hautus test.}
+\onp{The input reaches blocks $1$ and $2$; the output depends only on blocks $1$ and $3$.}
+\end{frame}
+
+\begin{frame}\ft{Minimal realisations}
+\begin{thm}[Kalman decomposition; minimality]\label{thm:ch05:kalman}
+There is an invertible $\mathbf T$ such that $\mathbf T\mathbf A\mathbf T^{-1}$, $\mathbf T\mathbf B$, $\mathbf C\mathbf T^{-1}$ have the block structure \eqref{eq:ch05:kalmanform}, and $\TF(s)=\mathbf C_{co}(s\Id-\mathbf A_{co})^{-1}\mathbf B_{co}$ depends only on the controllable-and-observable block. A realisation is minimal (of smallest dimension among all realisations of $\TF$) if and only if it is controllable and observable, and then its dimension is the McMillan degree of $\TF$, i.e.\ the degree of the least common denominator of its entries.
+\end{thm}
+\ona{For quantum systems the practical meaning of the theorem lies in the accessible set of \Chap~\ref{C.StateSpace}. The observable block of the coherence-vector dynamics is spanned by the accessible set $G_\infty$ generated from the measured observables, and the reduced system $\dot{\tilde x}=\tilde{\mathbf A}\tilde x$ on it is, with $\mathbf B=\Id$, a minimal realisation of the data. Its dimension $J$, and not $n=N^2-1$, is what any method based on data can recover, and it may be read off from the data as the rank of a Hankel matrix (next section). A Hamiltonian parameter that lives outside $G_\infty$ leaves no trace in any transfer function.}
+\onp{\begin{itemize}
+    \item Only the controllable-and-observable block enters $\TF$.
+    \item Minimal $\Leftrightarrow$ controllable and observable; the dimension is then the McMillan degree.
+    \item For quantum systems: the reduced system on the accessible set is a minimal realisation of the data.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The Kalman decomposition as a diagram}
+\ona{\begin{figure}[H]\centering
+\resizebox{0.9\linewidth}{!}{\input{figures/ch05_kalman.tex}}
+\caption{The Kalman decomposition \eqref{eq:ch05:kalmanform} drawn as a diagram of four boxes. An arrow from box $j$ to box $i$ indicates a block $\mathbf A_{ij}$ that may be non-zero, and the arrows from $u$ and to $y$ indicate the non-zero blocks of $\mathbf B$ and $\mathbf C$. The state $\vec x_{c\bar o}$ can be reached from $u$ but is never seen, and $\vec x_{\bar co}$ is seen but can never be reached. The only path from $u$ to $y$ (red) passes through $\vec x_{co}$, whence $\TF(s)=\mathbf C_{co}(s\Id-\mathbf A_{co})^{-1}\mathbf B_{co}$. Generated by \texttt{code/ch05\_kalman.py}.}\label{fig:ch05:kalman}
+\end{figure}}
+\onp{\begin{center}\resizebox{!}{0.72\textheight}{\input{figures/ch05_kalman.tex}}\end{center}}
+\end{frame}
+
+\section{Markov parameters, Hankel matrices, and realisation}
+
+\begin{frame}\ft{Discrete time: Markov parameters}
+\ona{Experiments sample at discrete times. With a uniform sampling interval $\tau$ and instants $k=0,1,\dots$, the zero-order-hold model in discrete time is}
+\onp{Uniformly sampled data obey a discrete LDS:}
+\begin{equation}\label{eq:ch05:discrete}
+    \vec x(k\tau+\tau)=\mathbf G_\tau\vec x(k\tau)+\mathbf F_\tau\vec u(k\tau),\qquad
+    \mathbf G_\tau=\exp[\mathbf A\tau],\quad \mathbf F_\tau=\int_0^\tau\exp[\mathbf At]\,\mathrm{d}t\,\mathbf B ,
+\end{equation}
+\ona{and the sampled output of the autonomous system is $y_k=\mathbf C\mathbf G_\tau^{k}\vec x_0$. The terms $y_k$, or more generally $\mathbf C\mathbf G_\tau^{k}\mathbf F_\tau$ in the driven case, are called the \emph{Markov parameters}; they are the coefficients in the expansion of the discrete transfer function $\TF_d(z)=\mathbf C(z\Id-\mathbf G_\tau)^{-1}\mathbf F_\tau=\sum_{k\ge0}\mathbf C\mathbf G_\tau^{k}\mathbf F_\tau\,z^{-k-1}$ in powers of $1/z$. Since $\mathbf G_\tau$ is an $n\times n$ matrix, the theorem of Cayley and Hamilton shows that the sequence satisfies a linear recurrence of order $n$, which is the discrete counterpart of the rationality of $\TF$. We arrange the Markov parameters in a block Hankel matrix with $r$ block rows and $s$ block columns:}
+\onp{Markov parameters $y_k=\mathbf C\mathbf G_\tau^k\vec x_0$ satisfy a recurrence of order $n$. Arrange them in a \alert{Hankel matrix}:}
+\begin{equation}\label{eq:ch05:hankel}
+    \Hankel_{rs}(k)=\begin{bmatrix} y_{k} & y_{k+1} & \cdots & y_{k+s-1}\\ y_{k+1} & y_{k+2} & \cdots & y_{k+s}\\ \vdots & & \ddots & \vdots\\ y_{k+r-1} & y_{k+r} & \cdots & y_{k+r+s-2}\end{bmatrix}
+    = \begin{bmatrix}\mathbf C\\ \mathbf C\mathbf G_\tau\\ \vdots\\ \mathbf C\mathbf G_\tau^{r-1}\end{bmatrix}\mathbf G_\tau^{k}
+    \begin{bmatrix}\vec x_0 & \mathbf G_\tau\vec x_0 & \cdots & \mathbf G_\tau^{s-1}\vec x_0\end{bmatrix}.
+\end{equation}
+\end{frame}
+
+\begin{frame}\ft{A recurrence for the samples}
+\ona{The recurrence is most easily seen for a single damped oscillation, such as $\langle\sigma_x\rangle$ in our example, for which $y_k=c\,\mathrm{Re}(\mu^k)$ with $\mu=\ee^{\lambda\tau}=\rho\,\ee^{\imath\omega\tau}$ and $\rho=\ee^{-\Gamma\tau}$. Then}
+\onp{One damped oscillation, $\mu=\ee^{\lambda\tau}=\rho\,\ee^{\imath\omega\tau}$:}
+\begin{equation}\label{eq:ch05:recurrence}
+    y_{k+2}=2\rho\cos(\omega\tau)\,y_{k+1}-\rho^2\,y_k ,
+\end{equation}
+\ona{since $\mu$ and $\bar\mu$ are the roots of $z^2-2\rho\cos(\omega\tau)\,z+\rho^2$. For $\tau=0.25$ the recurrence reads $y_{k+2}=1.29\,y_{k+1}-0.78\,y_k$, so that two numbers, fixed once and for all by the eigenvalues, determine each sample from the two before it (Figure~\ref{fig:ch05:recurrence}). In general $n$ modes require $n$ numbers, the coefficients of the characteristic polynomial of $\mathbf G_\tau$. It follows that every row of the Hankel matrix \eqref{eq:ch05:hankel} after the $n$-th is a fixed linear combination of the $n$ rows before it, so that its rank cannot exceed $n$, however many samples are taken. Conversely, the roots of the recurrence are the eigenvalues $\ee^{\lambda_i\tau}$ of $\mathbf G_\tau$, from which the $\lambda_i$ may be recovered. This is the method of Prony, published in 1795, and the oldest of the methods of this section.}
+\onp{\begin{itemize}
+    \item Each sample is determined by the $n$ before it, so the rows of $\Hankel$ beyond the $n$-th are dependent.
+    \item The roots of $z^2-2\rho\cos(\omega\tau)z+\rho^2$ are $z=\ee^{\lambda\tau}$, the eigenvalues of $\mathbf G_\tau$.
+\end{itemize}
+\begin{center}\resizebox{!}{0.36\textheight}{\input{figures/ch05_recurrence.tex}}\end{center}}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch05_recurrence.tex}}
+\caption{(a) The samples $y_k=\langle\sigma_x\rangle(k\tau)$, $\tau=0.25$, for the example. Any three consecutive samples satisfy $y_{k+2}=1.29\,y_{k+1}-0.78\,y_k$, the coefficients being $2\ee^{-\Gamma\tau}\cos\omega\tau$ and $-\ee^{-2\Gamma\tau}$; the recurrence is drawn at three places. (b) The roots of $z^2-1.29z+0.78$ are $\ee^{\lambda\tau}$ for $\lambda=-\Gamma\pm\imath\omega$, with modulus $\ee^{-\Gamma\tau}$ and argument $\pm\omega\tau$. Generated by \texttt{code/ch05\_recurrence.py}.}\label{fig:ch05:recurrence}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{The rank of the Hankel matrix}
+\begin{thm}[Hankel rank]\label{thm:ch05:hankelrank}
+$\Hankel_{rs}(0)=\Obsv_r\,\Ctrb_s$ factors into the (truncated) observability matrix of $(\mathbf G_\tau,\mathbf C)$ and the Krylov (controllability) matrix of $(\mathbf G_\tau,\vec x_0)$. Hence, for $r,s\ge n$, $\rank\Hankel_{rs}(0)$ equals the dimension of the minimal realisation of the data, and equals $n$ if and only if $(\mathbf G_\tau,\mathbf C)$ is observable and $(\mathbf G_\tau,\vec x_0)$ is a controllable pair.
+\end{thm}
+\ona{The second condition is the \emph{persistency of excitation} of the initial state. For an autonomous linear system it may be stated as the requirement that the Krylov matrix $X_n=[\vec x(0)\ \vec x(1)\ \cdots\ \vec x(n-1)]$ have full rank $n$, which is equivalent to $(\mathbf A,\vec x(0))$ being a controllable pair. It is the autonomous analogue of the condition $\rank\mathbf B=n$ of \Chap~\ref{C.StateSpace}: that condition ensures that a suitable $\vec x(0)$ can be prepared, whereas this one ensures that a given $\vec x(0)$ excites every mode. In the frequency domain the requirement is that $\vec x_0$ have a non-zero component $\vec w_i^\dagger\vec x_0$ along every mode, failing which the corresponding pole is absent from the data. Persistency of excitation matters because it ensures that the system under test reveals all of its dynamical degrees of freedom. Without it the parameters cannot be identified from the data alone, although structural knowledge, such as the sparsity or locality of the Hamiltonian, may restore identifiability with far fewer measurements. The position resembles that of someone who tries to reconstruct a Hamiltonian while driving only a single transition, or to learn a wave function while measuring in only one basis.}
+\ona{Figure~\ref{fig:ch05:hankel} reads the order of our example off its data. The singular values of $\Hankel_{rs}(0)$ fall abruptly after the dimension of the minimal realisation: after two for $\sigma_x$ or $\sigma_z$ alone, each of which sees half of the poles, and after four for $\sigma_n$, which sees all of them. With noisy data the fall ends not at the level of rounding error but at a noise floor, which rises with the noise, and a mode whose singular value lies below the floor is lost.}
+\onp{\begin{itemize}
+    \item $\rank\Hankel=$ dimension of the minimal realisation, so the order can be read off the data.
+    \item This needs observability \emph{and} \alert{persistency of excitation}: $\vec x_0$ must excite every mode ($\vec w_i^\dagger\vec x_0\neq0$), equivalently $\rank[\vec x_0\ \mathbf G_\tau\vec x_0\ \cdots]=n$.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The order read from the data}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch05_hankel.tex}}
+\caption{Singular values, on a logarithmic scale, of the Hankel matrix $\Hankel(0)$ ($10$ block rows, $40$ columns) formed from $60$ samples of the example, $\tau=0.25$. (a) Exact data: the rank is $2$ for $\sigma_x$ (the poles $-\Gamma\pm\imath\omega$), $2$ for $\sigma_z$ (the poles $0$ and $-\gamma_1$) and $4$ for $\sigma_n$, and the remaining singular values are at the level of rounding error. (b) $\sigma_n$ with Gaussian noise of standard deviation $10^{-3}$ and $3\cdot10^{-2}$: the singular values now level off at a noise floor (shaded), which rises with the noise, and a mode whose singular value falls below the floor is lost. Generated by \texttt{code/ch05\_hankel.py}.}\label{fig:ch05:hankel}
+\end{figure}}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch05_hankel.tex}}\end{center}
+Ranks $2$ ($\sigma_x$), $2$ ($\sigma_z$), $4$ ($\sigma_n$); with noise the fall ends at a noise floor.}
+\end{frame}
+
+\begin{frame}\ft{Ho--Kalman and the eigensystem realisation algorithm}
+\ona{The factorisation \eqref{eq:ch05:hankel} can be reversed. Once the evolution of an open quantum system has been written as a linear dynamical system, the established techniques of system identification become available \citep{ljung1999system}. One such algorithm was proposed by \citet{Zhang2015}, who wrote the Lindbladian dynamics of an uncontrolled system as a linear time-invariant system and used the eigensystem realisation algorithm (ERA) \citep{Kung1978ANI} to obtain a discrete realisation of the system matrix. In outline, one forms the generalised Hankel matrix $\Hankel_{rs}(k)\in\R^{rp\times s}$ from the outputs of the $p$ observables, and computes a singular value decomposition of $\Hankel_{rs}(0)$ with orthogonal matrices $\mathbf{P} = [\mathbf{P}_1\ \mathbf{P}_2]$ and $\mathbf{Q} = [\mathbf{Q}_1\ \mathbf{Q}_2]$ and the diagonal matrix $\mathbf{S}$ of the $n$ singular values that are significant at the accuracy available. A realisation of the discrete system matrix is then}
+\onp{ERA \citep{Kung1978ANI,Zhang2015}: SVD $\Hankel_{rs}(0)=\mathbf P_1\mathbf S\mathbf Q_1^\top$ (rank $n$), then}
+\begin{equation}\label{eq:ch05:era}
+    \mathbf{A}_{d} = \mathbf{S}^{-1/2}\mathbf{P}_{1}^{\top}\Hankel_{rs}(1)\mathbf{Q}_{1}\mathbf{S}^{-1/2},\qquad
+    \mathbf{C}_{d} = \mathsf{E}_{p}^{\top}\mathbf{P}_{1}\mathbf{S}^{1/2}, \qquad
+    \vec{x}(0) = \mathbf{S}^{1/2}\mathbf{Q}_{1}^{\top}e_{1},
+\end{equation}
+\ona{where $\mathsf{E}_{p}^{\top} = [\Id_{p}, \mathbf{0}_{p}, \cdots, \mathbf{0}_{p}]$ selects the first $p$ rows and $e_{1}$ is the first column of $\Id_{s}$. The identity behind \eqref{eq:ch05:era} is $\Hankel_{rs}(1)=\Obsv_r\mathbf G_\tau\Ctrb_s$. Choosing the balanced factors $\Obsv_r=\mathbf P_1\mathbf S^{1/2}$ and $\Ctrb_s=\mathbf S^{1/2}\mathbf Q_1^\top$ and solving for $\mathbf G_\tau$ gives $\mathbf A_d$, which is similar to $\mathbf G_\tau$; the construction goes back to Ho and Kalman in 1966. With noisy data the singular value decomposition is truncated at the numerical rank, and here the singular values of the observability matrix (Figure~\ref{fig:ch04:singular} of \Chap~\ref{C.StateSpace}) enter: small singular values cannot be distinguished from noise, and the corresponding modes are lost. Since the input--output behaviour does not depend on the realisation, one may then pass to the Laplace domain and obtain polynomial equations whose solution yields the Hamiltonian and the Lindblad coefficients \citep{Zhang2015}; the alternative, followed in \Chap~\ref{C.StateSpace}, is to fix the coordinates by a known $\mathbf C$ and to invert the linear map $\mathbf M$. Figure~\ref{fig:ch05:era} follows the algorithm step by step on the data of our example. The data are arranged in two Hankel matrices, the large singular values are counted, the matrix is split into balanced factors, the one-step matrix is found, and its eigenvalues are converted back into rates and frequencies.}
+\onp{Uses $\Hankel_{rs}(1)=\Obsv_r\mathbf G_\tau\Ctrb_s$ with balanced factors, so that $\mathbf A_d\sim\mathbf G_\tau$. With noise, truncate the SVD at the numerical rank; small singular values are lost modes.}
+\end{frame}
+
+\begin{frame}\ft{Ho--Kalman step by step}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch05_era.tex}}
+\caption{The algorithm of Ho and Kalman (ERA) \eqref{eq:ch05:era} applied to $40$ exact samples of $\langle\sigma_n\rangle$ for the example, $\tau=0.25$, with $5$ block rows. (1) The data. (2) The Hankel matrices $\Hankel(0)$ and $\Hankel(1)$, the second shifted by one sample (blue positive, red negative). (3) The singular values of $\Hankel(0)$ on a logarithmic scale; four are large and one is zero. (4) The balanced factors. (5) The $4\times4$ matrix $\mathbf A_d$. (6) Its eigenvalues $\ee^{\lambda_i\tau}$, of which $1$ and $\ee^{-\gamma_1\tau}\approx0.95$ nearly coincide. (7) $\lambda_i=\log(z_i)/\tau$ (rings) superimposed on the true poles (dots). Generated by \texttt{code/ch05\_era.py}.}\label{fig:ch05:era}
+\end{figure}}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch05_era.tex}}\end{center}
+{\small Hankel matrices, SVD, factors, one-step matrix, eigenvalues, logarithm. The rank fixes $n$, and $\Hankel(1)$ supplies the step.}}
+\end{frame}
+
+\begin{frame}[fragile]\ft{Ho--Kalman in a dozen lines}
+\ona{The following extract from \texttt{code/ch05\_spectrum.py} forms the two Hankel matrices from a sequence of output vectors and returns the balanced realisation \eqref{eq:ch05:era}; the continuous-time eigenvalues are then $\log(\lambda_i[\mathbf A_d])/\tau$, subject to the aliasing discussed in the next section.}
+\ona{\lstinputlisting[style=python,firstline=64,lastline=81]{code/ch05_spectrum.py}}
+\onp{\lstinputlisting[style=python,basicstyle=\ttfamily\scriptsize,numbers=none,firstline=69,lastline=81]{code/ch05_spectrum.py}}
+\ona{Figure~\ref{fig:ch05:poles} shows the eigenvalues recovered by Ho--Kalman from $80$ samples of $(\langle\sigma_x\rangle,\langle\sigma_z\rangle)$ for our example. From exact data they agree with those of $\mathbf A$ to about $10^{-10}$. When noise is added to each sample the estimates scatter, and they scatter most for the slow relaxation $-\gamma_1$, whose decay over the length of the record is the hardest to distinguish from the constant contributed by the steady state.}
+\ona{\begin{figure}[H]\centering\resizebox{0.8\linewidth}{!}{\input{figures/ch05_poles.tex}}
+\caption{The eigenvalues of the example in the complex plane (red), with the estimates $\log(\lambda_i[\mathbf A_d])/\tau$ obtained by Ho--Kalman from $80$ exact samples of $(\langle\sigma_x\rangle,\langle\sigma_z\rangle)$ (rings) and from $60$ repetitions with Gaussian noise of standard deviation $0.02$ added to each sample (blue). The real axis is stretched by a factor of seven. Generated by \texttt{code/ch05\_spectrum.py}.}\label{fig:ch05:poles}\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{Recovered poles}
+\onp{Ho--Kalman with $80$ samples: exact data give the eigenvalues to $10^{-10}$ (rings); with noise the estimates scatter, most of all for the slow $-\gamma_1$ (Figure~\ref{fig:ch05:poles}).
+\begin{center}\resizebox{!}{0.66\textheight}{\input{figures/ch05_poles.tex}}\end{center}}
+\end{frame}
+
+\section{Sampling and aliasing}\label{sec:ch05:sampling}
+
+\begin{frame}\ft{The stroboscopic effect}
+\ona{A vector that is observed only at the instants $k\tau$ turns through the angle $\omega\tau$ between one observation and the next. An angle, however, is defined only up to a multiple of $2\pi$, and a vector that turns through $\omega\tau$ and one that turns through $\omega\tau-2\pi$ occupy the same position at every observation. The first oscillates with frequency $\omega$ and the second with frequency $\omega-2\pi/\tau$, and the samples cannot distinguish them. This is the stroboscopic effect, familiar from the wheels of stagecoaches in old Westerns, which appear to turn slowly backwards (Figure~\ref{fig:ch05:stroboscope}). Only frequencies in the band $\abs{\nu}<\pi/\tau$, below the \emph{Nyquist frequency} $\pi/\tau$, are seen correctly, and every other frequency is folded into this band. If our example is sampled at intervals $\tau=1.6$, the precession at $\omega=3$ lies outside the band $\abs{\nu}<1.96$ and appears at $3-2\pi/1.6\approx-0.93$.}
+\onp{\begin{itemize}
+    \item An angle is defined only modulo $2\pi$, so $\omega$ and $\omega-2\pi/\tau$ give the same samples.
+    \item Only $\abs{\nu}<\pi/\tau$ (the Nyquist band) is seen correctly; other frequencies are folded into it.
+\end{itemize}
+\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch05_stroboscope.tex}}\end{center}}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch05_stroboscope.tex}}
+\caption{The stroboscopic effect. (a) The vector $\ee^{\imath\omega t}$, $\omega=3$, observed at intervals $\tau=1.6$. Between observations it turns anticlockwise through $4.8$ rad (blue), but the numbered positions are those that a clockwise turn through $2\pi-\omega\tau=1.48$ rad would give (red). (b) The rapid oscillation $\cos\omega t$ and the slow one $\cos(\omega-2\pi/\tau)t$ pass through the same samples, since $\pi/\tau=1.96<\omega$. A common damping factor would make no difference. Generated by \texttt{code/ch05\_stroboscope.py}.}\label{fig:ch05:stroboscope}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{From discrete to continuous time}
+\ona{It is well known that infinitely many matrices $\mathbf{A}$ correspond to a given $\mathbf{G}_{\tau}=\ee^{\mathbf A\tau}$, unless the eigenvalues of $\mathbf{A}$ are real, in which case $\mathbf A$ is unique. The $n$ eigenvalues of $\mathbf{A}$ can be constructed from those of $\mathbf{G}_{\tau}$, but since the complex logarithm is many-valued we obtain an infinite set of candidates,}
+\onp{$\mathbf G_\tau=\ee^{\mathbf A\tau}$ does \alert{not} determine $\mathbf A$, because the logarithm is many-valued:}
+\begin{equation}\label{eq:ch05:eigset}
+\eig_{\tau} = \left\{\frac{1}{\tau}\ln\lambda_{i}[\mathbf{G}_{\tau}] + \frac{2\pi\imath k}{\tau}   \;\middle|\;  i=1,\dots n,\ k \in \Z \right\}.
+\end{equation}
+\ona{This is aliasing: the frequencies $\omega_i$ and $\omega_i+2\pi k/\tau$ give the same samples. Figure~\ref{fig:ch05:expmap} shows the geometry. The map $\lambda\mapsto z=\ee^{\lambda\tau}$ takes a vertical line of constant decay rate $\alpha$ to the circle of radius $\ee^{\alpha\tau}$, and a horizontal line of constant frequency $\omega$ to the ray at the angle $\omega\tau$. It wraps each horizontal strip of height $2\pi/\tau$ once round the whole $z$-plane, so that all the strips are carried to the same place and the logarithm cannot tell from which strip a pole came. The principal logarithm always returns the alias in the central strip $\abs{\mathrm{Im}\,\lambda}<\pi/\tau$, which we call the \emph{Nyquist strip}. In accordance with Shannon's sampling theorem, if the imaginary parts of the $\lambda_{i}[\mathbf{A}]$ are bounded by a maximum frequency $\omega_{\max}$, the set has only $n$ admissible elements provided that $\tau < \pi/\omega_{\max}$; but this requires prior knowledge of $\omega_{\max}$. It should also be observed that discretisation can destroy controllability and observability. For sampling at a single rate, with $\omega_s = 2\pi/\tau$, if no two eigenvalues satisfy $\lambda_{i} - \lambda_{j} = \imath k\omega_{s}$ with $k\in \Z\setminus\{0\}$, the sampling is said to be non-pathological, and the discrete system is controllable and observable; otherwise two distinct continuous modes collapse onto a single discrete mode, and the rank of the Hankel matrix falls.}
+\onp{\begin{itemize}
+    \item Aliasing: $\omega_i$ and $\omega_i+2\pi k/\tau$ give identical samples.
+    \item Shannon: no ambiguity if $\tau<\pi/\omega_{\max}$, but $\omega_{\max}$ is not known in advance.
+    \item Pathological sampling: $\lambda_i-\lambda_j=\imath k\,2\pi/\tau$ merges two modes, and the Hankel rank falls.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The exponential map}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch05_expmap.tex}}
+\caption{Sampling at intervals $\tau$ replaces each pole $\lambda$ by $z=\ee^{\lambda\tau}$, the corresponding eigenvalue of $\mathbf G_\tau$; here $\tau=1.6$. (a) The $\lambda$-plane divided into strips of height $2\pi/\tau$, with the Nyquist strip $\abs{\mathrm{Im}\,\lambda}<\pi/\tau$ shaded gold, the poles of the example, and the aliases $\lambda+2\pi\imath k/\tau$ of $-\Gamma+\imath\omega$ (hollow). (b) The $z$-plane. The line of decay rate $\Gamma$ becomes the circle of radius $\ee^{-\Gamma\tau}$, the line of frequency $\omega$ becomes the ray at the angle $\omega\tau$, and the imaginary axis becomes the unit circle; the three red points of (a) are all carried to the same point $z$. Generated by \texttt{code/ch05\_expmap.py}.}\label{fig:ch05:expmap}
+\end{figure}}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch05_expmap.tex}}\end{center}}
+\end{frame}
+
+\begin{frame}\ft{Multirate sampling removes the ambiguity}
+\ona{The ambiguity can be removed without prior knowledge by sampling with at most $n+1$ intervals, chosen so that the ratio $\tau_{i}/\tau_{j}$ of any two of them is irrational. The intersection}
+\onp{Sample at several rates $\tau_j$ in irrational ratio \citep{Ding2009}:}
+\begin{equation}\label{eq:ch05:intersection}
+\bigcap_{j=1}^{n+1} \eig_{\tau_{j}}
+\end{equation}
+\ona{then has exactly $n$ elements, which are the eigenvalues of $\mathbf{A}$ \citep{Ding2009}. The reason is arithmetical. A spurious candidate $\lambda+2\pi\imath k/\tau_1$ coincides with a candidate $\lambda+2\pi\imath k'/\tau_2$ only if $k/\tau_1=k'/\tau_2$, that is, only if $\tau_1/\tau_2=k/k'$ is rational. In Figure~\ref{fig:ch05:multirate} each set of candidates is drawn as a comb along the frequency axis. Two combs whose spacings are in an irrational ratio have only one tooth in common, at the true frequency, whereas two combs whose spacings are in a rational ratio meet again and again. The matrix $\mathbf A$ may then be found as}
+\begin{equation}\label{eq:ch05:reconstructA}
+\mathbf{A}=\mathbf{g}\,\mathrm{diag}\big(\lambda_{1}[\mathbf{A}],\dots,\lambda_{n}[\mathbf{A}]\big)\,\mathbf{g}^{-1},
+\end{equation}
+\ona{where $\mathbf{g}$ is the matrix of eigenvectors of $\mathbf{G}_\tau$, which $\mathbf A$ shares. If $\mathbf{A}$ is not diagonalisable, it can still be constructed provided that it shares the Jordan structure of $\mathbf{G}_{\tau}$. With non-uniform sampling one can retain a minimal realisation either by choosing the frame period $T$ so that $\lambda_{i} - \lambda_{j} \neq 2\pi k\imath/T$, or by choosing the sampling intervals so that at least one ratio $\tau_{i}/\tau_{j}$ within the period is irrational. This is the origin of the multirate hypothesis in Theorem~\ref{thm:ch04:auto} of \Chap~\ref{C.StateSpace}. For driven systems the position is different: pulses of varying width already probe the generator in continuous time, and uniform sampling suffices (Theorem~\ref{thm:ch04:driven}).}
+\onp{\begin{itemize}
+    \item Spurious candidates coincide only if $\tau_1/\tau_2=k/k'\in\mathbb Q$.
+    \item Recover $\mathbf A=\mathbf g\,\mathrm{diag}(\lambda_i[\mathbf A])\,\mathbf g^{-1}$ with the eigenvectors of $\mathbf G_\tau$.
+    \item Hence the irrational ratios in Theorem~\ref{thm:ch04:auto}; driven systems do not need them.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Two sampling rates}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch05_multirate.tex}}
+\caption{The candidate frequencies $\omega+2\pi k/\tau$ compatible with the samples form a comb: blue teeth for $\tau_1=1.6$ (upwards) and red teeth for $\tau_2$ (downwards). The shaded intervals are the Nyquist bands, and the filled dots are what each rate reports on its own. (a) With $\tau_2=\sqrt2\,\tau_1$ the combs have only the true frequency $\omega=3$ in common (gold ring). (b) With $\tau_2=\tfrac32\tau_1$ they coincide every $4\pi/\tau_1\approx7.85$, and three candidates remain in the window shown. Generated by \texttt{code/ch05\_multirate.py}.}\label{fig:ch05:multirate}
+\end{figure}}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch05_multirate.tex}}\end{center}}
+\end{frame}
+
+\section{Identifiability in the frequency domain}
+
+\begin{frame}\ft{Three notions of identifiability}
+\ona{Although our main interest is in the identifiability of the system matrix, and hence of the parameters of the GKSL equation, there are connections with other definitions of identifiability. For an uncontrolled system the methods of behavioural systems theory \citep{willems2007mathematics, markovsky2008data} show that, under mild conditions, the three commonest notions of identifiability coincide:}
+\onp{Behavioural systems theory \citep{willems2007mathematics,markovsky2008data}: three notions coincide under persistency of excitation \citep{9904308}:}
+\begin{itemize}
+    \item the identifiability of the system matrix (the notion used in \Chap~\ref{C.StateSpace}),
+    \item the identifiability of the input--output relation (as an ordinary differential equation),
+    \item the identifiability of the transfer function associated with the input--output relation.
+\end{itemize}
+\ona{Persistency of excitation is needed for all three to be equivalent \citep{9904308}. A discrete linear time-invariant system has a persistently exciting input if the Hankel matrix of the input,}
+\begin{equation}\label{eq:ch05:pe}
+H_L(u) =
+\begin{bmatrix}
+u(0) & u(1) & \cdots & u(T-L) \\
+u(1) & u(2) & \cdots & u(T-L+1) \\
+\vdots & \vdots & \ddots & \vdots \\
+u(L-1) & u(L) & \cdots & u(T-1)
+\end{bmatrix},\qquad \rank H_L(u)=mL,
+\end{equation}
+\ona{has full row rank, where $T$ is the number of data points and $L$ the order of persistency of excitation. For an autonomous system this is the Krylov condition of Theorem~\ref{thm:ch05:hankelrank}. The equivalence therefore extends to all autonomous open quantum systems, which are particular autonomous linear systems once the measurement is taken into account.}
+\onp{Autonomous case: persistency of excitation is the Krylov condition on $\vec x_0$ (Theorem~\ref{thm:ch05:hankelrank}).}
+\end{frame}
+
+\begin{frame}\ft{Quantum identifiability via transfer functions}
+\ona{Several questions about the identifiability of \emph{closed} systems were settled by \citet{Wang_2020}, who gave the notion of quantum identifiability a precise meaning in terms of the transfer function of the linear system satisfied by the coherence vector. Two Hamiltonians are indistinguishable if and only if their realisations have the same transfer function, and, for minimal realisations, if and only if these are related by a similarity transformation (Theorem~\ref{thm:ch04:similarity}). The identifiability of a Hamiltonian thus becomes a question about the admissible similarity transformations: it holds when the only admissible transformations are those induced on the coherence vector by unitary conjugation, which act as rotations. For open systems \citet{Burgarth_2014} showed by an example that a similarity transformation need not preserve the Lindblad form, so that the transfer function determines the master equation only up to a gauge that may be unphysical; Proposition~\ref{prop:ch04:gauge} of \Chap~\ref{C.StateSpace} removes this gauge by means of a known $\mathbf C$ of full rank and $\mathbf B=\Id$. Figure~\ref{fig:ch05:gauge} shows both kinds of transformation on our example: a rotation of the Bloch ball, which is a change of frame and leaves the generator a Lindbladian, and a shear, which reproduces the same data with a generator that is not a physical evolution at all. In the terms of this \chap{}, the data determine $\TF(s)$; $\TF$ determines the minimal realisation up to $\mathbf T$; the known $\mathbf B$ and $\mathbf C$ force $\mathbf T=\Id$; and the linear map $\mathbf M$ then yields $(\vec\theta,\Koss)$.}
+\onp{\begin{itemize}
+    \item \citet{Wang_2020}: Hamiltonians indistinguishable $\Leftrightarrow$ same transfer function $\Leftrightarrow$ similar (minimal case).
+    \item \citet{Burgarth_2014}: for open systems a similarity transformation can leave the Lindblad class.
+    \item Data $\to$ $\TF(s)$ $\to$ realisation up to $\mathbf T$ $\to$ $\mathbf T=\Id$ (known $\mathbf B,\mathbf C$) $\to$ $(\vec\theta,\Koss)$ via $\mathbf M$.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Similar realisations}
+\ona{\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch05_gauge.tex}}
+\caption{Three realisations of the example with $\sigma_n$ measured: $(\mathbf A,\mathbf C,\vec x_0)$; its transform $(\mathbf T\mathbf A\mathbf T^{-1},\mathbf C\mathbf T^{-1},\mathbf T\vec x_0)$ by a rotation $\mathbf T_1$ of the Bloch ball through $50^\circ$ about the $y$-axis; and its transform by a shear and dilation $\mathbf T_2$. (a) Each realisation shown as coloured matrices (blue positive, red negative), with the image of the Bloch ball at time $t^*=\pi/(2\omega)$ beneath it. (b) All three give the same data. Only the rotated generator is again a Lindbladian; $\ee^{\mathbf T_2\mathbf A\mathbf T_2^{-1}t^*}$ carries part of the ball outside itself, and so is not a quantum channel. Generated by \texttt{code/ch05\_gauge.py}.}\label{fig:ch05:gauge}
+\end{figure}}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch05_gauge.tex}}\end{center}
+{\small The same data for every $\mathbf T$. A rotation is a change of frame; a general $\mathbf T$ may leave the class of Lindbladians.}}
+\end{frame}
+
+\begin{frame}\ft{Summary}
+\begin{itemize}\setlength\itemsep{0.4em}
+    \item A mode $\ee^{\lambda t}$ is a vector that turns at the rate $\mathrm{Im}\,\lambda$ and decays at the rate $-\mathrm{Re}\,\lambda$; the data are sums of modes.
+    \item The transfer function $\TF(s)=\mathbf C(s\Id-\mathbf A)^{-1}\mathbf B$ is invariant under similarity and so determined by the data; its poles are the eigenvalues of the Lindbladian, and each produces a peak in the spectrum.
+    \item Hautus: a mode is unobservable iff its eigenvector is annihilated by $\mathbf C$, iff its pole cancels; only the controllable and observable block reaches the data (Kalman decomposition, minimality, accessible set).
+    \item The Hankel matrix of the Markov parameters has rank equal to the minimal order if the initial state is persistently exciting; Ho--Kalman (ERA) recovers a realisation from it.
+    \item Sampling at one rate aliases frequencies; rates in irrational ratio restore the uniqueness of $\log\mathbf G_\tau$.
+    \item Next: how many measurements all this requires (\Chap~\ref{C.SampleComplexity}).
+\end{itemize}
+\end{frame}
+
+\begin{frame}\ft{Time and frequency}
+\ona{Figure~\ref{fig:ch05:dictionary} collects the correspondences between features of a signal and features of its spectrum that have appeared in this \chap{}.}
+\ona{\begin{figure}[H]\centering
+\resizebox{0.9\linewidth}{!}{\input{figures/ch05_dictionary.tex}}
+\caption{Correspondences between a signal (left) and its spectrum (right), every sketch being computed. The frequency of an oscillation gives the position of its peak; the rate of decay gives the width of the peak, measured at half the height of $\abs{\hat y}^2$; the weight of each mode gives the height of its peak; the length of the record determines how close two peaks may be and still be distinguished; sampling at intervals $\tau$ repeats the spectrum with period $2\pi/\tau$; and a mode that the measurement does not see ($\mathbf C\vec v=0$) gives no peak. Generated by \texttt{code/ch05\_dictionary.py}.}\label{fig:ch05:dictionary}
+\end{figure}}
+\onp{\begin{center}\resizebox{!}{0.82\textheight}{\input{figures/ch05_dictionary.tex}}\end{center}}
+\end{frame}
+
+\biblio
+\end{document}
