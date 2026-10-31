@@ -5,6 +5,15 @@ following the thirteen lectures of `syllabus.txt`.  The set-up is the one used
 in the *Quantum Computing via Randomized Algorithms* course: **one LaTeX source
 per chapter is compiled both as handouts and as slides.**
 
+## Course
+
+| | |
+| --- | --- |
+| code | BQM36QTC |
+| English name | Quantum (State, Process, Channel) Tomography and Quantum Optimal Control |
+| Czech name | Kvantová (stavová, procesní, kanálová) tomografie a kvantové optimální řízení |
+| repository | <https://github.com/jmarecek/quantum-system-id-and-control> |
+
 ## Syllabus
 
 | lecture | topic | chapter file |

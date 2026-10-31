@@ -1,36 +1,61 @@
 """ch01_spectrahedron.py -- a slice of the positive semidefinite cone: the
 elliptope {(x,y,z): [[1,x,y],[x,1,z],[y,z,1]] >= 0} cut at z = 0.3, i.e. a
-spectrahedron in the plane, compared with the polytope of its linear
-inequalities.  Writes figures/ch01_spectrahedron.tex."""
+spectrahedron in the plane, compared with the box |x|, |y| <= 1 cut out by the
+2x2 minors alone.  In the plane z = 0.3 the determinant is quadratic, so the
+slice is the ellipse x^2 + y^2 - 0.6 xy <= 0.91, which touches the box at the
+four points (+-1, +-0.3), (+-0.3, +-1).
+Writes figures/ch01_spectrahedron.tex.
+"""
 import os, sys
 import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import tikzexport as T
+import needham as N
 
-z = 0.3
-g = np.linspace(-1, 1, 401)
-Xg, Yg = np.meshgrid(g, g)
-# det of the 3x3 correlation matrix and the 2x2 minors
-det = 1 + 2 * Xg * Yg * z - Xg ** 2 - Yg ** 2 - z ** 2
-feas = (det >= 0) & (np.abs(Xg) <= 1) & (np.abs(Yg) <= 1)
-# boundary polygon: trace along angles
-pts = []
-for ang in np.linspace(0, 2 * np.pi, 240, endpoint=False):
-    r = np.linspace(0, 1.5, 600); xs = r * np.cos(ang); ys = r * np.sin(ang)
-    ok = (1 + 2 * xs * ys * z - xs ** 2 - ys ** 2 - z ** 2 >= 0) & (np.abs(xs) <= 1) & (np.abs(ys) <= 1)
-    k = np.where(~ok)[0]; k = k[0] - 1 if len(k) else len(r) - 1
-    pts.append((xs[k], ys[k]))
-poly = " -- ".join("(%.3f,%.3f)" % p for p in pts) + " -- cycle"
-body = r"""
-\begin{scope}[x=2.2cm,y=2.2cm]
-\draw[->] (-1.3,0) -- (1.3,0) node[right] {$x$};
-\draw[->] (0,-1.3) -- (0,1.3) node[above] {$y$};
-\draw[gray, dashed] (-1,-1) rectangle (1,1);
-\fill[qocA!30, draw=qocA, thick] %s;
-\node[font=\small, align=left, anchor=west] at (1.35,0.7) {$\begin{pmatrix}1&x&y\\ x&1&z\\ y&z&1\end{pmatrix}\succeq 0$, \ $z=%.1f$};
-\node[font=\small, align=left, anchor=west, text=qocA] at (1.35,0.1) {spectrahedron: an affine slice\\ of the PSD cone; convex,\\ boundary curved (a cubic)};
-\node[font=\small, align=left, anchor=west, text=gray] at (1.35,-0.5) {dashed: the box $|x|,|y|\le 1$\\ from the $2\times 2$ minors alone};
-\end{scope}
-""" % (poly, z)
-T.write_tikz("ch01_spectrahedron", body)
-print("written figures/ch01_spectrahedron.tex")
+Z = 0.3
+
+
+def psd(x, y, z=Z):
+    return np.linalg.eigvalsh(np.array([[1, x, y], [x, 1, z], [y, z, 1]])).min() >= -1e-12
+
+
+def main():
+    # boundary of the slice: along each ray from the origin, the largest r with the matrix PSD
+    pts = []
+    for ang in np.linspace(0, 2 * np.pi, 360, endpoint=False):
+        lo, hi = 0.0, 1.5
+        for _ in range(50):
+            mid = (lo + hi) / 2
+            lo, hi = (mid, hi) if psd(mid * np.cos(ang), mid * np.sin(ang)) else (lo, mid)
+        pts.append((lo * np.cos(ang), lo * np.sin(ang)))
+    pts = np.array(pts)
+    q = pts[:, 0] ** 2 + pts[:, 1] ** 2 - 2 * Z * pts[:, 0] * pts[:, 1]
+    assert np.allclose(q, 1 - Z ** 2, atol=1e-9)                 # the slice is an ellipse
+    assert abs(np.abs(pts[:, 0]).max() - 1) < 1e-4 and abs(np.abs(pts[:, 1]).max() - 1) < 1e-4   # inscribed in the box
+    for x, y in [(1, Z), (-1, -Z), (Z, 1), (-Z, -1)]:
+        assert psd(x, y)                                         # the four points of contact
+    assert not psd(1, 1) and not psd(0.9, -0.9)                  # the corners of the box are not in it
+
+    S = 2.0                                                      # cm per unit
+    P = lambda p: (S * p[0], S * p[1])
+    b = []
+    b.append("\\draw[faint, ->, >=stealth] (%.2f,0) -- (%.2f,0) node[right, text=ndInk] {$x$};" % (-1.3 * S, 1.35 * S))
+    b.append("\\draw[faint, ->, >=stealth] (0,%.2f) -- (0,%.2f) node[above, text=ndInk] {$y$};" % (-1.3 * S, 1.35 * S))
+    b.append("\\draw[dashedink] (%.2f,%.2f) rectangle (%.2f,%.2f);" % (-S, -S, S, S))
+    b.append("\\fill[ndSky, fill opacity=0.7] %s -- cycle;" % " -- ".join(N.pt(P(p)) for p in pts))
+    b.append("\\draw[line width=1.1pt, ndBlue] %s -- cycle;" % " -- ".join(N.pt(P(p)) for p in pts))
+    for x, y in [(1, Z), (-1, -Z), (Z, 1), (-Z, -1)]:
+        b.append("\\node[dot, fill=ndRed] at %s {};" % N.pt(P((x, y))))
+    for v, lab in [(-1, "$-1$"), (1, "$1$")]:
+        b.append("\\node[font=\\scriptsize, anchor=north] at (%.2f,-0.04) {%s};" % (S * v + (0.18 if v > 0 else -0.2), lab))
+        b.append("\\node[font=\\scriptsize, anchor=east] at (-0.04,%.2f) {%s};" % (S * v + (0.18 if v > 0 else -0.2), lab))
+    b.append("\\node[anchor=west] at (%.2f,%.2f) {$\\begin{pmatrix}1&x&y\\\\ x&1&z\\\\ y&z&1\\end{pmatrix}\\succeq 0,\\quad z=%.1f$};" % (1.55 * S, 1.05 * S, Z))
+    b.append("\\node[note, anchor=west, align=left, text=ndBlue] (s) at %s {the spectrahedron: an affine slice of the\\\\ PSD cone, convex, with a curved boundary;\\\\ in this plane the determinant is quadratic,\\\\ and the slice is an ellipse};" % N.pt((1.55 * S, 0.3 * S)))
+    b.append("\\draw[pointer] (s.west) to[bend right=15] %s;" % N.pt(P((0.62, 0.55))))
+    b.append("\\node[note, anchor=west, align=left] (bx) at %s {dashed: the box $\\abs{x},\\abs{y}\\le 1$ cut out by\\\\ the $2\\times2$ minors alone; the ellipse\\\\ touches it at four points (red), and\\\\ the corners of the box are not in it};" % N.pt((1.55 * S, -0.62 * S)))
+    b.append("\\draw[pointer] (bx.west) to[bend left=10] %s;" % N.pt(P((1.0, -0.6))))
+    N.write("ch01_spectrahedron", b)
+    print("written figures/ch01_spectrahedron.tex")
+
+
+if __name__ == "__main__":
+    main()
