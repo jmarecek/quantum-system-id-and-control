@@ -113,7 +113,6 @@ with $X(0)=X_0$ and $\Lambda(t_f)=\Lambda_0\,\partial_X G(X(t_f))$ (or $X(t_f)=X
     \item Perturbations of $u^\star$ push the endpoint inwards $\Rightarrow$ $\int[\HP(u)-\HP(u^\star)]\le0$ $\Rightarrow$ pointwise max.
     \item Abnormal: $\Lambda(t_f)\perp\dot X(t_f)$, trajectory tangent to $\partial\Reach$.
 \end{itemize}}
-\ona{\todo{redraw: reachable sets $\Reach(t,X_0)$ at increasing $t$ in the plane, the optimal trajectory hitting $X_f$ on the boundary, the normal $\Lambda(t_f)$, and a non-optimal trajectory ending inside.}}
 \end{frame}
 
 \begin{frame}\ft{Regular and singular controls; a bang-bang example}
@@ -267,15 +266,14 @@ Two-pulse qubit landscape: white $=$ local maxima, red $=$ local minima. Restric
 \end{frame}
 
 \begin{frame}\ft{Sub-Riemannian geodesics and the Cartan decomposition}
-\ona{Real hardware does not offer every direction. With $H(t)=\Hdrift+\sum_ku_k\Hctrl$ the velocity is confined, up to the drift, to the subspace $\mathfrak{d}=\operatorname{span}\{\imath\Hctrl\}$ translated around the group---a \emph{distribution} $D\subset T\SU[d]$. If $\mathfrak d$ generates $\liesu[d]$ under commutators (the Lie algebra rank condition of \Chap~\ref{C.StateSpace}) the Chow--Rashevskii theorem says every $V$ is reachable by \emph{horizontal} curves, those with $\dot U\in D$, and the infimum of their lengths is the Carnot--Carath\'eodory distance $d_\infty(\Id,V)$. Time-optimal control with bounded, direction-restricted controls is the computation of $d_\infty$; its minimisers are sub-Riemannian geodesics, which need not be one-parameter subgroups and can even be non-smooth \cite{Agrachev_Barilari_Boscain_2019,Montgomery2002}.}
-\ona{Khaneja, Brockett and Glaser made this concrete for two coupled spins with fast local controls: if local unitaries $K=\SU[2]\otimes\SU[2]$ are free, the relevant geometry is that of the quotient $\SU[4]/K$, and the Cartan decomposition $\SU[4]=K\,A\,K$ with $A=\{\exp(-\imath(c_1\sigma_x\!\otimes\!\sigma_x+c_2\sigma_y\!\otimes\!\sigma_y+c_3\sigma_z\!\otimes\!\sigma_z))\}$ reduces the minimal time for a gate $V$ to a minimisation over its Cartan coordinates $(c_1,c_2,c_3)$ given the coupling Hamiltonian \cite{Khaneja2005}. The time to reach a CNOT under an Ising coupling $J\sigma_z\otimes\sigma_z$ is $\pi/(2J)$.}
+\ona{Real hardware does not offer every direction. With $H(t)=\Hdrift+\sum_ku_k\Hctrl$ the velocity is confined, up to the drift, to the subspace $\mathfrak{d}=\operatorname{span}\{\imath\Hctrl\}$ translated around the group---a \emph{distribution} $D\subset T\SU[d]$. If $\mathfrak d$ generates $\liesu[d]$ under commutators (the Lie algebra rank condition of \Chap~\ref{C.StateSpace}) the Chow--Rashevskii theorem says every $V$ is reachable by \emph{horizontal} curves, those with $\dot U\in D$, and the infimum of their lengths is the Carnot--Carath\'eodory distance $d_\infty(\Id,V)$. Time-optimal control with bounded, direction-restricted controls is the computation of $d_\infty$; its minimisers are sub-Riemannian geodesics, which need not be one-parameter subgroups and can even be non-smooth \cite{Agrachev_Barilari_Boscain_2019,Montgomery2002}. When the controlled directions span the part $\mathfrak p$ of a Cartan decomposition $\mathfrak k\oplus\mathfrak p$ (a $K+P$ problem), the equations of the maximum principle are integrable: on $\SU[2]$ \citet{BoscainRossi2008} write down the geodesics and the whole cut locus, and for a three-level system \citet{boscain2002kp} show that the controls of least energy are in resonance with the transitions they drive.}
+\ona{Khaneja, Brockett and Glaser made this concrete for two coupled spins with fast local controls: if local unitaries $K=\SU[2]\otimes\SU[2]$ are free, the relevant geometry is that of the quotient $\SU[4]/K$, and the Cartan decomposition $\SU[4]=K\,A\,K$ with $A=\{\exp(-\imath(c_1\sigma_x\!\otimes\!\sigma_x+c_2\sigma_y\!\otimes\!\sigma_y+c_3\sigma_z\!\otimes\!\sigma_z))\}$ reduces the minimal time for a gate $V$ to a minimisation over its Cartan coordinates $(c_1,c_2,c_3)$ given the coupling Hamiltonian \citep{PhysRevA.63.032308}. The time to reach a CNOT under an Ising coupling $J\sigma_z\otimes\sigma_z$ is $\pi/(2J)$.}
 \onp{\begin{itemize}
     \item Available directions $\mathfrak d=\operatorname{span}\{\imath\Hctrl\}$: a distribution $D\subset T\SU[d]$.
     \item Bracket-generating $\Rightarrow$ Chow--Rashevskii: horizontal curves reach everything; $d_\infty=$ Carnot--Carath\'eodory distance.
     \item Time-optimal with restricted directions $=$ \alert{sub-Riemannian geodesic}.
-    \item Two spins, fast local controls: $\SU[4]=KAK$ (Cartan); minimal time from Cartan coordinates \cite{Khaneja2005}.
+    \item Two spins, fast local controls: $\SU[4]=KAK$ (Cartan); minimal time from Cartan coordinates \citep{PhysRevA.63.032308}.
 \end{itemize}}
-\ona{\todo{missing references: Khaneja--Brockett--Glaser, Phys.\ Rev.\ A 63, 032308 (2001); Boscain--Chambrion--Gauthier on sub-Riemannian $\SU[2]$.}}
 \end{frame}
 
 \section{Noise metrics and robust control}

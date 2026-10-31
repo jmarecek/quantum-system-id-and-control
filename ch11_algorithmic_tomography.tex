@@ -62,15 +62,14 @@ Write $\rho=\sum_k x_k F_k$ in an orthonormal operator basis and $p=\mathcal{M}x
 \ona{\begin{defn}[Maximum-likelihood estimate]\label{def:ch11:mle}
 $\hat\rho_{\mathrm{ML}}=\arg\max_{\rho\succeq0,\Tr\rho=1}\sum_j n_j\log\Tr(E_j\rho)$. The objective is concave, so this is a convex program over the spectrahedron $\Dens$.
 \end{defn}
-Hradil's $R\rho R$ iteration solves it by a fixed-point scheme: with $R(\rho)=\sum_j \frac{\hat p_j}{\Tr(E_j\rho)}E_j$, iterate $\rho\leftarrow R(\rho)\rho R(\rho)/\Tr(\cdot)$, which is a multiplicative-update analogue of expectation--maximisation. Convergence can be slow and the estimate is rank-deficient for finite data (a bias known as ``over-fitting to zero eigenvalues''). A cheaper alternative is to project the linear-inversion estimate onto $\Dens$.
+Hradil's $R\rho R$ iteration \citep{hradil1997quantum} solves it by a fixed-point scheme: with $R(\rho)=\sum_j \frac{\hat p_j}{\Tr(E_j\rho)}E_j$, iterate $\rho\leftarrow R(\rho)\rho R(\rho)/\Tr(\cdot)$, which is a multiplicative-update analogue of expectation--maximisation. Convergence can be slow and the estimate is rank-deficient for finite data (a bias known as ``over-fitting to zero eigenvalues''). A cheaper alternative is to project the linear-inversion estimate onto $\Dens$ \citep{smolin2012efficient}.
 \begin{propn}[Projected least squares]\label{prop:ch11:pls}
 The Frobenius projection of a Hermitian $\hat\rho_{\mathrm{LI}}$ with eigenvalues $\lambda_1\ge\dots\ge\lambda_d$ onto $\Dens$ keeps the eigenvectors and replaces the spectrum by $(\lambda_i-\mu)_+$, where $\mu$ is chosen so that $\sum_i(\lambda_i-\mu)_+=1$. For a qubit it is the radial projection of $\hat{\Bloch}$ onto the unit ball.
-\end{propn}
-\todo{Add bib entries for Hradil (1997) and Smolin--Gambetta--Smith (2012); not in refs.bib.}}
+\end{propn}}
 \onp{\begin{itemize}\setlength\itemsep{0.6em}
     \item \alert{MLE}: $\hat\rho_{\mathrm{ML}}=\arg\max_{\rho\in\Dens}\sum_j n_j\log\Tr(E_j\rho)$, a convex program.
-    \item Hradil's $R\rho R$ iteration: $R(\rho)=\sum_j \frac{\hat p_j}{\Tr(E_j\rho)}E_j$, $\rho\leftarrow R\rho R/\Tr(\cdot)$; slow, rank-deficient for finite data.
-    \item \alert{Projected least squares}: eigendecompose $\hat\rho_{\mathrm{LI}}$, spectrum $\lambda_i\mapsto(\lambda_i-\mu)_+$ with $\sum_i(\lambda_i-\mu)_+=1$; one eigendecomposition, near-optimal error.
+    \item Hradil's $R\rho R$ iteration \citep{hradil1997quantum}: $R(\rho)=\sum_j \frac{\hat p_j}{\Tr(E_j\rho)}E_j$, $\rho\leftarrow R\rho R/\Tr(\cdot)$; slow, rank-deficient for finite data.
+    \item \alert{Projected least squares} \citep{smolin2012efficient}: eigendecompose $\hat\rho_{\mathrm{LI}}$, spectrum $\lambda_i\mapsto(\lambda_i-\mu)_+$ with $\sum_i(\lambda_i-\mu)_+=1$; one eigendecomposition, near-optimal error.
     \item Qubit: radial projection of $\hat\Bloch$ onto the unit ball.
     \item Both $=$ ``linear inversion $+$ positivity''.
 \end{itemize}}
@@ -115,11 +114,11 @@ Mean infidelity over 400 runs; a pure target qubit state; $X,Y,Z$ settings.}
 
 \begin{frame}\ft{Noisy circuits and gate set tomography}
 \ona{\citet{Li26} investigate QST and QPT for noisy $n$-qubit circuits and develop algorithms that are provably efficient and are the first to handle both unital and non-unital channels with polynomial complexity across the entire noise spectrum and independent of circuit depth. The noisy process is $\mathcal{C} = \mathcal{E}^{\otimes n}\mathcal{C}_{d}\mathcal{E}^{\otimes n}\mathcal{C}_{d-1}\dots\mathcal{E}^{\otimes n}\mathcal{C}_1$, where $d$ denotes the circuit depth, $\mathcal{E}$ represents a unital or non-unital noisy channel and $\mathcal{C}_{j}$ are two-qubit gates. A key strategy is to decompose the noisy state $\rho=\mathcal C(\ket{0^{\otimes n}}\bra{0^{\otimes n}})$ and the dual operator $\mathcal C^\dagger(\hat O)$ into the Pauli basis: for high-weight Pauli terms the associated coefficient decays exponentially, leading to a sparse representation, whose coefficients are estimated from random product stabiliser inputs via SWAP tests or classical shadows. In their numerical example a $14$-qubit state description is reduced from 8\,GB to 1\,KB, on a circuit with $45$ layers. Counterintuitively, the approach improves as the noise increases, since stronger noise suppresses high-weight Pauli terms more aggressively.}
-\ona{\emph{Gate set tomography} (GST) addresses a different problem: in standard QPT the state preparations and measurements are assumed known, whereas in reality they are themselves noisy gates. GST treats preparations, gates and measurements as one unknown ``gate set'' and estimates them jointly, self-consistently, up to a gauge (a similarity transformation that leaves all observable probabilities invariant). The gauge freedom is the static analogue of the realisation ambiguity of \Chap~\ref{C.StateSpace}. \todo{Add bib entries for Blume-Kohout et al.\ / Greenbaum on GST; not in refs.bib.}}
+\ona{\emph{Gate set tomography} (GST) addresses a different problem: in standard QPT the state preparations and measurements are assumed known, whereas in reality they are themselves noisy gates. GST treats preparations, gates and measurements as one unknown ``gate set'' and estimates them jointly, self-consistently, up to a gauge (a similarity transformation that leaves all observable probabilities invariant) \citep{greenbaum2015introduction,nielsen2021gate}. The gauge freedom is the static analogue of the realisation ambiguity of \Chap~\ref{C.StateSpace}. \citet{blume2017demonstration} used GST to show single-qubit gates operating below a rigorous fault-tolerance threshold.}
 \onp{\begin{itemize}\setlength\itemsep{0.5em}
     \item Noisy circuits \citep{Li26}: noise suppresses high-weight Paulis exponentially $\Rightarrow$ sparse Pauli descriptions; poly-time QST/QPT, depth-independent; 14 qubits, 45 layers; 8\,GB $\to$ 1\,KB.
     \item More noise $\Rightarrow$ easier learning.
-    \item \alert{Gate set tomography}: preparations, gates, measurements estimated jointly; unique only up to a \alert{gauge} (cf.\ realisation ambiguity, \Chap~\ref{C.StateSpace}).
+    \item \alert{Gate set tomography} \citep{nielsen2021gate}: preparations, gates, measurements estimated jointly; unique only up to a \alert{gauge} (cf.\ realisation ambiguity, \Chap~\ref{C.StateSpace}).
 \end{itemize}}
 \end{frame}
 

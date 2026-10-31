@@ -17,8 +17,8 @@
     \item distances between channels: diamond norm, process and average gate fidelity;
     \item unitaries as a Lie group; the semigroup of GKSL channels inside the CPTP body.
 \end{itemize}}
-\ona{\medskip\noindent\textit{Sources.} This \chap{} draws on \citep{parvaiz2026survey}; passages from these papers are reproduced with light editing.}
-\onp{\vfill{\scriptsize Sources: \citep{parvaiz2026survey}.}}
+\ona{\medskip\noindent\textit{Sources.} This \chap{} draws on \citep{parvaiz2026survey}; passages from these papers are reproduced with light editing. The lecture notes of \citet{wolf2012quantum} are a good general guide to channels.}
+\onp{\vfill{\scriptsize Sources: \citep{parvaiz2026survey}. Further reading: \citet{wolf2012quantum}.}}
 \end{frame}
 
 \section{Dynamical maps}
@@ -86,7 +86,7 @@ $\mathcal{E}\in\Chan[\Hil]$ with Kraus operators $E_1,\dots,E_\ell$ (linearly in
 \end{frame}
 
 \begin{frame}\ft{What a channel does to the Bloch ball}
-\ona{For a qubit, a channel acts on the Bloch vector affinely, $\Bloch\mapsto M\Bloch+\vec c$ with $M\in\R^{3\times3}$, so the image of the Bloch ball is an ellipsoid inside the ball. Complete positivity constrains $(M,\vec c)$ beyond the obvious requirement that the ellipsoid fit inside the ball (Fujiwara--Algoet conditions). Unital channels have $\vec c=0$ and shrink the ball towards the centre; the amplitude damping channel, $E_1=\mathrm{diag}(1,\sqrt{1-\gamma})$, $E_2=\sqrt\gamma\ket0\bra1$, shifts it towards the pure state $\ket0$ and is the model of $T_1$ relaxation from Lecture~\ref{C.Motivation}.}
+\ona{For a qubit, a channel acts on the Bloch vector affinely, $\Bloch\mapsto M\Bloch+\vec c$ with $M\in\R^{3\times3}$, so the image of the Bloch ball is an ellipsoid inside the ball. Complete positivity constrains $(M,\vec c)$ beyond the obvious requirement that the ellipsoid fit inside the ball; the conditions were found by \citet{fujiwara1999one}. Unital channels have $\vec c=0$ and shrink the ball towards the centre; the amplitude damping channel, $E_1=\mathrm{diag}(1,\sqrt{1-\gamma})$, $E_2=\sqrt\gamma\ket0\bra1$, shifts it towards the pure state $\ket0$ and is the model of $T_1$ relaxation from Lecture~\ref{C.Motivation}.}
 \onp{Qubit channels act affinely on Bloch vectors, $\Bloch\mapsto M\Bloch+\vec c$: the ball becomes an ellipsoid. Unital $\Rightarrow\vec c=0$.
 \begin{center}\resizebox{!}{0.5\textheight}{\input{figures/ch08_channels.tex}}\end{center}}
 \ona{\begin{figure}[h]\centering
@@ -185,14 +185,14 @@ For channels $\mathcal{E},\mathcal{F}$ on $\Hil$:
 \begin{itemize}
     \item diamond distance $\tfrac12\dnorm{\mathcal{E}-\mathcal{F}}\coloneqq\tfrac12\max_{\rho\in\Dens[\Hil\otimes\Hil]}\tracenorm{(\mathcal{E}\otimes I-\mathcal{F}\otimes I)(\rho)}$;
     \item process (entanglement) fidelity $\Fid_{\mathrm{pro}}(\mathcal{E},\mathcal{F})\coloneqq\Fid\big(\Choi{\mathcal{E}}/N,\Choi{\mathcal{F}}/N\big)$, which for a unitary target $\mathcal{F}=U\cdot U^\dagger$ equals $\tfrac{1}{N^2}\sum_k\abs{\Tr(U^\dagger E_k)}^2$;
-    \item average gate fidelity $\bar\Fid(\mathcal{E},U)\coloneqq\int\braket{\psi|U^\dagger\mathcal{E}(\ket\psi\bra\psi)U|\psi}\,\mathrm d\psi=\dfrac{N\Fid_{\mathrm{pro}}+1}{N+1}$.
+    \item average gate fidelity $\bar\Fid(\mathcal{E},U)\coloneqq\int\braket{\psi|U^\dagger\mathcal{E}(\ket\psi\bra\psi)U|\psi}\,\mathrm d\psi=\dfrac{N\Fid_{\mathrm{pro}}+1}{N+1}$ \citep{nielsen2002simple}.
 \end{itemize}
 \end{defn}
-\ona{The diamond distance is the channel analogue of the trace distance: it is the best probability of telling $\mathcal{E}$ from $\mathcal{F}$ in one use, with an ancilla allowed (the ancilla matters: the maximisation over $\Dens[\Hil]$ alone gives a smaller, non-stabilised quantity). It is the norm in which fault-tolerance thresholds are stated, and it can be computed by a semidefinite programme (Watrous). The process fidelity is the fidelity of the normalised Choi states, i.e.\ a statement about $\Chan$ as a subset of $\Dens[\Hil\otimes\Hil]$; for a unitary channel $\mathcal{E}(\rho)=V\rho V^\dagger$ it reduces to $\abs{\Tr(U^\dagger V)}^2/N^2$, the gate fidelity used as an objective in Lecture~\ref{C.Motivation} and \Chap~\ref{C.GeometryControl}. The three are related by Fuchs--van de Graaf-type inequalities, $1-\Fid_{\mathrm{pro}}\le\tfrac12\dnorm{\mathcal{E}-\mathcal{F}}\le N\sqrt{1-\Fid_{\mathrm{pro}}}$, with the dimension factor again appearing when converting an average-case quantity into a worst-case one.}
+\ona{The diamond distance is the channel analogue of the trace distance: it is the best probability of telling $\mathcal{E}$ from $\mathcal{F}$ in one use, with an ancilla allowed (the ancilla matters: the maximisation over $\Dens[\Hil]$ alone gives a smaller, non-stabilised quantity). It is the norm in which fault-tolerance thresholds are stated, and it can be computed by a semidefinite programme \citep{watrous2009semidefinite}. The process fidelity is the fidelity of the normalised Choi states, i.e.\ a statement about $\Chan$ as a subset of $\Dens[\Hil\otimes\Hil]$; for a unitary channel $\mathcal{E}(\rho)=V\rho V^\dagger$ it reduces to $\abs{\Tr(U^\dagger V)}^2/N^2$, the gate fidelity used as an objective in Lecture~\ref{C.Motivation} and \Chap~\ref{C.GeometryControl}. The three are related by Fuchs--van de Graaf-type inequalities, $1-\Fid_{\mathrm{pro}}\le\tfrac12\dnorm{\mathcal{E}-\mathcal{F}}\le N\sqrt{1-\Fid_{\mathrm{pro}}}$, with the dimension factor again appearing when converting an average-case quantity into a worst-case one.}
 \onp{\begin{itemize}
-    \item Diamond: worst-case one-shot distinguishability with ancilla; an SDP; used for error thresholds.
+    \item Diamond: worst-case one-shot distinguishability with ancilla; an SDP \citep{watrous2009semidefinite}; used for error thresholds.
     \item Process fidelity: fidelity of Choi states; for unitaries $\abs{\Tr U^\dagger V}^2/N^2$, the objective of \Chap~\ref{C.GeometryControl}.
-    \item $1-\Fid_{\mathrm{pro}}\le\tfrac12\dnorm{\mathcal{E}-\mathcal{F}}\le N\sqrt{1-\Fid_{\mathrm{pro}}}$: average vs.\ worst case costs a factor $N$.
+    \item $1-\Fid_{\mathrm{pro}}\le\tfrac12\dnorm{\mathcal{E}-\mathcal{F}}\le N\sqrt{1-\Fid_{\mathrm{pro}}}$: average vs.\ worst case, a factor $N$.
 \end{itemize}}
 \end{frame}
 
@@ -208,10 +208,10 @@ For channels $\mathcal{E},\mathcal{F}$ on $\Hil$:
 \end{frame}
 
 \begin{frame}\ft{Markovian channels: a Lie semigroup, not a convex set}
-\ona{The channels reachable by autonomous GKSL dynamics, $\{\ee^{\tau\Lind}:\tau\ge0,\ \Lind\text{ GKSL}\}$, and more generally those reachable by CP-divisible evolutions, form a \emph{Lie semigroup}: closed under composition, containing the identity, generated by a convex cone of infinitesimal generators (the GKSL cone $\{-\imath\,\mathrm{ad}_H+\Diss_\gamma:\gamma\succeq0\}$), but \emph{not} closed under convex combinations and \emph{not} containing every channel. \citet{wolf06,wolf_09} showed that deciding whether a given channel is Markovian in this sense is NP-hard in general, and that the Markovian channels have measure zero among CPTP maps in the sense of being a lower-dimensional semi-algebraic set with non-empty interior only for some $N$; qubit channels with a negative determinant of $M$, e.g.\ the transposition-like ``inversion'' $\Bloch\mapsto-\lambda\Bloch$ for small $\lambda$, are CPTP but not divisible at all. Two consequences for this course: (i) controlled GKSL dynamics, $\dot{\vec x}=(\mathbf A+\sum_ku_k\mathbf N_k)\vec x+\vec\beta$, is a bilinear system on a semigroup rather than on a group, so controllability has to be replaced by accessibility and reachable sets are not symmetric (\Chap~\ref{C.StateSpace}); (ii) fitting a GKSL model to tomography data is a constrained problem, and the constraint set is non-convex, which is one motivation for the polynomial-optimisation approach of \Chap~\ref{C.AlgTomography}.}
+\ona{The channels reachable by autonomous GKSL dynamics, $\{\ee^{\tau\Lind}:\tau\ge0,\ \Lind\text{ GKSL}\}$, and more generally those reachable by CP-divisible evolutions, form a \emph{Lie semigroup}: closed under composition, containing the identity, generated by a convex cone of infinitesimal generators (the GKSL cone $\{-\imath\,\mathrm{ad}_H+\Diss_\gamma:\gamma\succeq0\}$), but \emph{not} closed under convex combinations and \emph{not} containing every channel. \citet{wolf06,cubitt2012complexity} showed that deciding whether a given channel is Markovian in this sense is NP-hard in general, and that the Markovian channels have measure zero among CPTP maps in the sense of being a lower-dimensional semi-algebraic set with non-empty interior only for some $N$; qubit channels with a negative determinant of $M$, e.g.\ the transposition-like ``inversion'' $\Bloch\mapsto-\lambda\Bloch$ for small $\lambda$, are CPTP but not divisible at all. Two consequences for this course: (i) controlled GKSL dynamics, $\dot{\vec x}=(\mathbf A+\sum_ku_k\mathbf N_k)\vec x+\vec\beta$, is a bilinear system on a semigroup rather than on a group, so controllability has to be replaced by accessibility and reachable sets are not symmetric (\Chap~\ref{C.StateSpace}); (ii) fitting a GKSL model to tomography data is a constrained problem, and the constraint set is non-convex, which is one motivation for the polynomial-optimisation approach of \Chap~\ref{C.AlgTomography}.}
 \onp{\begin{itemize}
     \item $\{\ee^{\tau\Lind}\}$ and CP-divisible channels: a Lie semigroup generated by the convex GKSL cone; not convex, not all of $\Chan$.
-    \item Deciding Markovianity of a channel is NP-hard~\cite{wolf_09}; some qubit channels (e.g.\ $\Bloch\mapsto-\lambda\Bloch$) are not divisible at all.
+    \item Deciding Markovianity of a channel is NP-hard~\cite{cubitt2012complexity}; some qubit channels (e.g.\ $\Bloch\mapsto-\lambda\Bloch$) are not divisible at all.
     \item For us: controllability $\to$ accessibility on a semigroup (\Chap~\ref{C.StateSpace}); GKSL fitting is a non-convex constrained problem (\Chap~\ref{C.AlgTomography}).
 \end{itemize}}
 \end{frame}
@@ -223,7 +223,6 @@ For channels $\mathcal{E},\mathcal{F}$ on $\Hil$:
     \item Distances: diamond norm (worst case, SDP), process and average gate fidelity (average case, control objective), related up to a factor $N$.
     \item Unitaries: compact Lie group with bi-invariant metric; Markovian channels: a non-convex Lie semigroup, hard to recognise.
 \end{itemize}
-\ona{\todo{Add references not yet in \texttt{refs.bib}: Watrous (diamond-norm SDP), Fujiwara--Algoet (qubit channel conditions), Nielsen (2002) on average gate fidelity, Wolf's lecture notes \emph{Quantum Channels \& Operations}. Check \texttt{wolf\_09} is the NP-hardness paper (Cubitt--Eisert--Wolf) and adjust.}}
 \end{frame}
 
 \biblio

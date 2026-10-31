@@ -8,213 +8,380 @@
 \chapter{Geometry of Quantum States}\label{C.GeometryStates}
 
 \begin{frame}\ft{Outline}
-\ona{So far we have treated a density operator as a point $x=\vecop{\rho}\in\C^{d^2}$ or, equivalently, as a coherence vector in $\R^{d^2-1}$, and the master equation as a linear system on that space. Identification (\Chaps~\ref{C.StateSpace}--\ref{C.SampleComplexity}) asks how well we can pin down that point from samples, and control (\Chap~\ref{C.GeometryControl}) asks how to steer it. Both questions need a notion of \emph{distance} between states, and both are constrained by the \emph{shape} of the set of states. This \chap{} collects the geometry: the coherence-vector coordinates and the structure constants that make them work, the convex body of density operators and its boundary, and the metrics (trace, Hilbert--Schmidt, Bures/Fubini--Study) that measure statistical distinguishability.}
+\ona{In \Chap~\ref{C.Closed} we met the density operator as a point of a convex set, with the coherence vector as its coordinates, and in \Chap~\ref{C.SampleComplexity} we found that the cost of identifying a parameter depends on how far a change in it moves the state. Both matters belong to the geometry of the set of states, which is the subject of this \chap. We begin with the shape of the set: its faces, which prove to be smaller state spaces, and its boundary, on which lie the pure and nearly pure states that control aims at. We then ask what unitary control can do to a mixed state, and find that it can do no more than move the state over a manifold fixed by its spectrum; majorisation describes what lies within reach and what does not. The second half of the \chap{} is concerned with distances. The trace distance measures how well two states can be told apart by a single measurement, and no noise can increase it. The fidelity, and the Fubini--Study and Bures metrics built from it, make the set of states a Riemannian manifold, in which the length of a trajectory bounds the time needed to traverse it, and the Bures metric proves to be the quantum Fisher information of \Chap~\ref{C.SampleComplexity} seen from the side of geometry. We close with systems of two parts, where the separable states form a convex set of their own and entanglement shows itself as the mixedness of a part. The ideas are illustrated throughout on the running examples of the previous \chaps.}
 \onp{Outline of today's lecture:
-\begin{itemize}\setlength\itemsep{0.8em}
-    \item coherence vectors: $\rho=\tfrac1N\Id+\sum_j x_jF_j$ and the structure constants of $\liesu[N]$;
-    \item the convex body $\Dens[\Hil]$: extreme points, the Bloch ball, and why $d>2$ is not a ball;
-    \item unitary orbits, spectra and majorisation;
-    \item distances: trace, Hilbert--Schmidt, fidelity, Bures, Fubini--Study, quantum Fisher information;
-    \item where these enter identification (\Chap~\ref{C.SampleComplexity}) and control (\Chap~\ref{C.GeometryControl}).
+\begin{itemize}\setlength\itemsep{0.35em}
+    \item the shape of the state space: faces, boundary, a section of the qutrit;
+    \item unitary orbits and majorisation: what unitary control can reach;
+    \item the trace distance: Helstrom's measurement; no channel increases it;
+    \item fidelity, Bures and Fubini--Study; length, distance and the speed limit;
+    \item the Bures metric is the quantum Fisher information;
+    \item two qubits: separable and entangled states;
+    \item which distance for which task.
 \end{itemize}}
-\ona{\medskip\noindent\textit{Sources.} This \chap{} draws on \citep{parvaiz2025identifiability,lawrence2026geometric,ansel2024introduction}; passages from these papers are reproduced with light editing, whereas material from the tutorial of \citet{ansel2024introduction} is paraphrased.}
-\onp{\vfill{\scriptsize Sources: \citep{parvaiz2025identifiability,lawrence2026geometric,ansel2024introduction}.}}
+\ona{\endgraf\noindent\textit{Sources.} The standard monograph on the subject is \citet{bengtsson2017geometry}, which we follow in several places. The examples are those of \Chaps~\ref{C.StateSpace}--\ref{C.SampleComplexity}, taken from \citet{parvaiz2025identifiability}.}
+\onp{\vfill{\scriptsize Further reading: \citet{bengtsson2017geometry}. Examples from \Chaps~\ref{C.StateSpace}--\ref{C.SampleComplexity} and \citep{parvaiz2025identifiability}.}}
 \end{frame}
 
-\section{Coherence vectors}
+\section{The shape of the state space}\label{sec:ch07:shape}
 
-\begin{frame}\ft{An orthonormal basis of observables}
-\ona{Throughout, $N=\dim\Hil$ and $n\coloneqq N^2-1$. We fix an orthonormal basis of the real vector space of traceless Hermitian $N\times N$ matrices, i.e., a basis of $\liesu[N]$ up to an overall factor of $\imath$:}
-\begin{equation}\label{eq:ch07:basis}
-    F_0=\tfrac{1}{\sqrt N}\Id,\qquad F_m=F_m^\dagger,\qquad \Tr(F_mF_n)=\delta_{mn},\qquad m,n=1,\dots,n .
-\end{equation}
-\ona{For a register of $q$ qubits, $N=2^q$ and the natural choice is the (normalised) generalised Pauli basis $\{\sigma_{a_1}\otimes\dots\otimes\sigma_{a_q}\}$. For $N=3$ one uses the Gell-Mann matrices. The anti-symmetric and symmetric structure constants $f_{jkl}$ and $g_{jkl}$ are defined through the commutation and anti-commutation relations}
-\onp{$N=\dim\Hil$, $n=N^2-1$; $\{F_j\}$ = orthonormal traceless Hermitian basis (generalised Paulis for qubits, Gell-Mann for $N=3$). Structure constants:}
-\begin{subequations}\label{eq:ch07:structure}
-\begin{align}
-    \comm{F_j}{F_k} &= \imath\sum_{l=1}^{n} f_{jkl}F_l, \label{eq:ch07:f}\\
-    \acomm{F_j}{F_k} &= \tfrac{2}{N}\delta_{jk}\Id + \sum_{l=1}^{n} g_{jkl}F_l . \label{eq:ch07:g}
-\end{align}
-\end{subequations}
-\ona{Every traceless Hermitian $H$ admits the unique expansion $H=\sum_{j}\theta_jF_j$ with $\theta_j=\Tr(F_jH)\in\R$; the vector $\vec\theta\in\R^n$ is what one identifies in Hamiltonian learning (\Chap~\ref{C.StateSpace}).}
-\onp{Any traceless Hermitian $H=\sum_j\theta_jF_j$, $\theta_j=\Tr(F_jH)\in\R$: the parameters to identify.}
-\end{frame}
-
-\begin{frame}\ft{The coherence vector}
-\begin{defn}[Coherence vector]\label{def:ch07:coherence}
-The density operator decomposes as
-\begin{equation}\label{eq:ch07:coherence}
-    \rho = \tfrac{1}{N}\Id + \sum_{j=1}^{n} x_j F_j,\qquad x_j\coloneqq\Tr(F_j\rho)\in\R,
-\end{equation}
-and $\vec x\in\R^{n}$ is called the coherence vector (Bloch vector) of $\rho$~\cite{Hioe1981}.
-\end{defn}
-\ona{Since each $F_j$ is an observable, the components $x_j$ are simply expectation values, which can be obtained by measurements: $x_j$ is the average obtained when measuring $F_j$ on an ensemble of identically prepared copies of $\rho$. Hence the state is encoded in the set of expectation values of a complete set of independent observables $\{F_j\}$. Since the whole dynamics can be captured by $\vec x$, it represents the state, and in the context of system identification it is called the state vector. The Liouville--von Neumann and GKSL equations become real linear (or, under control, bilinear) equations in $\vec x$, with system matrices built from the structure constants (\Chap~\ref{C.Open}): $\mathbf A^{(l)}_{jk}=-\sum_l\theta_lf_{jkl}$ for the Hamiltonian part, and a dissipative part $\mathbf A^{(d)}$ built from $z_{jkl}=f_{jkl}+\imath g_{jkl}$ and the Kossakowski matrix.}
-\onp{\begin{itemize}
-    \item $x_j$ are expectation values of observables: the state \emph{is} a list of measurable numbers.
-    \item Real coordinates: $\Tr\rho=1$ is built in, Hermiticity is built in; only $\rho\succeq0$ remains.
-    \item Dynamics: $\dot{\vec x}=(\mathbf A^{(l)}+\mathbf A^{(d)})\vec x+\vec\beta$ with $\mathbf A^{(l)}_{jk}=-\sum_l\theta_lf_{jkl}$ (\Chap~\ref{C.Open}).
+\begin{frame}\ft{The state space recalled}
+\ona{Let us recall what \Chap~\ref{C.Closed} established. A density operator on $\Hil=\C^N$ is a positive semidefinite matrix of unit trace, and the set $\Dens[\Hil]$ of all of them is the intersection of the cone of positive semidefinite matrices with the hyperplane $\Tr\rho=1$, a spectrahedron in the language of \Chap~\ref{C.Motivation}. In the coordinates of the coherence vector \eqref{eq:ch02:coherence}, $\rho=\tfrac1N\Id+\sum_jx_jF_j$ with $x_j=\Tr(F_j\rho)$ \citep{Hioe1981}, it is a compact convex body of dimension $N^2-1$, lying between the two balls of \eqref{eq:ch02:balls}. Its extreme points, the states that are not mixtures of other states, are the pure states $\ket\psi\bra\psi$. For a qubit the body is the Bloch ball and every point of its surface is pure. For $N\ge3$ it is not a ball, it is not symmetric under $\vec x\mapsto-\vec x$, and its section through the diagonal states is the triangle of Figure~\ref{fig:ch02:qutrit}. The expectation value $\Tr(M\rho)$ of an observable is a linear function on the body, and its least and greatest values are the extreme eigenvalues of $M$, attained at the corresponding eigenvectors. In this section we look more closely at the boundary of the body, where the extreme points lie.}
+\onp{From \Chap~\ref{C.Closed}:
+\begin{itemize}\setlength\itemsep{0.5em}
+    \item $\Dens[\C^N]=\{\rho\succeq0,\ \Tr\rho=1\}$: a spectrahedron of dimension $N^2-1$, in coordinates $x_j=\Tr(F_j\rho)$.
+    \item Extreme points: the pure states $\ket\psi\bra\psi$.
+    \item Qubit: the Bloch ball, every boundary point pure.
+    \item $N\ge3$: between the two balls \eqref{eq:ch02:balls}; not a ball, not symmetric (Figure~\ref{fig:ch02:qutrit}).
 \end{itemize}}
 \end{frame}
 
-\begin{frame}\ft{Structure constants of $\liesu[2^q]$ in the Pauli basis}
-\ona{For a single qubit the (unnormalised) Pauli matrices give $f_{jkl}=2\varepsilon_{jkl}$ and $g_{jkl}=0$, where $\varepsilon_{jkl}$ is the Levi-Civita symbol. With the normalisation $\Tr(F_mF_n)=\delta_{mn}$ one has instead $f_{jkl}=\sqrt2\,\varepsilon_{jkl}$; the rescaling $F_j\to cF_j$ sends $f\to cf$ and $g\to cg$ and therefore neither creates nor destroys non-zero structure constants. For two qubits the generalised Pauli basis $\{\sigma_j\otimes\Id,\Id\otimes\sigma_j,\sigma_j\otimes\sigma_k\}$ satisfies, e.g.,}
-\onp{One qubit: $f_{jkl}=2\varepsilon_{jkl}$, $g_{jkl}=0$. Two qubits, basis $\{\sigma_j\otimes\Id,\Id\otimes\sigma_j,\sigma_j\otimes\sigma_k\}$:}
-\begin{equation}\label{eq:ch07:su4}
-\begin{aligned}
-    \comm{\sigma_j\otimes\sigma_l}{\sigma_k\otimes\sigma_m}&=2\imath\varepsilon_{jkn}\delta_{lm}(\sigma_n\otimes\Id)+2\imath\varepsilon_{lmn}\delta_{jk}(\Id\otimes\sigma_n),\\
-    \acomm{\sigma_j\otimes\sigma_l}{\sigma_k\otimes\sigma_m}&=2\delta_{jk}\delta_{lm}\Id\otimes\Id-2\varepsilon_{jkp}\varepsilon_{lmq}\,\sigma_p\otimes\sigma_q .
-\end{aligned}
-\end{equation}
-\begin{propn}[Sparsity of the structure constants]\label{prop:ch07:sparsity}
-In the generalised Pauli basis of $\liesu[2^q]$, for any fixed pair $(j,k)$ there is at most one index $l$ with $f_{jkl}\neq0$, and at most one index $l$ with $g_{jkl}\neq0$ (not necessarily the same $l$).
-\end{propn}
+\begin{frame}\ft{Faces}
+\ona{A \emph{face} of a convex set $K$ is a convex subset $\mathcal F\subseteq K$ with the property that whenever a point of $\mathcal F$ is a mixture $p\rho_1+(1-p)\rho_2$, with $0<p<1$, of two points of $K$, both $\rho_1$ and $\rho_2$ lie in $\mathcal F$. The extreme points are the faces of dimension zero; the faces of a polytope are its vertices, edges and facets. Those of the state space are described by the following theorem, in which $\operatorname{supp}\rho$ denotes the support of $\rho$, the span of its eigenvectors with non-zero eigenvalues.}
+\onp{Face: $\mathcal F\subseteq K$ convex, and $p\rho_1+(1-p)\rho_2\in\mathcal F$ with $0<p<1$ implies $\rho_1,\rho_2\in\mathcal F$.}
+\begin{thm}[Faces of the state space]\label{thm:ch07:faces}
+For every subspace $\mathcal K\subseteq\Hil$, the set $\Dens_{\mathcal K}=\{\rho\in\Dens[\Hil]:\operatorname{supp}\rho\subseteq\mathcal K\}$ is a face of $\Dens[\Hil]$, affinely isomorphic to $\Dens[\mathcal K]$, and every face of $\Dens[\Hil]$ is of this form.
+\end{thm}
 \ona{\begin{pf}
-Generalised Pauli matrices square to a multiple of the identity, so $g_{jjk}=0$. The claim holds for $\liesu[2]$ and, by inspection of \eqref{eq:ch07:su4} together with the analogous relations for the remaining pairs of basis elements, for $\liesu[4]$: the two terms on each right-hand side are mutually exclusive because of the symmetry properties of the $\delta$- and $\varepsilon$-symbols. For the induction step from $\liesu[2^{q-1}]$ to $\liesu[2^q]$ one checks the three types of generators $F_J\otimes\Id_2$, $F_J\otimes\sigma_j$, $\Id\otimes\sigma_j$ using
-$\comm{A_1\otimes A_2}{B_1\otimes B_2}=\tfrac12\big(\comm{A_1}{B_1}\otimes\acomm{A_2}{B_2}+\acomm{A_1}{B_1}\otimes\comm{A_2}{B_2}\big)$ and its anti-commutator counterpart; again all competing terms are mutually exclusive, and the induction hypothesis applies to the $\liesu[2^{q-1}]$ factors.
-\end{pf}
-This is highly basis dependent: already for $\liesu[3]$ the Gell-Mann basis is a counter-example, $1/2=f_{453}\neq f_{458}=\sqrt3/2$. The sparsity is what makes the Lindbladian system matrices sparse and the reconstruction maps of \Chap~\ref{C.StateSpace} well conditioned.}
-\onp{Basis dependent (fails for Gell-Mann in $\liesu[3]$). Consequence: sparse system matrices, well-conditioned reconstruction (\Chap~\ref{C.StateSpace}).}
-\end{frame}
-
-\section{The convex body of density operators}
-
-\begin{frame}\ft{$\Dens[\Hil]$ as a spectrahedron}
-\begin{defn}\label{def:ch07:dens}
-$\Dens[\Hil]=\{\rho\in\Lin{\Hil}:\rho=\rho^\dagger,\ \rho\succeq0,\ \Tr\rho=1\}$. In coherence coordinates, $\Dens[\Hil]\cong\{\vec x\in\R^n:\ \tfrac1N\Id+\sum_jx_jF_j\succeq0\}$.
-\end{defn}
-\ona{The set is the intersection of the cone of positive semidefinite matrices with the affine hyperplane $\Tr\rho=1$: a \emph{spectrahedron}, in the language of Lecture~\ref{C.Motivation}. It is therefore compact and convex, and optimisation of a linear functional $\Tr(M\rho)$ over it is a semidefinite programme. Its extreme points are the rank-one projectors $\rho=\ket\psi\bra\psi$: if $\rho$ has rank $\ge2$, pick two orthogonal eigenvectors and move mass between them. Conversely a rank-one projector cannot be a non-trivial convex combination because $\Tr\rho^2=1$ is extremal on $\Dens$. Purity $\Tr\rho^2=\tfrac1N+\norm{\vec x}^2\le1$ shows that pure states lie on the sphere of radius $\sqrt{(N-1)/N}$, but for $N>2$ that sphere is not contained in $\Dens$.}
-\onp{\begin{itemize}
-    \item $\Dens=\{\text{PSD cone}\}\cap\{\Tr=1\}$: a spectrahedron; $\max_\rho\Tr(M\rho)$ is an SDP.
-    \item Extreme points $=$ pure states $\ket\psi\bra\psi$ (rank one).
-    \item Purity: $\Tr\rho^2=\tfrac1N+\norm{\vec x}^2\le1$; pure states on the sphere $\norm{\vec x}=\sqrt{(N-1)/N}$.
-    \item $N=2$: the whole ball. $N>2$: only part of the sphere is in $\Dens$!
+If $\rho=p\rho_1+(1-p)\rho_2$ with $0<p<1$, then $0\preceq p\rho_1\preceq\rho$, so that every vector annihilated by $\rho$ is annihilated by $\rho_1$, and $\operatorname{supp}\rho_1\subseteq\operatorname{supp}\rho$; likewise for $\rho_2$. Hence $\Dens_{\mathcal K}$ is a face. Conversely, let $\mathcal F$ be a face, let $\rho\in\mathcal F$ have the largest rank in $\mathcal F$, and let $\mathcal K=\operatorname{supp}\rho$. If $\sigma$ is any state with support in $\mathcal K$, then $\rho-\eps\sigma\succeq0$ for small $\eps>0$, and $\rho=\eps\sigma+(1-\eps)\tau$ with the state $\tau=(\rho-\eps\sigma)/(1-\eps)$; hence $\sigma\in\mathcal F$, and $\Dens_{\mathcal K}\subseteq\mathcal F$. If, on the other hand, $\sigma\in\mathcal F$, then $\tfrac12(\rho+\sigma)\in\mathcal F$ has the support $\operatorname{supp}\rho+\operatorname{supp}\sigma$, which by the choice of $\rho$ cannot be larger than $\mathcal K$; hence $\mathcal F\subseteq\Dens_{\mathcal K}$.
+\end{pf}}
+\ona{The faces of the state space are therefore themselves state spaces, of dimensions $r^2-1$ for $r=\dim\mathcal K=1,\dots,N$: points, Bloch balls of dimension three, copies of the qutrit body of dimension eight, and so on. There are no faces of dimension one or two, so that a straight segment on the boundary of the state space of a qutrit always lies within a three-dimensional Bloch ball. The boundary of $\Dens[\C^N]$ is the union of the faces with $\dim\mathcal K=N-1$, and consists of the singular density operators, those of rank less than $N$. The states of rank $r$ form a manifold of dimension $2Nr-r^2-1$. For $r=1$ this is the dimension $2N-2$ of the pure states, and for $r=N-1$ it is $N^2-2$, one less than the dimension of the body, as befits its boundary.}
+\onp{\begin{itemize}\setlength\itemsep{0.4em}
+    \item Faces are state spaces, of dimension $r^2-1$: points, Bloch balls, \dots; no edges.
+    \item Boundary $=$ singular states, $\operatorname{rank}\rho<N$.
+    \item Rank $r$: a manifold of dimension $2Nr-r^2-1$; pure states $2N-2$, boundary $N^2-2$.
 \end{itemize}}
 \end{frame}
 
-\begin{frame}\ft{The Bloch ball and the Bloch body}
-\ona{For $N=2$ write $\rho=\tfrac12(\Id+\Bloch\cdot\vec\sigma)$ (unnormalised Paulis, so $\Bloch=\sqrt2\,\vec x$). The eigenvalues are $\tfrac12(1\pm\norm{\Bloch})$, so $\rho\succeq0$ iff $\norm\Bloch\le1$: the state space is the closed unit \emph{Bloch ball}, pure states are its surface, the maximally mixed state its centre, and unitaries act as rotations $\mathrm{SO}(3)$, the adjoint action of $\SU[2]$. Every boundary point is extreme; there are no faces of intermediate dimension.}
-\ona{For $N\ge3$ the positivity condition involves all elementary symmetric functions of the eigenvalues, not just one quadratic form, and the resulting \emph{Bloch body} is a proper convex subset of the sphere of radius $r_{\mathrm{out}}=\sqrt{(N-1)/N}$ (here we use $\rho=\tfrac1N\Id+\tfrac12\sum x_j\lambda_j$ with $\Tr\lambda_j\lambda_k=2\delta_{jk}$, for which $r_{\mathrm{out}}=\sqrt{2(N-1)/N}$ and the largest inscribed ball has radius $r_{\mathrm{in}}=\sqrt{2/(N(N-1))}$). Figure~\ref{fig:ch07:blochbody} shows two planar sections of the qutrit body: the section through the diagonal states (a triangle, the simplex of eigenvalue vectors) and a mixed section. The boundary contains rank-deficient mixed states, which are not extreme.}
-\onp{\begin{itemize}
-    \item $N=2$: $\rho=\tfrac12(\Id+\Bloch\cdot\vec\sigma)$, eigenvalues $\tfrac12(1\pm\norm\Bloch)$ $\Rightarrow$ unit ball; boundary $=$ pure states; $\SU[2]$ acts by rotations.
-    \item $N\ge3$: PSD needs all symmetric functions of the eigenvalues $\Rightarrow$ a body with $r_{\mathrm{in}}=\sqrt{2/(N(N-1))}<r_{\mathrm{out}}=\sqrt{2(N-1)/N}$; flat faces; boundary contains mixed states.
-\end{itemize}
-\begin{center}\resizebox{!}{0.38\textheight}{\input{figures/ch07_blochbody.tex}}\end{center}}
-\ona{\begin{figure}[h]\centering
-\resizebox{\textwidth}{!}{\input{figures/ch07_blochbody.tex}}
-\caption{Planar sections of the state space in coherence coordinates, computed by bisection on the radius in each direction (\texttt{code/ch07\_blochbody.py}). Left: the qubit, a disc of radius one. Middle and right: two sections of the qutrit Bloch body in the Gell-Mann basis; the dotted and dashed circles are the inscribed and circumscribed spheres, $r_{\mathrm{in}}=1/\sqrt3$ and $r_{\mathrm{out}}=2/\sqrt3$. The $(x_3,x_8)$ section contains the diagonal states and is the probability simplex.}
-\label{fig:ch07:blochbody}
+\begin{frame}\ft{A three-dimensional section of the qutrit}
+\ona{Figure~\ref{fig:ch07:cone} shows these facts in the section of the qutrit state space by the three-dimensional space of coherence vectors along $F_1$, $F_3$ and $F_8$, where $F_8=\operatorname{diag}(1,1,-2)/\sqrt6$ and $F_1,F_3$ are the normalised Pauli matrices $\sigma_x/\sqrt2$, $\sigma_z/\sqrt2$ acting on $\operatorname{span}\{\ket0,\ket1\}$. The states with $x_8=1/\sqrt6$ have no weight on $\ket2$, and form the face $\Dens_{\mathcal K}$ for $\mathcal K=\operatorname{span}\{\ket0,\ket1\}$; in the section it appears as a disc, the section of the Bloch ball of the qubit spanned by $\ket0$ and $\ket1$ through its $x$- and $z$-axes. Every other state of the section is a mixture of the pure state $\ket2\bra2$ with a state of this disc, so that the section is a solid circular cone with its apex at $\ket2\bra2$. Its pure states are the apex and the rim of the base; the lateral surface and the base consist of states of rank two, and only the interior of the cone of states of full rank. The triangle of Figure~\ref{fig:ch02:qutrit} is the section of the cone through its axis. The cone has a half-angle of $30^\circ$; its inscribed sphere is the inner ball of \eqref{eq:ch02:balls}, of radius $1/\sqrt6$, and the outer ball, of radius $\sqrt{2/3}$, touches it only at the apex and along the rim.}
+\onp{\begin{center}\resizebox{!}{0.66\textheight}{\input{figures/ch07_cone.tex}}\end{center}
+{\small A face is a smaller state space; the boundary is the singular states.}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{0.75\linewidth}{!}{\input{figures/ch07_cone.tex}}
+\caption{The section of the qutrit state space by the coherence vectors $x_1F_1+x_3F_3+x_8F_8$. It is a solid cone. Its base, at $x_8=1/\sqrt6$, is a face, the section of the Bloch ball of $\operatorname{span}\{\ket0,\ket1\}$; its apex is the pure state $\ket2\bra2$. The pure states of the section are the apex and the rim, the lateral surface and the base consist of states of rank two, and the interior of states of full rank. The section through the axis is the triangle of Figure~\ref{fig:ch02:qutrit}, and the inscribed sphere, of radius $1/\sqrt6$, is the inner ball of \eqref{eq:ch02:balls}. Generated by \texttt{code/ch07\_cone.py}.}\label{fig:ch07:cone}
 \end{figure}}
 \end{frame}
 
-\begin{frame}\ft{Unitary orbits and majorisation}
-\ona{Unitaries act on $\Dens$ by conjugation, $\rho\mapsto U\rho U^\dagger$, an isometry for every metric considered below. The orbit of $\rho$ is determined by its spectrum $\lambda(\rho)$, a point of the probability simplex, so $\Dens/\Un[N]\cong\{\lambda\in\R^N_+:\sum\lambda_i=1\}/S_N$. The orbit of a pure state is the complex projective space $\mathbb{CP}^{N-1}$, of real dimension $2N-2$, while the orbit of a generic mixed state has dimension $N^2-N$; the state space is thus stratified by rank and degeneracy pattern.}
-\ona{\begin{defn}[Majorisation]\label{def:ch07:major}
-For probability vectors $\lambda,\mu\in\R^N$ with decreasing rearrangements $\lambda^\downarrow,\mu^\downarrow$, we write $\lambda\prec\mu$ if $\sum_{i\le k}\lambda^\downarrow_i\le\sum_{i\le k}\mu^\downarrow_i$ for all $k$.
-\end{defn}}
-\onp{Majorisation: $\lambda\prec\mu$ iff $\sum_{i\le k}\lambda^\downarrow_i\le\sum_{i\le k}\mu^\downarrow_i$ for all $k$.}
-\begin{thm}[Uhlmann]\label{thm:ch07:uhlmann-major}
-$\lambda(\rho)\prec\lambda(\sigma)$ if and only if $\rho$ is a convex combination of unitary conjugates of $\sigma$, $\rho=\sum_ip_iU_i\sigma U_i^\dagger$.
-\end{thm}
-\onp{\begin{itemize}
-    \item $\rho\mapsto U\rho U^\dagger$: isometry; orbits $\leftrightarrow$ spectra; pure orbit $=\mathbb{CP}^{N-1}$.
-    \item ``$\rho$ more mixed than $\sigma$'' $\Leftrightarrow$ $\rho\in\mathrm{conv}\{U\sigma U^\dagger\}$; random unitary noise (\Chap~\ref{C.Open}) only increases mixedness.
+\begin{frame}\ft{States near the boundary}
+\ona{The states that control aims at, the pure states and those close to them, lie on the boundary of the body or near it, and this has a consequence for identification. An estimate $\hat\rho$ obtained by inverting measured frequencies linearly (\Chap~\ref{C.AlgTomography}) is unbiased, $\Expect\hat\rho=\rho$, and its error $\hat\rho-\rho$ points in every direction of the space of traceless Hermitian matrices. If $\rho=\ket\psi\bra\psi$ is pure, $\rho+\eps X$ is a state for small $\eps>0$ only when the compression of $X$ to the orthogonal complement of $\ket\psi$ is positive semidefinite, an $(N-1)\times(N-1)$ matrix inequality. For an error whose distribution is invariant under unitary conjugation, this happens with probability one half for a qubit, about $0.03$ for a qutrit and about $10^{-4}$ for two qubits. The estimate of a nearly pure state is therefore usually not a state at all, and the methods of \Chap~\ref{C.AlgTomography}, maximum likelihood (Definition~\ref{def:ch11:mle}) and projected least squares (Proposition~\ref{prop:ch11:pls}), are needed to bring it back into the body.}
+\onp{\begin{itemize}\setlength\itemsep{0.5em}
+    \item Control aims at pure states: on the boundary.
+    \item Unbiased estimate of a pure state: $\rho+\eps X$ is a state only if $X$ compressed to $\ket\psi^\perp$ is $\succeq0$.
+    \item Probability for isotropic errors: $\tfrac12$ (qubit), $\approx0.03$ (qutrit), $\approx10^{-4}$ (two qubits).
+    \item Hence maximum likelihood and projected least squares (\Chap~\ref{C.AlgTomography}).
 \end{itemize}}
-\ona{Random unitary noise, as in the random Schr\"odinger equation of \Chap~\ref{C.Open}, produces exactly such convex combinations: for each realisation $\omega$ the state $\rho(\omega)=\ket{\psi(\omega)}\bra{\psi(\omega)}$ is pure, but the ensemble average $\hat\rho=\Expect_\omega\rho(\omega)$ lies in the convex hull of the support, and since the set of pure states contains no non-trivial convex subsets, $\hat\rho$ is mixed as soon as $\rho(\omega)$ is non-constant.}
 \end{frame}
 
-\section{Distances between states}
+\section{Unitary orbits and majorisation}\label{sec:ch07:orbits}
 
-\begin{frame}\ft{Trace distance and Hilbert--Schmidt distance}
+\begin{frame}\ft{Unitary orbits}
+\ona{A closed system, however it is driven, evolves by $\rho\mapsto U\rho U^\dagger$ with $U$ unitary (\Chap~\ref{C.Closed}). Such a conjugation preserves the spectrum of $\rho$, and conversely two density operators with the same spectrum are unitarily conjugate, since each is diagonalised by a unitary. The \emph{unitary orbit} $\mathcal O_\rho=\{U\rho U^\dagger:U\in\Un[N]\}$ is therefore the set of states with the spectrum of $\rho$, and the state space is the disjoint union of these orbits, one for each probability vector $\lambda_1\ge\lambda_2\ge\dots\ge\lambda_N\ge0$. If the distinct eigenvalues of $\rho$ have the multiplicities $m_1,\dots,m_k$, the orbit is the manifold $\Un[N]/(\Un[m_1]\times\dots\times\Un[m_k])$, of dimension $N^2-\sum_im_i^2$. This is $2N-2$ for a pure state, $N^2-N$ for a state with distinct eigenvalues, and $0$ for $\tfrac1N\Id$, which no unitary moves. For a qubit the orbits are the spheres $\norm\Bloch=\mathrm{const}$ about the centre of the Bloch ball, and unitary evolution is rotation (Figure~\ref{fig:ch07:orbits}(a)).}
+\ona{The consequence for control is immediate. If the controls generate all of $\liesu[N]$, the reachable set of a closed system from $\rho_0$ is the whole orbit $\mathcal O_{\rho_0}$ (\Chap~\ref{C.StateSpace}), but nothing outside it. No choice of the controls changes the eigenvalues of the state, and in particular no closed system can purify a mixed state or cool it. To leave the orbit the system must be open, and Figure~\ref{fig:ch04:accessibility} of \Chap~\ref{C.StateSpace} shows how dissipation moves the Bloch vector from one sphere to another.}
+\onp{\begin{itemize}\setlength\itemsep{0.5em}
+    \item $\rho\mapsto U\rho U^\dagger$ keeps the spectrum: the orbit $\mathcal O_\rho$ is the set of states with the eigenvalues of $\rho$.
+    \item Dimension $N^2-\sum_im_i^2$: $2N-2$ (pure), $N^2-N$ (distinct eigenvalues), $0$ ($\tfrac1N\Id$).
+    \item Qubit: the spheres $\norm\Bloch=\mathrm{const}$.
+    \item Closed-system control reaches at most the orbit: it can neither purify nor cool. Leaving the orbit needs dissipation (Figure~\ref{fig:ch04:accessibility}).
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Majorisation}
+\ona{Which states are more mixed than others? For probability vectors the answer is given by the following ordering, which goes back to Muirhead and to Hardy, Littlewood and P\'olya \citep{marshall2011inequalities}.}
+\begin{defn}[Majorisation]\label{def:ch07:major}
+For probability vectors $\lambda,\mu\in\R^N$ with decreasing rearrangements $\lambda^\downarrow,\mu^\downarrow$, we say that $\mu$ majorises $\lambda$, and write $\lambda\prec\mu$, if $\sum_{i\le k}\lambda^\downarrow_i\le\sum_{i\le k}\mu^\downarrow_i$ for $k=1,\dots,N$.
+\end{defn}
+\ona{The uniform vector $(\tfrac1N,\dots,\tfrac1N)$ is majorised by every probability vector, and every probability vector is majorised by $(1,0,\dots,0)$. The two theorems that follow connect the ordering with unitary conjugation.}
+\begin{thm}[Schur--Horn]\label{thm:ch07:schurhorn}
+Let $\rho$ have the spectrum $\lambda$. A probability vector $p$ is the diagonal $p_j=\braket{j|U\rho U^\dagger|j}$ of some state of the orbit $\mathcal O_\rho$ if and only if $p\prec\lambda$; equivalently, the diagonals of the states of $\mathcal O_\rho$ fill the convex hull of the $N!$ vectors obtained by permuting $\lambda$.
+\end{thm}
+\onp{\begin{itemize}
+    \item Schur--Horn: the populations reachable by unitary control are those majorised by the spectrum.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Mixing by random unitaries}
+\begin{thm}[Uhlmann]\label{thm:ch07:uhlmann-major}
+$\lambda(\rho)\prec\lambda(\sigma)$ if and only if $\rho=\sum_ip_iU_i\sigma U_i^\dagger$ for some unitaries $U_i$ and probabilities $p_i$.
+\end{thm}
+\ona{That the diagonal of a Hermitian matrix is majorised by its spectrum was proved by Schur in 1923, and that every such vector occurs as a diagonal by \citet{horn1954doubly}; both theorems, with their proofs, are in \citet{marshall2011inequalities}.} \ona{By Theorem~\ref{thm:ch07:uhlmann-major}, $\rho$ is more mixed than $\sigma$ in the sense of majorisation if and only if it can be obtained from $\sigma$ by applying unitaries at random. Random unitary noise, such as that of the random Schr\"odinger equation of \Chap~\ref{C.Open} \citep{lawrence2026geometric}, does this: each realisation is unitary and keeps the state on its orbit, but the average over the realisations can only move it towards the centre. The same holds for every unital channel, $\Phi(\Id)=\Id$, which satisfies $\lambda(\Phi(\rho))\prec\lambda(\rho)$ \citep{bengtsson2017geometry}; this is why, under the dephasing of Figure~\ref{fig:ch04:accessibility}(a), no control could take the Bloch vector outside the sphere through its initial point.}
+\onp{\begin{itemize}\setlength\itemsep{0.5em}
+    \item More mixed $\Leftrightarrow$ a random mixture of unitary conjugates.
+    \item Random unitary noise (\Chap~\ref{C.Open}): each realisation stays on its orbit, the average moves towards the centre.
+    \item Every unital channel, $\Phi(\Id)=\Id$, only mixes: $\lambda(\Phi(\rho))\prec\lambda(\rho)$. Hence the sphere in Figure~\ref{fig:ch04:accessibility}(a).
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{What unitary control can reach}
+\ona{The two theorems answer a practical question: how large can a given expectation value be made by unitary control alone? By Theorem~\ref{thm:ch07:schurhorn}, the population of $\ket0$ after any unitary evolution is at most the largest eigenvalue $\lambda_1$ of the initial state, and the populations that can be reached are those in the polytope of the theorem, the \emph{permutohedron} of $\lambda$ (Figure~\ref{fig:ch07:orbits}(b)). For an observable $A$ with the eigenvalues $a_1\ge\dots\ge a_N$, and $\lambda_1\ge\dots\ge\lambda_N$,}
+\onp{Populations: inside the permutohedron of $\lambda$. For an observable $A$, eigenvalues in decreasing order,}
+\begin{equation}\label{eq:ch07:unitarybound}
+    \max_{U\in\Un[N]}\Tr\big(A\,U\rho U^\dagger\big)=\sum_{i=1}^Na_i\lambda_i ,
+\end{equation}
+\ona{attained when $U$ carries the eigenvectors of $\rho$ to those of $A$ in the same order. This is von Neumann's trace inequality. In magnetic resonance it is known as the \emph{unitary bound}: \citet{glaser1998unitary} used it to compute the largest signal that any pulse sequence can produce in the standard experiments of coherent spectroscopy, against which the efficiency of a given sequence may be judged. It also settles the question of cooling a qubit by pulses: the largest eigenvalue of a qubit state is $\tfrac12(1+\norm\Bloch)$, and that is the greatest population of $\ket0$ that any pulse can produce.}
+\onp{the \alert{unitary bound} \citep{glaser1998unitary}, attained when $U$ carries the eigenvectors of $\rho$ to those of $A$ in the same order.
+\begin{itemize}
+    \item The population of $\ket0$ cannot exceed $\lambda_1$.
+    \item A qubit cannot be cooled by pulses: at most $\tfrac12(1+\norm\Bloch)$ in $\ket0$.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{What unitary control can reach, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch07_orbits.tex}}\end{center}
+{\small Unitary control moves a state over its orbit; the populations stay in the permutohedron.}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch07_orbits.tex}}
+\caption{What unitary control can reach. (a) The unitary orbits of a qubit are the spheres $\norm\Bloch=\mathrm{const}$; unitary control moves a state over its sphere, and only dissipation moves it from one sphere to another. (b) For a qutrit with the spectrum $\lambda=(0.6,0.3,0.1)$, the populations $(p_0,p_1,p_2)$ of the states $U\rho U^\dagger$ fill the hexagon spanned by the six permutations of $\lambda$ (Theorem~\ref{thm:ch07:schurhorn}). The point $\mu=(0.8,0.1,0.1)$ is not majorised by $\lambda$ and cannot be reached; in particular no unitary raises the population of $\ket0$ above $0.6$. The ordered spectra, $\lambda_1\ge\lambda_2\ge\lambda_3$, fill one sixth of the triangle (gold), and each orbit meets it in one point. Generated by \texttt{code/ch07\_orbits.py}.}\label{fig:ch07:orbits}
+\end{figure}}
+\end{frame}
+
+\section{Distances between states}\label{sec:ch07:distances}
+
+\begin{frame}\ft{The trace distance and Helstrom's measurement}
 \begin{defn}\label{def:ch07:trace}
-$D(\rho,\sigma)\coloneqq\tfrac12\tracenorm{\rho-\sigma}=\tfrac12\sum_i\abs{\lambda_i(\rho-\sigma)}$ is the trace distance, and $\HSnorm{\rho-\sigma}=\sqrt{\Tr(\rho-\sigma)^2}=\norm{\vec x_\rho-\vec x_\sigma}$ the Hilbert--Schmidt distance.
+The \emph{trace distance} of $\rho,\sigma\in\Dens[\Hil]$ is $D(\rho,\sigma)\coloneqq\tfrac12\tracenorm{\rho-\sigma}$, half the sum of the absolute values of the eigenvalues of $\rho-\sigma$. Their \emph{Hilbert--Schmidt distance} is $\HSnorm{\rho-\sigma}=\sqrt{\Tr(\rho-\sigma)^2}=\norm{\vec x_\rho-\vec x_\sigma}$.
 \end{defn}
 \begin{thm}[Helstrom]\label{thm:ch07:helstrom}
-$D(\rho,\sigma)=\max_{0\preceq E\preceq\Id}\Tr\big(E(\rho-\sigma)\big)$. Hence the optimal success probability of distinguishing $\rho$ from $\sigma$ (equal priors, one copy) is $\tfrac12\big(1+D(\rho,\sigma)\big)$.
+$D(\rho,\sigma)=\max_{0\preceq E\preceq\Id}\Tr\big(E(\rho-\sigma)\big)$, the maximum being attained by the projector onto the span of the eigenvectors of $\rho-\sigma$ with positive eigenvalues. Hence, given one copy of a state that is $\rho$ or $\sigma$ with equal probabilities, the greatest probability of naming it correctly is $\tfrac12\big(1+D(\rho,\sigma)\big)$.
 \end{thm}
-\ona{The trace distance is thus the operationally meaningful one: it bounds the difference of any measurement statistics, $\abs{\Tr(E\rho)-\Tr(E\sigma)}\le D(\rho,\sigma)$, and it is contractive under every CPTP map (\Chap~\ref{C.GeometryChannels}). The Hilbert--Schmidt distance is the Euclidean distance of coherence vectors, hence the natural one for least-squares identification (\Chap~\ref{C.AlgTomography}); it is \emph{not} contractive under all channels for $N>2$, but for a qubit $D=\tfrac12\norm{\Bloch_\rho-\Bloch_\sigma}$, so both agree up to a constant.}
+\ona{\begin{pf}
+Write $\rho-\sigma=P-Q$ with $P,Q\succeq0$ supported on orthogonal subspaces. Since $\Tr(\rho-\sigma)=0$, $\Tr P=\Tr Q=D(\rho,\sigma)$. For $0\preceq E\preceq\Id$ we have $\Tr(E(P-Q))\le\Tr(EP)\le\Tr P$, with equality when $E$ is the projector onto the support of $P$. A measurement $\{E,\Id-E\}$ that names $\rho$ on the outcome $E$ succeeds with probability $\tfrac12\Tr(E\rho)+\tfrac12\Tr((\Id-E)\sigma)=\tfrac12\big(1+\Tr(E(\rho-\sigma))\big)$.
+\end{pf}}
+\ona{The theorem is due to \citet{helstrom1969quantum}. The trace distance is thus the operational one: no measurement separates the statistics of $\rho$ and $\sigma$ by more than $D$, since $\abs{\Tr(E\rho)-\Tr(E\sigma)}\le D(\rho,\sigma)$ for every effect $E$, and some measurement attains this. For a qubit, $\rho-\sigma=\tfrac12(\Bloch_\rho-\Bloch_\sigma)\cdot\vec\sigma$ has the eigenvalues $\pm\tfrac12\norm{\Bloch_\rho-\Bloch_\sigma}$, so that $D$ is half the Euclidean distance in the Bloch ball, and the best measurement is that of the Pauli observable along $\Bloch_\rho-\Bloch_\sigma$ (Figure~\ref{fig:ch07:helstrom}).}
 \onp{\begin{itemize}
-    \item $D$ = best one-shot distinguishability; $\abs{\Tr E\rho-\Tr E\sigma}\le D$; contractive under CPTP maps.
-    \item $\HSnorm{\cdot}$ = Euclidean distance of coherence vectors: least squares, \Chap~\ref{C.AlgTomography}; not contractive for $N>2$.
-    \item Qubit: $D=\tfrac12\norm{\Bloch_\rho-\Bloch_\sigma}=\tfrac{1}{\sqrt2}\HSnorm{\rho-\sigma}$.
+    \item Best single-shot discrimination: success $\tfrac12(1+D)$; no effect separates the statistics by more than $D$ \citep{helstrom1969quantum}.
+    \item Qubit: $D=\tfrac12\norm{\Bloch_\rho-\Bloch_\sigma}$; measure along $\Bloch_\rho-\Bloch_\sigma$.
 \end{itemize}}
 \end{frame}
 
-\begin{frame}\ft{Fidelity and the Bures metric}
-\begin{defn}[Uhlmann fidelity]\label{def:ch07:fidelity}
-$\Fid(\rho,\sigma)\coloneqq\big(\Tr\sqrt{\sqrt\rho\,\sigma\sqrt\rho}\big)^2=\tracenorm{\sqrt\rho\sqrt\sigma}^2$. For pure states $\Fid=\abs{\braket{\psi|\phi}}^2$, and for commuting states it is the classical Bhattacharyya overlap $(\sum_i\sqrt{p_iq_i})^2$.
+\begin{frame}\ft{Helstrom's measurement, pictured}
+\onp{\begin{center}\resizebox{!}{0.7\textheight}{\input{figures/ch07_helstrom.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{0.7\linewidth}{!}{\input{figures/ch07_helstrom.tex}}
+\caption{Helstrom's measurement for two mixed states of a qubit, drawn in the $(x,z)$ section of the Bloch ball. The outcomes of a measurement of the Pauli observable along an axis are distributed according to the shadows of the Bloch vectors on that axis. Along the axis $\vec n$ parallel to $\Bloch_\rho-\Bloch_\sigma$, with the projector $E=\tfrac12(\Id+\vec n\cdot\vec\sigma)$, the shadows are as far apart as the states themselves, $\norm{\Bloch_\rho-\Bloch_\sigma}=2D$ (gold), and naming $\rho$ on the outcome $+1$ succeeds with the probability $\tfrac12(1+D)=0.77$, here with $D=0.55$. Along any other axis $\vec m$ the shadows are closer (green); along the one drawn they are $0.16$ apart, and the same rule succeeds with the probability $0.54$ only. Generated by \texttt{code/ch07\_helstrom.py}.}\label{fig:ch07:helstrom}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{No channel increases the trace distance}
+\begin{thm}[Contractivity]\label{thm:ch07:contract}
+For every channel $\Phi$ (\Chap~\ref{C.Open}) and all states $\rho,\sigma$, $D\big(\Phi(\rho),\Phi(\sigma)\big)\le D(\rho,\sigma)$.
+\end{thm}
+\ona{\begin{pf}
+The adjoint map $\Phi^\dagger$, defined by $\Tr(X\Phi(Y))=\Tr(\Phi^\dagger(X)Y)$, is positive and unital, so that $0\preceq E\preceq\Id$ implies $0\preceq\Phi^\dagger(E)\preceq\Id$. By Theorem~\ref{thm:ch07:helstrom}, $D(\Phi(\rho),\Phi(\sigma))=\max_E\Tr\big(\Phi^\dagger(E)(\rho-\sigma)\big)\le D(\rho,\sigma)$.
+\end{pf}
+The proof uses only positivity and the preservation of the trace, so that the theorem holds for every positive trace-preserving map. Its content is that no processing of a quantum system, whether by noise, by measurement or by discarding a part of it, makes two states easier to tell apart. It has a consequence for dynamics. If the evolution is a Markovian semigroup, $\rho(t)=\ee^{t\Lind}\rho(0)$, or more generally if the map from every time $s$ to every later time $t$ is a channel, then $D(\rho(t),\sigma(t))$ cannot increase. Figure~\ref{fig:ch07:contraction}(a) shows this for the qubit of \Chap~\ref{C.Frequency}. There it can also be seen directly: the affine term of the Bloch equation cancels in the difference $\Bloch_\rho-\Bloch_\sigma$, and the symmetric part of the system matrix is $\operatorname{diag}(-\Gamma,-\Gamma,-\gamma_1)$, so that the length of the difference can only decrease. When the trace distance does increase, as it does for the qubit with the hidden defect of \Chap~\ref{C.StateSpace} (Figure~\ref{fig:ch07:contraction}(b)), the evolution of the qubit alone cannot be divided into channels, and the increase is information returning from the environment \citep{Breuer_09}. This is taken up in \Chap~\ref{C.GeometryChannels}.}
+\ona{The Hilbert--Schmidt distance has no such property. For any state $\tau$, $\HSnorm{\rho\otimes\tau-\sigma\otimes\tau}=\HSnorm{\rho-\sigma}\HSnorm{\tau}$, and the partial trace, which is a channel, maps $\rho\otimes\tau$ to $\rho$. When $\tau$ is mixed, $\HSnorm\tau<1$, and discarding $\tau$ increases the Hilbert--Schmidt distance by the factor $1/\HSnorm\tau$, which is $\sqrt2$ for $\tau=\tfrac12\Id$ \citep{ozawa2000entanglement}. Between states of one qubit the Hilbert--Schmidt distance is $\sqrt2\,D$, and so it is not increased by channels from a qubit to a qubit; the failure comes with larger dimensions.}
+\onp{\begin{itemize}\setlength\itemsep{0.4em}
+    \item Proof: $\Phi^\dagger$ maps effects to effects.
+    \item No noise, measurement or discarding makes states easier to tell apart.
+    \item Markovian evolution: $D(\rho(t),\sigma(t))$ never increases. An increase is information returning from the environment \citep{Breuer_09}, \Chap~\ref{C.GeometryChannels}.
+    \item Hilbert--Schmidt is not contractive: discarding $\tau$ multiplies it by $1/\HSnorm\tau$ ($\sqrt2$ for $\tfrac12\Id$).
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Distinguishability under noise}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch07_contraction.tex}}\end{center}
+{\small Markovian: the distance only shrinks. A hidden partner can give information back.}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch07_contraction.tex}}
+\caption{The trace distance under a Markovian and under a non-Markovian evolution. (a) The damped qubit of \Chap~\ref{C.Frequency} ($\omega=3$, $\gamma_1=0.2$, $\gamma_\phi=0.4$), prepared in $\vec x_0$ and in $\ket1$. Both Bloch vectors approach $\ket0$, and the chord between them, drawn at $t=0$, $0.6$, $1.5$ and $3$, only shrinks. (b) The trace distance of that pair against time (blue), which falls from $\tfrac12$ and never grows; and that of the qubit with the hidden defect of \Chap~\ref{C.StateSpace} prepared in $\ket1$ and in $\ket0$ (red), which is $\abs{c(t)}^2$, vanishes at $t=1.81$ and revives to $0.28$ at $t=3.21$ as the excitation returns from the defect. No evolution of the qubit alone that is divisible into channels can do this. Generated by \texttt{code/ch07\_contraction.py}.}\label{fig:ch07:contraction}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{Fidelity}
+\begin{defn}[Fidelity]\label{def:ch07:fidelity}
+$\Fid(\rho,\sigma)\coloneqq\big(\Tr\sqrt{\sqrt\rho\,\sigma\sqrt\rho}\big)^2$. For a pure state $\rho=\ket\psi\bra\psi$ it is $\braket{\psi|\sigma|\psi}$, and for two pure states $\abs{\braket{\psi|\phi}}^2$. For two states of a qubit,
+\begin{equation}\label{eq:ch07:qubitfid}
+    \Fid(\rho,\sigma)=\Tr(\rho\sigma)+2\sqrt{\det\rho\det\sigma}=\tfrac12\Big(1+\Bloch_\rho\cdot\Bloch_\sigma+\sqrt{(1-\norm{\Bloch_\rho}^2)(1-\norm{\Bloch_\sigma}^2)}\Big).
+\end{equation}
 \end{defn}
-\begin{thm}[Uhlmann; Fuchs--van de Graaf]\label{thm:ch07:fvdg}
-$\Fid(\rho,\sigma)=\max\abs{\braket{\Psi|\Phi}}^2$ over purifications $\ket\Psi,\ket\Phi$ of $\rho,\sigma$; and
+\onp{\begin{itemize}
+    \item Bures distance $\sqrt{2-2\sqrt\Fid}$ \citep{bures1969extension}, Bures angle $\arccos\sqrt\Fid$: metrics built from $\Fid$.
+    \item $\braket{\psi|\rho|\psi}$: probability of passing the test for the target; the objective of \Chaps~\ref{C.GeometryControl}, \ref{C.AlgControl}.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Uhlmann's theorem}
+\begin{thm}[Uhlmann]\label{thm:ch07:uhlmann}
+$\Fid(\rho,\sigma)=\max\abs{\braket{\Psi|\Phi}}^2$ over all purifications $\ket\Psi$, $\ket\Phi$ of $\rho$ and $\sigma$. Hence $0\le\Fid\le1$, $\Fid(\rho,\sigma)=1$ only for $\rho=\sigma$, $\Fid$ is symmetric, and $\Fid(\Phi(\rho),\Phi(\sigma))\ge\Fid(\rho,\sigma)$ for every channel $\Phi$. Moreover \citep{fuchs1999cryptographic}
 \begin{equation}\label{eq:ch07:fvdg}
     1-\sqrt{\Fid(\rho,\sigma)}\ \le\ D(\rho,\sigma)\ \le\ \sqrt{1-\Fid(\rho,\sigma)} .
 \end{equation}
 \end{thm}
-\ona{The fidelity is not a metric, but $d_B(\rho,\sigma)=\sqrt{2-2\sqrt\Fid}$ (Bures distance) and $A(\rho,\sigma)=\arccos\sqrt\Fid$ (Bures angle) are; by \eqref{eq:ch07:fvdg} they are equivalent to $D$ in the topological sense, but they behave differently near the boundary: Figure~\ref{fig:ch07:metrics} compares them along a path from the pure state $\ket0$ through the centre of the Bloch ball. Fidelity is the figure of merit used for state transfer in \Chap~\ref{C.GeometryControl}, and its infinitesimal version is the Bures metric.}
+\ona{A \emph{purification} of $\rho=\sum_i\lambda_i\ket i\bra i$ is a pure state of the system and a copy of it whose partial trace is $\rho$, such as $\sum_i\sqrt{\lambda_i}\ket i\ket i$. The definition of the fidelity is due to \citet{uhlmann1976transition}, who called it the transition probability, the name to \citet{jozsa1994fidelity}, and the formula \eqref{eq:ch07:qubitfid} for qubits to \citet{hubner1992explicit}; some authors call $\sqrt\Fid$ the fidelity, and the reader should check the convention in use. The fidelity is not a distance, but two distances are built from it: the \emph{Bures distance} $d_B=\sqrt{2-2\sqrt\Fid}$ \citep{bures1969extension} and the \emph{Bures angle} $A=\arccos\sqrt\Fid$, which for pure states is the angle between the rays. By \eqref{eq:ch07:fvdg} they define the same topology as the trace distance, but they weigh the neighbourhoods of the pure states differently, as we shall see. The fidelity is the usual figure of merit in quantum control \citep{ansel2024introduction}: $\Fid(\ket\psi\bra\psi,\rho)=\braket{\psi|\rho|\psi}$ is the probability that the prepared state $\rho$ passes the test $\{\ket\psi\bra\psi,\Id-\ket\psi\bra\psi\}$ for the target $\ket\psi$, and it is the objective of \Chaps~\ref{C.GeometryControl} and~\ref{C.AlgControl}.}
 \onp{\begin{itemize}
-    \item Bures distance $\sqrt{2-2\sqrt\Fid}$ and angle $\arccos\sqrt\Fid$ are metrics; equivalent to $D$ by \eqref{eq:ch07:fvdg}.
-    \item Fidelity $=$ the state-transfer figure of merit of \Chap~\ref{C.GeometryControl}.
-\end{itemize}
-}
+    \item Purification of $\rho=\sum_i\lambda_i\ket i\bra i$: e.g.\ $\sum_i\sqrt{\lambda_i}\ket i\ket i$ \citep{uhlmann1976transition,jozsa1994fidelity}.
+    \item Bures distance and angle are equivalent to $D$ by \eqref{eq:ch07:fvdg}, but weigh the pure states differently.
+\end{itemize}}
 \end{frame}
 
 \begin{frame}\ft{Distances along a path through the Bloch ball}
-\onp{\begin{center}\resizebox{!}{0.62\textheight}{\input{figures/ch07_metrics.tex}}\end{center}
-Bures angle: infinite slope at the pure state, saturates at $\pi/2$ when $\Fid=0$.}
-\ona{\begin{figure}[h]\centering
-\input{figures/ch07_metrics.tex}
-\caption{Distances between $\rho_0=\ket0\bra0$ and $\rho(s)$ with Bloch vector $(0,0,1-2s)$, from \texttt{code/ch07\_metrics.py}. The trace and Hilbert--Schmidt distances are linear in the Bloch vector; the Bures angle has infinite slope at the pure state and saturates at $\pi/2$ once the states become orthogonal, at $s=1$ where $\Fid=0$.}
+\ona{Figure~\ref{fig:ch07:metrics} compares the distances of $\ket0\bra0$ from the states on the diameter of the Bloch ball through the poles. The trace and Hilbert--Schmidt distances grow linearly with the Bloch vector, and so, since one of the two states is pure, does the fidelity. The Bures angle leaves the pure state with infinite slope, so that a small loss of purity is a large step in the Bures metric, and it reaches $\pi/2$ at the orthogonal state $\ket1$.}
+\onp{\begin{center}\resizebox{!}{0.6\textheight}{\input{figures/ch07_metrics.tex}}\end{center}
+{\small The Bures angle leaves the pure state with infinite slope.}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{0.8\linewidth}{!}{\input{figures/ch07_metrics.tex}}
+\caption{Distances between $\rho_0=\ket0\bra0$ and the state $\rho(s)$ with the Bloch vector $(0,0,1-2s)$. The trace distance $D=s$ and the Hilbert--Schmidt distance $\sqrt2\,s$ are linear in the Bloch vector, and so is the fidelity $\Fid=1-s$. The Bures angle $\arccos\sqrt{1-s}$ has infinite slope at the pure state and reaches $\pi/2$ at $s=1$, where the states are orthogonal. Generated by \texttt{code/ch07\_metrics.py}.}
 \label{fig:ch07:metrics}
 \end{figure}}
 \end{frame}
 
 \begin{frame}[fragile]\ft{Computing the distances}
-\ona{The definitions translate directly into a few lines of numpy (\texttt{code/ch07\_metrics.py}); the only non-trivial step is the matrix square root in the fidelity.}
-\ona{\lstinputlisting[style=python,title={},firstline=14,lastline=37]{code/ch07_metrics.py}}
-\onp{\lstinputlisting[style=python,title={},basicstyle=\ttfamily\scriptsize,firstline=14,lastline=33]{code/ch07_metrics.py}}
+\ona{The definitions translate directly into a few lines of numpy (\texttt{code/ch07\_metrics.py}); the only step that is not elementary is the matrix square root in the fidelity.}
+\ona{\lstinputlisting[style=python,title={},firstline=15,lastline=41]{code/ch07_metrics.py}}
+\onp{\lstinputlisting[style=python,title={},basicstyle=\ttfamily\scriptsize,firstline=23,lastline=41]{code/ch07_metrics.py}}
 \end{frame}
 
-\begin{frame}\ft{Fubini--Study metric and quantum Fisher information}
-\ona{On pure states, the infinitesimal Bures angle is the \emph{Fubini--Study} metric on $\mathbb{CP}^{N-1}$: for $\ket{\psi(\theta)}$, $\dd{s}^2_{FS}=\braket{\dot\psi|\dot\psi}-\abs{\braket{\psi|\dot\psi}}^2\,\mathrm d\theta^2$, the squared speed of the ray, i.e.\ the variance of the generator when $\dot\psi=-\imath H\psi$. On the Bloch sphere it is $\tfrac14$ of the round metric. For mixed states the Bures metric is}
-\onp{Pure states: infinitesimal Bures angle $=$ Fubini--Study metric on $\mathbb{CP}^{N-1}$, $\dd s^2=\mathrm{Var}_\psi(H)\,\mathrm dt^2$ for $\dot\psi=-\imath H\psi$. Mixed states:}
-\begin{equation}\label{eq:ch07:bures}
-    \dd{s}^2_B = \tfrac14\,\QFI(\theta)\,\mathrm d\theta^2,\qquad
-    \QFI(\theta)=\sum_{i,j:\lambda_i+\lambda_j>0}\frac{2\,\abs{\braket{i|\partial_\theta\rho|j}}^2}{\lambda_i+\lambda_j},
+\section{Metrics on the state space}\label{sec:ch07:metrics}
+
+\begin{frame}\ft{The Fubini--Study metric}
+\ona{On the pure states the Bures angle is the angle between rays, $d_{FS}(\psi,\phi)=\arccos\abs{\braket{\psi|\phi}}$, which lies between $0$ and $\pi/2$ and takes the value $\pi/2$ for orthogonal states. It is the geodesic distance of a Riemannian metric on the manifold $\mathbb{CP}^{N-1}$ of rays, the \emph{Fubini--Study metric}, introduced by Fubini in 1904 and by \citet{study1905kurzeste} in their work on complex projective geometry. For a curve $t\mapsto\ket{\psi(t)}$ of unit vectors,}
+\onp{Pure states: $d_{FS}(\psi,\phi)=\arccos\abs{\braket{\psi|\phi}}\in[0,\pi/2]$, the geodesic distance of the Fubini--Study metric on $\mathbb{CP}^{N-1}$:}
+\begin{equation}\label{eq:ch07:fs}
+    \Big(\frac{\mathrm ds_{FS}}{\mathrm dt}\Big)^2=\braket{\dot\psi|\dot\psi}-\abs{\braket{\psi|\dot\psi}}^2 ,
 \end{equation}
-\ona{where $\QFI$ is the \emph{quantum Fisher information} of the family $\rho(\theta)$ (Braunstein--Caves). It is the maximum over all POVMs of the classical Fisher information of the outcome distribution, and yields the quantum Cram\'er--Rao bound}
-\begin{equation}\label{eq:ch07:qcrb}
-    \mathrm{Var}(\hat\theta)\ \ge\ \frac{1}{M\,\QFI(\theta)}
+\ona{the squared length of the part of the velocity orthogonal to $\ket\psi$; the part along $\ket\psi$ changes only the phase, which is not observable (\Chap~\ref{C.Closed}). The geodesics are the curves $\cos s\,\ket\psi+\sin s\,\ket{\psi^\perp}$ with $\braket{\psi|\psi^\perp}=0$. For a qubit, $\abs{\braket{\psi|\phi}}^2=\tfrac12(1+\Bloch_\psi\cdot\Bloch_\phi)=\cos^2(\theta/2)$, where $\theta$ is the angle between the Bloch vectors, so that $d_{FS}=\theta/2$. With the Fubini--Study metric the Bloch sphere is therefore a round sphere of radius $\tfrac12$, and its geodesics are its great circles. When $\ket\psi$ evolves under the Schr\"odinger equation with the Hamiltonian $H$, \eqref{eq:ch07:fs} becomes}
+\onp{Qubit: $d_{FS}=\theta/2$, the Bloch sphere of radius $\tfrac12$; geodesics are great circles. Under $\dot\psi=-\imath H\psi$,}
+\begin{equation}\label{eq:ch07:speed}
+    \frac{\mathrm ds_{FS}}{\mathrm dt}=\Delta H,\qquad \Delta H^2=\braket{\psi|H^2|\psi}-\braket{\psi|H|\psi}^2 ,
 \end{equation}
-\ona{for any unbiased estimator from $M$ copies. In words: the Bures geometry of the model $\theta\mapsto\rho(\theta)$ is the ultimate limit on how well the parameter can be identified from samples, which is the theme of \Chap~\ref{C.SampleComplexity}. For a unitary family $\rho(\theta)=\ee^{-\imath\theta H}\rho\,\ee^{\imath\theta H}$ one has $\QFI\le4\,\mathrm{Var}_\rho(H)$ with equality for pure states, which also gives the Mandelstam--Tamm quantum speed limit of \Chap~\ref{C.GeometryControl}: the Bures length of any trajectory is at least the Bures angle between its endpoints.}
-\onp{\begin{itemize}
-    \item $\QFI=\max_{\text{POVM}}$ classical Fisher information; quantum Cram\'er--Rao $\mathrm{Var}(\hat\theta)\ge1/(M\QFI)$: the identification limit of \Chap~\ref{C.SampleComplexity}.
-    \item Unitary family: $\QFI\le4\mathrm{Var}_\rho(H)$ $\Rightarrow$ Mandelstam--Tamm speed limit (\Chap~\ref{C.GeometryControl}).
+\ona{so that a state moves through the space of rays with a speed equal to the uncertainty of its energy \citep{anandan1990geometry}. An eigenstate of $H$ does not move at all.}
+\onp{the speed is the uncertainty of the energy \citep{anandan1990geometry}.}
+\end{frame}
+
+\begin{frame}\ft{Length, distance and the speed limit}
+\begin{thm}[Mandelstam--Tamm, geometric form]\label{thm:ch07:mt}
+For every Hamiltonian $H(t)$ and every solution of the Schr\"odinger equation, $d_{FS}\big(\psi(0),\psi(T)\big)\le\int_0^T\Delta H(t)\,\mathrm dt$. In particular, a state orthogonal to $\psi(0)$ can be reached only if $T\ge\pi/(2\max_t\Delta H(t))$.
+\end{thm}
+\ona{The proof is short: the left-hand side is the length of the shortest curve between the endpoints, and the right-hand side, by \eqref{eq:ch07:speed}, the length of the curve that the state follows. Mandelstam and Tamm stated their inequality in 1945 for a Hamiltonian independent of time; the geometric form is due to \citet{anandan1990geometry}, and the many speed limits found since are reviewed by \citet{deffner2017quantum}. Equality requires the state to travel along a geodesic. Figure~\ref{fig:ch07:speed} shows the driven qubit of \Chap~\ref{C.StateSpace}. With the drift switched off, a constant pulse moves $\ket0$ along a meridian, which is a geodesic, and the length travelled equals the distance until $\ket1$ is reached; this is the $\pi$-pulse that \Chap~\ref{C.GeometryControl} proves to be time-optimal. With the drift on, the same pulse moves the state along a small circle, the length runs ahead of the distance, and the state never reaches $\ket1$. The excess of the length over the distance measures how far the motion is from a geodesic, and \Chaps~\ref{C.GeometryControl} and~\ref{C.Complexity} show that it cannot be avoided when the controls do not provide the direction of the geodesic.}
+\onp{\begin{itemize}\setlength\itemsep{0.5em}
+    \item Distance $\le$ length of the path travelled $=\int\Delta H$ \citep{anandan1990geometry,deffner2017quantum}.
+    \item Equality only along a geodesic: the drift-free $\pi$-pulse (time-optimal, \Chap~\ref{C.GeometryControl}).
+    \item With drift the path is a small circle and the length runs ahead of the distance.
 \end{itemize}}
 \end{frame}
 
+\begin{frame}\ft{Length and distance, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch07_speed.tex}}\end{center}
+{\small Length $\ge$ distance; equality only along a geodesic (\Chap~\ref{C.GeometryControl}).}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch07_speed.tex}}
+\caption{Length and distance for the driven qubit $H=-\tfrac\omega2\sigma_z+\tfrac u2\sigma_x$ of \Chap~\ref{C.StateSpace}, started in $\ket0$ with the constant control $u=1.5$. (a) Without drift ($\omega=0$) the state moves along a meridian to $\ket1$ (blue); with the drift $\omega=1$ it moves along a small circle (green), whose farthest point from $\ket0$ is joined to it by the dashed geodesic. (b) The Fubini--Study distance $d_{FS}$ from $\ket0$, and the length $L(t)=\int_0^t\Delta H$ travelled, which is the same straight line for both paths, since both move with the speed $\Delta H=u/2$. Along the meridian the distance equals the length until $\ket1$ is reached at $t=\pi/u$. Along the small circle it falls behind, and at the farthest point, at $t=1.74$, the distance is $0.98$ while the length is $1.31$. Generated by \texttt{code/ch07\_speed.py}.}\label{fig:ch07:speed}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{The Bures metric is the quantum Fisher information}
+\ona{For mixed states the infinitesimal form of the Bures angle is the \emph{Bures metric}. Let $\rho(\theta)$ be a curve of states, with the spectral decomposition $\rho=\sum_i\lambda_i\ket i\bra i$ at the point $\theta$. Then}
+\onp{Mixed states, $\rho=\sum_i\lambda_i\ket i\bra i$:}
+\begin{equation}\label{eq:ch07:bures}
+    \mathrm ds_B^2=\frac12\sum_{i,j:\,\lambda_i+\lambda_j>0}\frac{\abs{\braket{i|\mathrm d\rho|j}}^2}{\lambda_i+\lambda_j}=\tfrac14\,\QFI(\theta)\,\mathrm d\theta^2 ,
+\end{equation}
+\ona{where $\QFI$ is the quantum Fisher information of Definition~\ref{def:ch06:qfi}. For pure states \eqref{eq:ch07:bures} reduces to the Fubini--Study metric \eqref{eq:ch07:fs}, and for commuting states, $\rho=\sum_ip_i\ket i\bra i$ with fixed eigenvectors, to $\tfrac14\sum_i\mathrm dp_i^2/p_i$, which is one quarter of the Fisher--Rao metric of classical statistics. The identity of the Bures metric with the quantum Fisher information \citep{Braunstein1994} joins the two halves of the course. By the quantum Cram\'er--Rao bound (Theorem~\ref{thm:ch06:qcr}), $M$ copies of $\rho(\theta)$ determine $\theta$ with a standard deviation of at least $1/\sqrt{M\QFI}$, which is $1/(2\sqrt M)$ divided by the Bures speed $\mathrm ds_B/\mathrm d\theta$. A parameter can be estimated well when a change in it moves the state a long way in the Bures metric, and only badly when it hardly moves the state; the weakly excited modes of \Chap~\ref{C.SampleComplexity} are of the second kind. \citet{wootters1981statistical} was the first to show that the angle between two rays is a statistical distance, measuring how many states between them can be told apart by measurements on many copies.}
+\onp{\begin{itemize}\setlength\itemsep{0.4em}
+    \item $\QFI$ of \Chap~\ref{C.SampleComplexity} \citep{Braunstein1994}; pure states: Fubini--Study; commuting states: $\tfrac14$ Fisher--Rao.
+    \item Cram\'er--Rao: standard deviation $\ge\dfrac{1}{2\sqrt M}\Big/\dfrac{\mathrm ds_B}{\mathrm d\theta}$. Estimable $=$ the state moves far.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The Bures geometry of a qubit}
+\ona{For a qubit the Bures metric can be pictured. Lift each point $\Bloch$ of the Bloch ball to the point $R=(\Bloch,\sqrt{1-\norm\Bloch^2})$ of the unit sphere $S^3\subset\R^4$, on the hemisphere above the ball. By \eqref{eq:ch07:qubitfid}, $\Fid(\rho,\sigma)=\tfrac12(1+R\cdot S)=\cos^2(\theta/2)$, where $\theta$ is the angle between $R$ and $S$, so that the Bures angle is $\theta/2$. With the Bures metric the Bloch ball is thus a hemisphere of radius $\tfrac12$ \citep{hubner1992explicit,bengtsson2017geometry}: the maximally mixed state is its pole, the pure states form its equator, and the geodesics are arcs of great circles. Figure~\ref{fig:ch07:bures}(a) shows a section. Near the equator the hemisphere is steep, so that a short step from a pure state towards the centre has a long Bures length; the Bures angle between $\ket0$ and a state at the distance $\eps$ from it in the Bloch ball is of order $\sqrt\eps$, which is the infinite slope of Figure~\ref{fig:ch07:metrics}. Figure~\ref{fig:ch07:bures}(b) shows the same effect locally. In the section, the states at a fixed small Bures distance from a given state form an ellipse, round near the centre and flattened in the radial direction near the surface, whereas for the trace distance they form circles of one size everywhere. Near a pure state a small loss of purity is therefore easily detected.}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch07_bures.tex}}\end{center}
+{\small Bloch ball $+$ Bures metric $=$ a hemisphere of radius $\tfrac12$: steep near the pure states.}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch07_bures.tex}}
+\caption{The Bures geometry of a qubit. (a) The $(x,z)$ section of the Bloch ball lifted to the hemisphere $w=\sqrt{1-x^2-z^2}$; the Bures angle between two states is half the angle between their lifts. The maximally mixed state is the pole and the pure states form the rim. The Bures geodesic between two mixed states is an arc of a great circle on the hemisphere (blue), whose shadow on the disc bows outwards, towards the pure states, whereas the geodesic of the trace and Hilbert--Schmidt distances is the straight chord. For the two states drawn, $D=0.79$ and the Bures angle is $0.91$. The diameter of diagonal states lifts to a great semicircle (gold), the Fisher--Rao geometry of a coin in the coordinates $\sqrt{p_i}$. (b) The displacements of Bures length $\eps$ from a point of the disc form an ellipse with the semi-axes $2\eps$ along the circle and $2\eps\sqrt{1-\norm\Bloch^2}$ along the radius (blue), while those of trace distance $\eps$ form the circle of radius $2\eps$ everywhere (dashed). Generated by \texttt{code/ch07\_bures.py}.}\label{fig:ch07:bures}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{Monotone metrics}
+\ona{Why the Bures metric, and not another? In classical statistics the answer is a theorem of \v{C}encov: up to a constant factor, the Fisher--Rao metric is the only Riemannian metric on the probability vectors that no stochastic map increases. Contraction under processing is the natural requirement on a statistical distance, as Theorem~\ref{thm:ch07:contract} showed for the trace distance. In the quantum case \citet{petz1996monotone} found that there are infinitely many Riemannian metrics on $\Dens$ that no channel increases, one for each operator monotone function $f$ with $f(1)=1$ and $f(t)=tf(1/t)$. All of them reduce to the Fisher--Rao metric on commuting states, and the Bures metric is the smallest of them. Each corresponds to a quantum generalisation of the Fisher information, and the Bures metric is the one that governs the Cram\'er--Rao bound.}
+\onp{\begin{itemize}\setlength\itemsep{0.5em}
+    \item Classical (\v{C}encov): Fisher--Rao is the only metric that no stochastic map increases.
+    \item Quantum \citep{petz1996monotone}: infinitely many monotone metrics, all Fisher--Rao on commuting states.
+    \item Bures is the smallest of them, and the one in the Cram\'er--Rao bound.
+\end{itemize}}
+\end{frame}
+
+\section{Two systems}\label{sec:ch07:composite}
+
+\begin{frame}\ft{Separable and entangled states}
+\ona{When the system consists of two parts, $\Hil=\Hil_A\otimes\Hil_B$, the state space acquires a further structure. A pure state $\ket\Psi$ has a \emph{Schmidt decomposition} $\ket\Psi=\sum_k\sqrt{p_k}\,\ket{a_k}\ket{b_k}$, with orthonormal $\ket{a_k}\in\Hil_A$, $\ket{b_k}\in\Hil_B$ and a probability vector $p$; it is the singular value decomposition of the matrix of coefficients of $\ket\Psi$. The two reduced states $\rho_A=\Tr_B\ket\Psi\bra\Psi$ and $\rho_B=\Tr_A\ket\Psi\bra\Psi$ have the same spectrum $p$, and $\ket\Psi$ is a product state if and only if $\rho_A$ is pure. The entanglement of a pure state is therefore the mixedness of its parts, as for the Bell state of \Chap~\ref{C.Closed}. For two qubits, $\ket\Psi=a\ket{00}+b\ket{01}+c\ket{10}+d\ket{11}$, it is measured by the \emph{concurrence} $C=2\abs{ad-bc}$, and the Bloch vector of either part has the length $\norm{\Bloch_A}=\sqrt{1-C^2}$ \citep{wootters1998entanglement}.}
+\onp{\begin{itemize}
+    \item Pure $\ket\Psi=\sum_k\sqrt{p_k}\ket{a_k}\ket{b_k}$ (Schmidt): $\rho_A$, $\rho_B$ have the spectrum $p$; product $\Leftrightarrow$ $\rho_A$ pure.
+    \item Two qubits: concurrence $C=2\abs{ad-bc}$, $\norm{\Bloch_A}=\sqrt{1-C^2}$ \citep{wootters1998entanglement}.
+\end{itemize}}
+\begin{defn}[Separable states]\label{def:ch07:separable}
+A state of $\Hil_A\otimes\Hil_B$ is \emph{separable} if it is a mixture $\sum_kp_k\,\rho_A^{(k)}\otimes\rho_B^{(k)}$ of product states, and \emph{entangled} otherwise \citep{werner1989quantum}.
+\end{defn}
+\ona{The separable states form a convex subset of $\Dens[\Hil_A\otimes\Hil_B]$, whose extreme points are the pure product states. It has the full dimension, since it contains a neighbourhood of the maximally mixed state, but unlike the state space it is not a spectrahedron, and to decide whether a given state is separable is in general a hard problem. A simple necessary condition is due to \citet{peres1996separability}: the \emph{partial transpose} $\rho^{T_B}=(\mathrm{id}\otimes T)(\rho)$ of a separable state is again a state, since it is the mixture of the products $\rho_A^{(k)}\otimes(\rho_B^{(k)})^T$. For two qubits, and for a qubit and a qutrit, the condition is also sufficient \citep{horodecki1996separability}.}
+\onp{\begin{itemize}
+    \item Separable: a convex set of full dimension, not a spectrahedron; deciding membership is hard.
+    \item Peres: separable $\Rightarrow$ $\rho^{T_B}\succeq0$ \citep{peres1996separability}; sufficient for $2\times2$ and $2\times3$ \citep{horodecki1996separability}.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Two qubits in a tetrahedron}
+\ona{All of this can be seen in a three-dimensional section of the $15$-dimensional state space of two qubits. Consider the states whose coherence vector has no local part and a diagonal correlation part,}
+\onp{Bell-diagonal states:}
+\begin{equation}\label{eq:ch07:belldiag}
+    \rho=\tfrac14\Big(\Id\otimes\Id+\sum_{i=1}^3t_i\,\sigma_i\otimes\sigma_i\Big),\qquad t_i=\Tr\big(\rho\,\sigma_i\otimes\sigma_i\big).
+\end{equation}
+\ona{They are diagonal in the basis of the four Bell states, with the eigenvalues $\tfrac14(1+\vec t\cdot\vec v_B)$, where $\vec v_B$ is $(1,-1,1)$ for $\ket{\Phi^+}$, $(-1,1,1)$ for $\ket{\Phi^-}$, $(1,1,-1)$ for $\ket{\Psi^+}$ and $(-1,-1,-1)$ for $\ket{\Psi^-}$. The states of the form \eqref{eq:ch07:belldiag} therefore fill the tetrahedron with the Bell states at its vertices. Since $\sigma_y^T=-\sigma_y$, the partial transpose of such a state has the same form with $\vec t$ replaced by $(t_1,-t_2,t_3)$, and it is a state when this reflected vector also lies in the tetrahedron. The separable states thus form the intersection of the tetrahedron with its reflection, the octahedron $\abs{t_1}+\abs{t_2}+\abs{t_3}\le1$ \citep{horodecki1996information}, and the four corners cut off are the entangled states (Figure~\ref{fig:ch07:bell}). On the segment from the centre to the singlet lie the states $p\ket{\Psi^-}\bra{\Psi^-}+(1-p)\tfrac14\Id$ studied by \citet{werner1989quantum}, which are separable for $p\le\tfrac13$ and entangled beyond.}
+\onp{\begin{columns}[c]
+\column{0.42\textwidth}
+\begin{itemize}\setlength\itemsep{0.4em}
+    \item States: the tetrahedron of Bell states.
+    \item $\rho^{T_B}$: $t_2\mapsto-t_2$.
+    \item Separable: the octahedron $\abs{t_1}+\abs{t_2}+\abs{t_3}\le1$ \citep{horodecki1996information}.
+    \item Werner: separable for $p\le\tfrac13$.
+\end{itemize}
+\column{0.56\textwidth}
+\resizebox{\linewidth}{!}{\input{figures/ch07_bell.tex}}
+\end{columns}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{0.7\linewidth}{!}{\input{figures/ch07_bell.tex}}
+\caption{The Bell-diagonal states of two qubits \eqref{eq:ch07:belldiag} in the coordinates $t_i=\Tr(\rho\,\sigma_i\otimes\sigma_i)$. The states fill the tetrahedron with the four Bell states at its vertices, and the separable states the octahedron $\abs{t_1}+\abs{t_2}+\abs{t_3}\le1$ (blue), whose vertices are the midpoints of the edges and which fills half the volume; the four corners cut off (rose) are entangled. The Werner states lie on the segment from $\tfrac14\Id$ to $\ket{\Psi^-}$ and are separable up to the dot at $p=\tfrac13$. A vertex of the octahedron such as $\vec t=(0,0,1)$ is the classically correlated mixture $\tfrac12(\ket{00}\bra{00}+\ket{11}\bra{11})$. Generated by \texttt{code/ch07\_bell.py}.}\label{fig:ch07:bell}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{A qubit entangled with its defect}
+\ona{Let us return to the qubit with the hidden defect of \Chap~\ref{C.StateSpace}, now prepared in $\ket+$ with the defect in $\ket0$. The exchange coupling passes the excitation to and fro, and while it is shared the qubit and the defect are entangled; since only the qubit is observed, the entanglement shows itself as mixedness of the qubit's state. In a frame rotating at the frequency $\omega$, the qubit's Bloch vector is $(c(t),0,1-c(t)^2)$, where $c(t)=\ee^{-\kappa t/4}\big(\cos Wt+\tfrac{\kappa}{4W}\sin Wt\big)$ with $W=\sqrt{g^2-\kappa^2/16}$ is the amplitude of the excitation remaining in the qubit. The Bloch vector therefore moves to and fro along the parabola $z=1-x^2$ inside the Bloch ball (Figure~\ref{fig:ch07:defect}(a)). It starts on the surface, at $\ket+$, and returns to the surface at $\ket0$ whenever the excitation has passed wholly to the defect, since the qubit is then in its ground state and cannot be entangled with anything. On its first excursion it lies inside the ball because the qubit is entangled with the defect, and it is least pure, with $\norm{\Bloch_S}=\sqrt3/2$, at $t\approx0.8$, when the concurrence of the two is greatest (Figure~\ref{fig:ch07:defect}(b)). The later excursions are shorter, and the mixedness is of another origin. At the turning point $t=3.21$ the concurrence has fallen almost to zero while $\norm{\Bloch_S}=0.89$, for the part of the excitation that was lost to the bath has left the qubit correlated with the bath rather than with the defect. The bath gradually removes the excitation, and the qubit settles at $\ket0$. To an observer who sees only the qubit, a point inside the ball is a mixed state, and nothing in the Bloch vector says whether the mixedness comes from entanglement with a partner that may later return the information, or from a bath that never will. The hidden state of \Chap~\ref{C.StateSpace} is what decides.}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch07_defect.tex}}\end{center}
+{\small Entanglement with the hidden defect is seen as mixedness of the qubit.}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch07_defect.tex}}
+\caption{The qubit with the hidden defect of \Chap~\ref{C.StateSpace} ($g=1$, $\kappa=0.8$), prepared in $\ket+$ with the defect in $\ket0$, in a frame rotating at $\omega$. (a) The Bloch vector of the qubit moves along the parabola $z=1-x^2$ inside the ball, from $\ket+$ to $\ket0$ and back, with a shrinking amplitude. It is pure at $\ket+$ and again at $\ket0$, first at $t=1.81$, when the excitation sits in the defect. (b) The length $\norm{\Bloch_S}$ of the qubit's Bloch vector (blue) and the concurrence $C$ of the qubit and the defect (red). On the first excursion the qubit is mixed because it is entangled with the defect, and $C$ reaches $0.45$; at $t=3.21$, by contrast, $C$ vanishes while $\norm{\Bloch_S}=0.89$, the qubit being correlated with the bath. The dashed curve $\sqrt{1-\norm{\Bloch_S}^2}$ would equal $C$ if the qubit and the defect were alone. Generated by \texttt{code/ch07\_defect.py}.}\label{fig:ch07:defect}
+\end{figure}}
+\end{frame}
+
+\section{Distances in identification and control}\label{sec:ch07:which}
+
 \begin{frame}\ft{Which distance for which task?}
 \begin{center}\footnotesize
-\begin{tabular}{p{2.4cm}p{4.4cm}p{5.2cm}}
+\begin{tabular}{p{2.3cm}p{4.6cm}p{5.0cm}}
 \hline
 Quantity & Operational meaning & Used in \\ \hline
-trace distance $D$ & one-shot distinguishability; contractive under channels & tomography error bounds (Ch.~\ref{C.SampleComplexity}), Markovianity (Ch.~\ref{C.GeometryChannels}) \\
-Hilbert--Schmidt & Euclidean norm of $\vec x_\rho-\vec x_\sigma$ & least-squares identification (Ch.~\ref{C.AlgTomography}) \\
-fidelity $\Fid$ & overlap of purifications & state-transfer objectives (Ch.~\ref{C.GeometryControl}, \ref{C.AlgControl}) \\
-Bures / $\QFI$ & statistical speed; Cram\'er--Rao & sample complexity, speed limits \\
+trace distance $D$ & single-shot distinguishability; contracted by every channel & error bounds of tomography (\Chap~\ref{C.SampleComplexity}), Markovianity (\Chap~\ref{C.GeometryChannels}) \\
+Hilbert--Schmidt & Euclidean distance of coherence vectors; not contracted & least-squares identification (\Chap~\ref{C.AlgTomography}) \\
+fidelity $\Fid$ & probability of passing the test for a pure target & objectives of control (\Chaps~\ref{C.GeometryControl}, \ref{C.AlgControl}) \\
+Fubini--Study & angle between rays; speed $\Delta H$ & speed limits (\Chaps~\ref{C.GeometryControl}, \ref{C.Complexity}) \\
+Bures / $\QFI$ & statistical speed & Cram\'er--Rao bounds (\Chap~\ref{C.SampleComplexity}) \\
 \hline
 \end{tabular}
 \end{center}
-\ona{The table summarises the roles the different notions will play. The one point worth remembering when reading the identification literature is that error bounds are usually stated in trace distance (because it controls all observable statistics) while algorithms usually minimise a Hilbert--Schmidt or weighted least-squares loss (because it is quadratic in the coherence vector); the two are related by $\HSnorm{X}\le\tracenorm{X}\le\sqrt{N}\,\HSnorm{X}$, so a factor $\sqrt N=\sqrt{\dim\Hil}$ can appear when converting between them.}
-\onp{Converting bounds: $\HSnorm{X}\le\tracenorm{X}\le\sqrt{N}\HSnorm{X}$, so a factor $\sqrt{\dim\Hil}$ appears between least-squares guarantees and trace-distance guarantees.}
+\ona{The table summarises the roles that the different notions will play. When reading the literature on identification, it is worth remembering that error bounds are usually stated in the trace distance, because it controls the statistics of every measurement, while algorithms usually minimise a Hilbert--Schmidt or weighted least-squares loss, because it is quadratic in the coherence vector. The two are related by $\HSnorm{X}\le\tracenorm{X}\le\sqrt{N}\,\HSnorm{X}$ for an $N\times N$ matrix $X$, so that a factor $\sqrt N=\sqrt{\dim\Hil}$ can appear when one is converted into the other. In control, the fidelity of a pure target is related to the trace distance by \eqref{eq:ch07:fvdg}, so that a fidelity of $1-\eps$ guarantees that no measurement can tell the prepared state from the target with an advantage greater than $\sqrt\eps$.}
+\onp{Converting: $\HSnorm{X}\le\tracenorm{X}\le\sqrt{N}\HSnorm{X}$, a factor $\sqrt{\dim\Hil}$; fidelity $1-\eps$ $\Rightarrow$ $D\le\sqrt\eps$.}
 \end{frame}
 
-\begin{frame}\ft{Summary}
-\begin{itemize}\setlength\itemsep{0.5em}
-    \item Coherence coordinates $x_j=\Tr(F_j\rho)$ turn states into real vectors of expectation values; the structure constants $f,g$ of $\liesu[N]$ encode the dynamics and are sparse in the Pauli basis.
-    \item $\Dens[\Hil]$ is a spectrahedron whose extreme points are the pure states: a ball for a qubit, a body with flat faces for $N\ge3$; unitary orbits are labelled by spectra, mixedness by majorisation.
-    \item Trace distance (distinguishability), Hilbert--Schmidt (least squares), fidelity/Bures (overlap, Fisher information) are equivalent up to dimension-dependent constants but serve different purposes.
-    \item Next: the same questions for the maps between states, i.e.\ quantum channels.
+\begin{frame}\ft{Summary}\mop{\small}
+\begin{itemize}\setlength\itemsep{0.4em}
+    \item The state space is a spectrahedron whose faces are smaller state spaces; its boundary consists of the singular states, and the pure states that control aims at lie on it.
+    \item Unitary control moves a state only over its orbit, the states with the same spectrum; the populations it can reach are those majorised by the spectrum, and it can neither purify nor cool.
+    \item The trace distance measures single-shot distinguishability, and no channel increases it; an increase in time reveals memory in the environment.
+    \item Fidelity gives the Bures and Fubini--Study metrics. Length bounds time (the speed limit), and the Bures metric is the quantum Fisher information.
+    \item For two qubits the separable states form an octahedron within the tetrahedron of Bell-diagonal states; the entanglement of a pure state is the mixedness of its parts.
+    \item Next: the same questions for the maps between states, the quantum channels.
 \end{itemize}
-\ona{\todo{Add references: Bengtsson \& \.Zyczkowski, \emph{Geometry of Quantum States}; Kimura (2003) and Byrd--Khaneja (2003) on the Bloch body; Braunstein--Caves (1994) on the quantum Fisher information; Fuchs--van de Graaf (1999). Check which are already in \texttt{refs.bib}.}}
 \end{frame}
 
 \biblio
