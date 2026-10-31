@@ -8,160 +8,502 @@
 \chapter{Sample Complexity of Identification}\label{C.SampleComplexity}
 
 \begin{frame}\ft{Outline}
-\ona{\Chaps~\ref{C.StateSpace} and~\ref{C.Frequency} answered the structural question: with exact expectation values, when is the model determined? But an experiment never returns an expectation value. It returns one outcome of one measurement on one copy of the state, and the copy is destroyed. Every number we have used so far, from $x_j=\Tr[F_j\rho]$ to the Hankel matrix, is an estimate from a finite number of \emph{shots}. This \chap{} asks how many shots are needed for a prescribed accuracy: the \emph{sample complexity} of estimation, tomography, and system identification. We give the elementary upper bounds (concentration inequalities), the information-theoretic lower bounds (Cram\'er--Rao and its quantum version), and the finite-sample theory of linear system identification that transfers to the coherence-vector model.}
+\ona{\Chaps~\ref{C.StateSpace} and~\ref{C.Frequency} answered a structural question: given exact expectation values, when do the data determine the model? The answer was a set of rank conditions, and the last of them, in \Chap~\ref{C.Frequency}, said that a mode reaches the data only if the experiment excites it, the measurement sees it, and the sampling keeps it apart from the others. But an experiment never returns an expectation value. It returns one outcome of one measurement on one copy of the state, and the copy is destroyed in the process. Every number we have used so far, from the coherence vector to the Hankel matrix, is in practice an average over a finite number of such \emph{shots}, and carries an error. In this \chap{} we ask how many shots are needed for a prescribed accuracy, which is the \emph{sample complexity} of the problem. We shall find that the answer has two factors. One, proportional to $1/\eps^2$ for an accuracy $\eps$, is the price of probabilistic measurement and cannot be avoided with independent shots. The other measures how weakly the experiment excites and sees the system: the rank conditions of the previous \chaps{} become quantitative, and a system that is only just identifiable is very expensive to identify.}
 \onp{Outline of today's lecture:
-\begin{itemize}\setlength\itemsep{0.8em}
-    \item from shots to expectation values: Hoeffding and the $N^{-1/2}$ law;
-    \item quantum state tomography: $\bigO{d^2/\eps^2}$ copies, and why that is tight;
-    \item classical shadows: many observables from few copies;
-    \item Fisher information, Cram\'er--Rao, and the quantum Fisher information;
-    \item Heisenberg-limited Hamiltonian learning;
-    \item finite-sample identification of linear systems and the coherence-vector model;
-    \item propagating tomography error into the master equation.
+\begin{itemize}\setlength\itemsep{0.35em}
+    \item identifiable, but at what cost?
+    \item shots: a measurement is a coin toss; the $1/\sqrt N$ law and Hoeffding's inequality;
+    \item Fisher information and the Cram\'er--Rao bound; when to measure; the error ellipse;
+    \item quantum limits: the best measurement, and time as a resource (the Heisenberg limit);
+    \item the cost of tomography, and classical shadows;
+    \item learning a Hamiltonian from its Gibbs state: copies, time and bits;
+    \item Ho--Kalman on quantum data; weakly excited, weakly seen, nearly merged;
+    \item an error budget for the identification of a master equation.
 \end{itemize}}
-\ona{\medskip\noindent\textit{Sources.} This \chap{} draws on \citep{parvaiz2026survey,parvaiz2025identifiability,bondar2025globally}; passages from these papers are reproduced with light editing.}
-\onp{\vfill{\scriptsize Sources: \citep{parvaiz2026survey,parvaiz2025identifiability,bondar2025globally}.}}
+\ona{\endgraf\noindent\textit{Sources.} This \chap{} draws on \citep{parvaiz2026survey,parvaiz2025identifiability,bondar2025globally,wodecki2024learning}, on which several of its passages are based.}
+\onp{\vfill{\scriptsize Sources: \citep{parvaiz2026survey,parvaiz2025identifiability,bondar2025globally,wodecki2024learning}.}}
 \end{frame}
 
-\section{From shots to expectation values}
-
-\begin{frame}\ft{Estimating one expectation value}
-\ona{Let $O$ be an observable with $\norm{O}_\infty\le1$ and eigenvalues $\pm1$, measured on $N$ independent copies of $\rho$. The outcomes $o_1,\dots,o_N\in\{\pm1\}$ are i.i.d.\ with mean $\Tr[O\rho]$, and the empirical mean $\hat o=\frac1N\sum_i o_i$ has variance $(1-\Tr[O\rho]^2)/N\le1/N$. Beyond the variance, we want a guarantee that holds with high probability:}
-\begin{thm}[Hoeffding]\label{thm:ch06:hoeffding}
-For i.i.d.\ $o_i\in[-1,1]$ with mean $\mu$, $\Prob\big(\abs{\hat o-\mu}\ge\eps\big)\le2\exp(-N\eps^2/2)$. Hence $N\ge\frac{2}{\eps^2}\ln\frac{2}{\delta}$ shots guarantee $\abs{\hat o-\mu}\le\eps$ with probability at least $1-\delta$.
-\end{thm}
-\ona{This is the $N^{-1/2}$ law, or \emph{standard quantum limit}: the error decreases as $1/\sqrt N$ and the number of shots as $1/\eps^2$. It is the price of destructive, probabilistic measurement, and it propagates into everything downstream: each entry of the coherence vector, each Markov parameter, each entry of the Hankel matrix carries an error of order $N^{-1/2}$. For a $\pm1$-valued observable the bound is essentially tight, since the variance of a single shot is $1-\mu^2$, close to $1$ unless the state is nearly an eigenstate. Figure~\ref{fig:ch06:shots} shows the law at work for a decay-rate estimate: the root-mean-square error of $\hat\gamma$ follows $N^{-1/2}$ over four orders of magnitude.}
-\onp{Error $\propto N^{-1/2}$, shots $\propto\eps^{-2}\ln(1/\delta)$: the \alert{standard quantum limit}. Every downstream quantity (coherence vector, Hankel matrix) inherits it.}
+\begin{frame}\ft{Identifiable, but at what cost?}
+\ona{We begin with the qubit of \Chap~\ref{C.Frequency}, which precesses with angular frequency $\omega=3$, loses coherence at the rate $\Gamma=0.5$ and relaxes at the rate $\gamma_1=0.2$. Prepare it at an angle $\phi$ from the excited state $\ket1$, in the plane of the $x$- and $z$-axes, and measure $\sigma_n$ along the axis midway between them. For $\phi=0$ the precession is never excited, and by \Chap~\ref{C.Frequency} no data whatever will reveal $\omega$. For every $\phi>0$ the precession is excited, its pole appears in the data, and $\omega$ is identifiable. The rank conditions draw a sharp line between these two cases; the experiment does not. Figure~\ref{fig:ch06:cost}(a) shows the data for $\phi=60^\circ$ and for $\phi=6^\circ$, each estimated from $200$ shots per point. In the first, the oscillation is plain; in the second, it is buried in the noise of the shots. Figure~\ref{fig:ch06:cost}(b) shows the number of shots needed to estimate $\omega$ to a given accuracy, as a function of $\phi$. It is finite for every $\phi>0$, but it grows without bound as $\phi\to0$, like $1/\sin^2\phi$: about $6\,200$ shots per point suffice at $60^\circ$, and about $420\,000$ are needed at $6^\circ$. Between the identifiable and the unidentifiable there is a continuum of cost, and the purpose of this \chap{} is to measure it.}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch06_cost.tex}}\end{center}
+{\small Identifiable for every $\phi>0$, but the cost grows like $1/\sin^2\phi$: rank conditions become \alert{quantitative}.}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch06_cost.tex}}
+\caption{Identifiable, but at a cost. (a) The qubit of \Chap~\ref{C.Frequency} prepared at the angle $\phi$ from $\ket1$ and measured along $\vec n$, with $200$ shots at each time and bars of one standard deviation: for $\phi=60^\circ$ the precession is plain, for $\phi=6^\circ$ its amplitude $\sin\phi/\sqrt2$ is of the size of the noise. (b) The shots per time needed to estimate $\omega$ to a standard deviation of $0.01$, from the Cram\'er--Rao bound of Section~\ref{sec:ch06:fisher} with $\omega$, $\gamma_1$ and $\gamma_\phi$ all unknown (dots), against $\phi$; the dashed curve is $c/\sin^2\phi$. At $\phi=0$ the precession is not excited and $\omega$ cannot be identified; for every $\phi>0$ it can, at a cost growing like $1/\sin^2\phi$. Generated by \texttt{code/ch06\_cost.py}.}\label{fig:ch06:cost}
+\end{figure}}
 \end{frame}
 
-\begin{frame}[fragile]\ft{A Monte-Carlo check}
-\ona{The script \texttt{code/ch06\_shots.py} prepares a qubit in the excited state, lets it relax at rate $\gamma$ so that $\langle\sigma_z\rangle(t)=1-2\ee^{-\gamma t}$, measures $\sigma_z$ with $N$ shots at each of $12$ times, fits $\gamma$ by least squares, and repeats $200$ times to estimate the root-mean-square error.}
-\ona{\lstinputlisting[style=python,firstline=22,lastline=36]{code/ch06_shots.py}}
-\onp{\lstinputlisting[style=python,basicstyle=\ttfamily\scriptsize,numbers=none,firstline=26,lastline=36]{code/ch06_shots.py}}
-\end{frame}
+\section{Shots}\label{sec:ch06:shots}
 
-\begin{frame}\ft{The $N^{-1/2}$ law, observed}
-\onp{Root-mean-square error of $\hat\gamma$ over $200$ repetitions versus shots per time point; dashed: $\propto N^{-1/2}$ (Figure~\ref{fig:ch06:shots}).
-\begin{center}\resizebox{!}{0.62\textheight}{\input{figures/ch06_shots.tex}}\end{center}}
-\ona{\begin{figure}[h]\centering\input{figures/ch06_shots.tex}
-\caption{Root-mean-square error of the least-squares estimate of a decay rate $\gamma=0.5$ from binomial estimates of $\langle\sigma_z\rangle$ at $12$ times, as a function of the number of shots $N$ per time, over $200$ Monte-Carlo repetitions; the dashed line is $\propto N^{-1/2}$. Generated by \texttt{code/ch06\_shots.py}.}\label{fig:ch06:shots}\end{figure}}
-\end{frame}
-
-\section{Quantum state tomography}
-
-\begin{frame}\ft{Sample complexity of tomography}
-\ona{Quantum state tomography (\Chap~\ref{C.AlgTomography}) estimates the full $\rho\in\Dens[\C^d]$, which has $d^2-1$ real parameters, from measurements on $N$ copies. The elementary approach measures each of the $d^2-1$ basis observables $F_j$ separately, $N/(d^2-1)$ shots each, and assembles $\hat\rho=\frac1d\Id+\sum_j\hat x_jF_j$. By Theorem~\ref{thm:ch06:hoeffding} each $\hat x_j$ has error $\bigO{\sqrt{d^2/N}}$, so the Hilbert--Schmidt error is $\norm{\hat\rho-\rho}_{2}=\bigO{\sqrt{d^4/N}}$ and, since $\norm{\cdot}_1\le\sqrt d\norm{\cdot}_2$, the trace-distance error is $\bigO{\sqrt{d^5/N}}$. Thus $N=\bigO{d^5/\eps^2}$ copies suffice for trace-distance accuracy $\eps$ with product (single-copy) measurements, and better single-copy schemes bring this down to $\bigO{d^3/\eps^2}$. Measuring many copies jointly (entangled measurements) does better still:}
-\begin{thm}[Sample complexity of tomography; \citealp{haah2016sample}, O'Donnell--Wright]\label{thm:ch06:tomography}
-There is a measurement on $N=\bigO{d^2/\eps^2}$ copies whose output $\hat\rho$ satisfies $\tracenorm{\hat\rho-\rho}\le\eps$ with high probability, and no procedure achieves this with $N=o(d^2/\eps^2)$ copies. For states of rank $r$, $N=\bigTheta{dr/\eps^2}$ copies are necessary and sufficient (up to logarithmic factors), and with single-copy measurements $\bigOmega{d^3/\eps^2}$ copies are necessary.
-\end{thm}
-\ona{Two remarks. The lower bound $\bigOmega{d^2/\eps^2}$ is a parameter-counting bound: $d^2-1$ parameters at accuracy $\eps$ each cannot be learned from fewer than $\sim d^2/\eps^2$ samples, and the argument is a packing argument plus Holevo's bound on the information carried by $N$ copies. The gap between $d^2$ and $d^3$ is the price of measuring copies one at a time, which is the realistic situation on most hardware. Since $d=2^q$ for $q$ qubits, full tomography is exponential in $q$ in either case: the identification results of \Chaps~\ref{C.StateSpace}--\ref{C.Frequency}, which take the coherence vector as input, inherit this cost, and the way out is structure: locality, sparsity, or low rank.}
+\begin{frame}\ft{A measurement is a coin toss}
+\ona{Let $O$ be an observable with eigenvalues $\pm1$, such as a Pauli operator, and let $\mu=\Tr[O\rho]$ be its expectation value. A single measurement of $O$ on one copy of $\rho$ yields $+1$ with probability $\frac12(1+\mu)$ and $-1$ with probability $\frac12(1-\mu)$, so that it is in effect the toss of a biased coin. Its mean is $\mu$ and its variance is $1-\mu^2$. Measuring $N$ fresh copies gives independent outcomes $o_1,\dots,o_N$, and their mean $\hat\mu=\frac1N\sum_io_i$ is the natural estimate of $\mu$. It has mean $\mu$, so that it is unbiased, and variance $(1-\mu^2)/N$, so that its typical error is $\sqrt{(1-\mu^2)/N}$. The error falls like $1/\sqrt N$: to halve it one must quadruple the number of shots. Figure~\ref{fig:ch06:coins}(a) shows the running mean of several sequences of outcomes settling into the band $\mu\pm\sqrt{(1-\mu^2)/N}$, and Figure~\ref{fig:ch06:coins}(b) the distribution of $\hat\mu$, which narrows by a factor of $\sqrt{10}$ for every tenfold increase in $N$. Note that the variance is smallest when $\mu$ is close to $\pm1$, that is, when the state is close to an eigenstate of $O$, and largest when $\mu=0$.}
 \onp{\begin{itemize}
-    \item Product measurements, na\"ive: $\bigO{d^5/\eps^2}$; best single-copy: $\bigTheta{d^3/\eps^2}$.
-    \item $d=2^q$: exponential either way; the escape is \alert{structure} (locality, sparsity, low rank).
+    \item One shot: $\pm1$ with probabilities $\frac12(1\pm\mu)$; mean $\mu$, variance $1-\mu^2$.
+    \item $N$ shots: $\hat\mu=\frac1N\sum o_i$ has variance $(1-\mu^2)/N$; the error falls like \alert{$1/\sqrt N$}.
+\end{itemize}
+\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch06_coins.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch06_coins.tex}}
+\caption{A measurement is a coin toss. (a) The running mean of five sequences of outcomes, each $+1$ or $-1$, of an observable with expectation value $\mu=0.4$, for $N$ up to $2000$; the shaded bands are $\mu\pm\sqrt{1-\mu^2}/\sqrt N$ and twice that, one and two standard deviations of the mean. (b) The distribution of the mean of $N=10$, $100$ and $1000$ outcomes; each is $\sqrt{10}$ times narrower and taller than the last. Generated by \texttt{code/ch06\_coins.py}.}\label{fig:ch06:coins}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{How many shots: Hoeffding's inequality}
+\ona{The variance tells us the typical error, but we often want a guarantee: that the error is at most $\eps$ except with a small probability $\delta$. Such guarantees are given by concentration inequalities, of which the following is the simplest.}
+\begin{thm}[Hoeffding]\label{thm:ch06:hoeffding}
+For independent $o_i\in[-1,1]$ with mean $\mu$, $\Prob\big(\abs{\hat\mu-\mu}\ge\eps\big)\le2\exp(-N\eps^2/2)$. Hence $N\ge\frac{2}{\eps^2}\ln\frac{2}{\delta}$ shots ensure $\abs{\hat\mu-\mu}<\eps$ with probability at least $1-\delta$.
+\end{thm}
+\ona{The bound is due to \citet{Hoeffding1963}. It does not use the variance, and so it is pessimistic when $\mu$ is close to $\pm1$, but it has the right shape (Figure~\ref{fig:ch06:hoeffding}(a)). Two features of the shot count deserve emphasis. The dependence on the accuracy is $1/\eps^2$: ten times the accuracy costs a hundred times the shots (Figure~\ref{fig:ch06:hoeffding}(b)). The dependence on the confidence is only logarithmic, which has a useful consequence. If $M$ expectation values are to be estimated, each from its own $N$ shots, the probability that any one of them is in error by $\eps$ or more is at most $M$ times the probability for one of them, so that $N\ge\frac{2}{\eps^2}\ln\frac{2M}{\delta}$ shots each suffice for all of them at once. Many expectation values cost little more per value than one.}
+\onp{\begin{itemize}
+    \item $N\ge\frac{2}{\eps^2}\ln\frac{2}{\delta}$: accuracy is expensive ($\eps^{-2}$), confidence is cheap ($\ln\frac1\delta$).
+    \item $M$ expectation values: $N\ge\frac{2}{\eps^2}\ln\frac{2M}{\delta}$ each.
 \end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{How many shots: Hoeffding's inequality}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch06_hoeffding.tex}}
+\caption{Hoeffding's inequality. (a) For $N=100$ shots of an observable with outcomes $\pm1$ and mean $\mu=0$, the probability that the mean of the outcomes misses $\mu$ by at least $\eps$: exactly, from the binomial distribution (staircase), in the Gaussian approximation (dashed), and Hoeffding's bound $2\ee^{-N\eps^2/2}$ (red), which lies above the exact value everywhere. (b) The number of shots $N=2\ln(2/\delta)/\eps^2$ that the inequality requires for accuracy $\eps$ with probability $1-\delta$: a tenfold gain in accuracy costs a hundredfold increase in shots, while lowering $\delta$ from $0.05$ to $0.001$ only about doubles them. Generated by \texttt{code/ch06\_hoeffding.py}.}\label{fig:ch06:hoeffding}
+\end{figure}}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch06_hoeffding.tex}}\end{center}
+{\small Ten times the accuracy costs a hundred times the shots.}}
+\end{frame}
+
+\section{How much a shot can tell}\label{sec:ch06:fisher}
+
+\begin{frame}\ft{When to measure}
+\ona{Most of the quantities we wish to learn, such as a frequency or a decay rate, are not expectation values but parameters on which the expectation values depend. How much a single shot tells us about such a parameter $\theta$ depends on how strongly the probabilities of its outcomes depend on $\theta$. Suppose that we measure $\sigma_x$ at time $t$, so that $\mu(t;\theta)=\langle\sigma_x\rangle(t)$. If a small change $\delta\theta$ changes $\mu$ by $\partial_\theta\mu\,\delta\theta$, the change can be detected with $N$ shots when it exceeds their typical error $\sqrt{(1-\mu^2)/N}$. The ratio of the squares of the two,}
+\onp{Information about $\theta$ in one shot of a $\pm1$ observable with mean $\mu(\theta)$:}
+\begin{equation}\label{eq:ch06:fisherbinary}
+    \CFI(\theta)=\frac{(\partial_\theta\mu)^2}{1-\mu^2},
+\end{equation}
+\ona{is the information that one shot carries about $\theta$; it is the Fisher information of the shot, defined in general below. Figure~\ref{fig:ch06:fisher} shows it as a function of the time of measurement, for the frequency $\omega$ and the decay rate $\Gamma$ of our qubit. The frequency is best measured where the curve $\langle\sigma_x\rangle(t)$ crosses zero, since there a change of $\omega$ moves it most, and the decay rate near its extremes. Both are subject to the envelope $t^2\ee^{-2\Gamma t}$, which is greatest at $t=1/\Gamma$: too early, and the phase $\omega t$ has had no time to depend appreciably on $\omega$; too late, and the signal has decayed. The relaxation rate $\gamma_1$, measured through $\sigma_z$, offers a small surprise. The sensitivity $\partial_{\gamma_1}\langle\sigma_z\rangle$ is greatest at $t=1/\gamma_1=5$, but the information is greatest later, near $t\approx8.7$. The reason is the denominator in \eqref{eq:ch06:fisherbinary}: as $\langle\sigma_z\rangle$ approaches $1$ the state approaches an eigenstate of $\sigma_z$, the noise of the shots dies away, and a small change is more easily seen. A well-designed experiment spends its shots at such times.}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch06_fisher.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch06_fisher.tex}}
+\caption{When to measure. (a) $\langle\sigma_x\rangle(t)$ for $\omega=3$ and for $\omega=3.3$ (dashed); the shaded difference shows where a measurement is informative about $\omega$, and it grows with $t$ until the decay overtakes it. (b) The Fisher information of one shot of $\sigma_x$ about $\omega$ (blue) and about $\Gamma$ (gold), each scaled to a maximum of $1$: $\omega$ is best measured where $\langle\sigma_x\rangle$ crosses zero, near $t=1/\Gamma$, where the envelope $a^2t^2\ee^{-2\Gamma t}$ (dashed) is greatest, and $\Gamma$ near the extremes. (c) The same for $\gamma_1$ from $\sigma_z$: the sensitivity alone (dashed) is greatest at $t=1/\gamma_1$, but the noise of the shots, $1-z^2$, shrinks as $z$ approaches $1$, and the information is greatest later, at $t\approx8.7$. Generated by \texttt{code/ch06\_fisher.py}.}\label{fig:ch06:fisher}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{Fisher information and the Cram\'er--Rao bound}
+\ona{The idea extends to any number of parameters and any kind of measurement. Let the outcome $o$ of a shot have the probability $p_\theta(o)$, depending on parameters $\theta\in\R^m$.}
+\begin{defn}[Fisher information]\label{def:ch06:fisher}
+The Fisher information of one shot is the $m\times m$ matrix $\CFI(\theta)_{ab}=\Expect_\theta\big[\partial_a\log p_\theta(o)\,\partial_b\log p_\theta(o)\big]$.
+\end{defn}
+\ona{For a $\pm1$ outcome with mean $\mu(\theta)$ the definition gives $[\CFI]_{ab}=\partial_a\mu\,\partial_b\mu/(1-\mu^2)$, which is \eqref{eq:ch06:fisherbinary}. Fisher information is additive over independent shots: $N$ shots at each of the times $t_1,\dots,t_K$ carry $N\sum_k[\CFI]_k(\theta)$. Its importance lies in the following theorem, due to Cram\'er and Rao in the 1940s.}
+\begin{thm}[Cram\'er--Rao]\label{thm:ch06:cramerrao}
+Every unbiased estimator $\hat\theta$ computed from data with Fisher information $\CFI$ has covariance $\Cov(\hat\theta)\succeq\CFI(\theta)^{-1}$. The maximum-likelihood estimator attains the bound asymptotically, as the number of shots grows.
+\end{thm}
+\ona{Thus no method whatever can estimate $\theta$ from $N$ independent shots with an error smaller than of order $1/\sqrt{N\CFI}$, and a good method attains this. Figure~\ref{fig:ch06:shots} compares the bound with the errors of a least-squares fit of $\gamma_1$ to data of our qubit; the two agree closely for all but the smallest numbers of shots, so that least squares is here nearly as good as possible. The bound also explains the $1/\sqrt N$ law of the previous section. It is not a defect of the estimator but a property of independent shots, and it can be escaped only by measurements that are not independent, which we take up in Section~\ref{sec:ch06:quantum}.}
+\onp{\begin{itemize}
+    \item Additive over shots: $N$ shots at $K$ times carry $N\sum_k[\CFI]_k$.
+    \item No unbiased estimator does better than $\CFI^{-1}$; maximum likelihood attains it asymptotically.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The bound observed}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch06_shots.tex}}
+\caption{The $N^{-1/2}$ law for the relaxation rate of the qubit. (a) $\langle\sigma_z\rangle(t)$ at $12$ times in $[1,15]$, each estimated from $N=100$ shots, with bars of one standard deviation; the least-squares fit gives $\hat\gamma_1=0.213$ against the true $\gamma_1=0.2$ (dashed). (b) The root-mean-square error of $\hat\gamma_1$ over $300$ repetitions (dots) against the number of shots per time, with the Cram\'er--Rao bound $1/\sqrt{\CFI}$ (line), which falls as $N^{-1/2}$; least squares comes within about a quarter of the bound. Generated by \texttt{code/ch06\_shots.py}.}\label{fig:ch06:shots}
+\end{figure}}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch06_shots.tex}}\end{center}
+{\small Least squares comes close to the Cram\'er--Rao bound; both fall like $N^{-1/2}$.}}
+\end{frame}
+
+\begin{frame}[fragile]\ft{Shots in a few lines}
+\ona{The following lines of \texttt{code/ch06\_shots.py} simulate the shots and compute the Fisher information of $N$ shots of each of a list of expectation values, by differentiating the model numerically.}
+\ona{\lstinputlisting[style=python,firstline=44,lastline=65]{code/ch06_shots.py}}
+\onp{\lstinputlisting[style=python,basicstyle=\ttfamily\scriptsize,numbers=none,firstline=44,lastline=60]{code/ch06_shots.py}}
+\end{frame}
+
+\begin{frame}\ft{Several parameters: the error ellipse}
+\ona{When several parameters are estimated together, the inverse Fisher matrix describes an ellipse in parameter space, $\{\theta:(\theta-\hat\theta)^\top\CFI(\theta-\hat\theta)\le1\}$, within which the estimates of repeated experiments fall about as often as a Gaussian variable falls within one standard deviation. Its axes are the eigenvectors of $\CFI$, and their lengths are the reciprocals of the square roots of its eigenvalues. Figure~\ref{fig:ch06:ellipse} shows the ellipse for the rates $(\gamma_1,\gamma_\phi)$ of our qubit, together with the estimates from repeated simulated experiments, which fill it as the theorem says they should. For the preparation at $60^\circ$ the standard deviations are $0.003$ for $\gamma_1$ and $0.025$ for $\gamma_\phi$; at $15^\circ$, where the precession is weakly excited, that of $\gamma_\phi$ grows to $0.083$, while that of $\gamma_1$ hardly changes. The ellipse has a simple geometric meaning. Near its minimum, the least-squares cost of fitting the parameters to the data is approximately a quadratic form whose matrix is, up to a factor, the Fisher matrix, so that the ellipse is the shape of the bottom of the valley of the cost. When a direction in parameter space cannot be identified at all, the valley is flat along it, as in Figure~\ref{fig:ch04:valley} of \Chap~\ref{C.StateSpace}: the Fisher matrix is singular, and the ellipse is infinitely long. Structural identifiability is the statement that $\CFI$ is invertible; its practical counterpart is that $\CFI$ is well conditioned.}
+\onp{\begin{itemize}
+    \item Error ellipse $(\theta-\hat\theta)^\top\CFI(\theta-\hat\theta)\le1$: the bottom of the least-squares valley.
+    \item Unidentifiable direction $\Leftrightarrow$ singular $\CFI$; poorly identifiable $\Leftrightarrow$ ill-conditioned $\CFI$.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Several parameters: the error ellipse}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch06_ellipse.tex}}
+\caption{The error ellipse. Estimates of $(\gamma_1,\gamma_\phi)$, with $\omega$ known, by weighted least squares from $1000$ shots of $\sigma_n$ at each of $40$ times, in $200$ repetitions, for the preparations (a) $\phi=60^\circ$ and (b) $\phi=15^\circ$ from $\ket1$; the curves are the Cram\'er--Rao ellipses of one and two standard deviations. The estimates fill the ellipse, which is the shape of the bottom of the least-squares valley of Figure~\ref{fig:ch04:valley}. When the precession is weakly excited it tells little about $\gamma_\phi$, which enters the data only through the decay of the precession, and the ellipse is stretched along $\gamma_\phi$. The two axes have different scales. Generated by \texttt{code/ch06\_ellipse.py}.}\label{fig:ch06:ellipse}
+\end{figure}}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch06_ellipse.tex}}\end{center}
+{\small A weakly excited mode stretches the ellipse along the parameters that only it carries.}}
+\end{frame}
+
+\begin{frame}\ft{Weakly excited means expensive}
+\ona{We can now account for Figure~\ref{fig:ch06:cost}. By \eqref{eq:ch05:sum} of \Chap~\ref{C.Frequency}, the data are a sum of modes $r_i\ee^{\lambda_it}$ with weights $r_i=(\mathbf C\vec v_i)(\vec w_i^\dagger\vec x_0)$, the product of what the measurement sees of the mode and of how much the preparation excites it. The parameters of a mode enter the data only through that mode, and the derivative of $r_i\ee^{\lambda_it}$ with respect to $\lambda_i$ is $r_it\,\ee^{\lambda_it}$, proportional to $r_i$. By \eqref{eq:ch06:fisherbinary}, the Fisher information about $\lambda_i$ is therefore proportional to $\abs{r_i}^2$, and the number of shots needed for a given accuracy to $1/\abs{r_i}^2$:}
+\onp{Weight of a mode $r_i=(\mathbf C\vec v_i)(\vec w_i^\dagger\vec x_0)$ (\Chap~\ref{C.Frequency}); then}
+\begin{equation}\label{eq:ch06:weight}
+    \CFI(\lambda_i)\;\propto\;\abs{r_i}^2=\abs{\mathbf C\vec v_i}^2\,\abs{\vec w_i^\dagger\vec x_0}^2,\qquad
+    N\;\propto\;\frac{1}{\abs{\mathbf C\vec v_i}^2\,\abs{\vec w_i^\dagger\vec x_0}^2\,\eps^2}.
+\end{equation}
+\ona{For the qubit prepared at the angle $\phi$, the precession is excited with $\abs{\vec w^\dagger\vec x_0}\propto\sin\phi$, and the cost grows like $1/\sin^2\phi$. In the same way a mode that is weakly seen, with $\mathbf C\vec v_i$ small, is expensive. Persistency of excitation and observability, which in \Chaps~\ref{C.StateSpace} and~\ref{C.Frequency} were conditions to be satisfied or not, have become quantities: the cost of an experiment is inversely proportional to the square of how well it excites and sees each mode.}
+\onp{\begin{itemize}
+    \item Cost of a mode $\propto1/\abs{r_i}^2$: weakly excited or weakly seen means expensive.
+    \item Persistency of excitation and observability become \alert{quantities}.
+\end{itemize}}
+\end{frame}
+
+\section{Quantum limits}\label{sec:ch06:quantum}
+
+\begin{frame}\ft{The best measurement: quantum Fisher information}
+\ona{The Fisher information depends on the measurement. In quantum mechanics we may choose the measurement, and it is natural to ask which choice gives the most information. Let the state $\rho_\theta$ depend on $\theta$, and let the measurement be a POVM $\{E_o\}$, so that $p_\theta(o)=\Tr[E_o\rho_\theta]$.}
+\begin{defn}[Quantum Fisher information]\label{def:ch06:qfi}
+For one parameter, the quantum Fisher information is $\QFI(\theta)=\Tr[\rho_\theta L_\theta^2]$, where the symmetric logarithmic derivative $L_\theta$ is defined by $\partial_\theta\rho_\theta=\frac12\acomm{L_\theta}{\rho_\theta}$.
+\end{defn}
+\begin{thm}[Quantum Cram\'er--Rao]\label{thm:ch06:qcr}
+For every POVM, $\CFI(\theta)\le\QFI(\theta)$, with equality for the measurement in the eigenbasis of $L_\theta$. Hence every unbiased estimator from $N$ shots has $\Var(\hat\theta)\ge1/(N\QFI(\theta))$ \citep{HOLEVO_2019}.
+\end{thm}
+\ona{For a qubit with Bloch vector $\vec r_\theta$ the quantities are explicit. A measurement of the Pauli operator along the unit vector $\vec m$ has $\CFI=(\vec m\cdot\partial_\theta\vec r)^2/(1-(\vec m\cdot\vec r)^2)$, and $\QFI=\abs{\partial_\theta\vec r}^2+(\vec r\cdot\partial_\theta\vec r)^2/(1-\abs{\vec r}^2)$. For a vector that rotates, as in a measurement of $\omega$, the velocity is perpendicular to $\vec r$, and the best measurement is along the velocity, perpendicular to the Bloch vector in the plane of motion (Figure~\ref{fig:ch06:qfi}). For a pure state, $\ket{\psi_\theta}=\ee^{-\imath\theta H}\ket\psi$, the quantum Fisher information is $4\Var_\psi(H)$. The quantum Fisher information is also a Riemannian metric on the set of states, the Bures metric of \Chap~\ref{C.GeometryStates} \citep{Braunstein1994}: how well a parameter can be estimated and how far apart the neighbouring states lie are one and the same geometric quantity.}
+\onp{\begin{itemize}
+    \item $\CFI\le\QFI$ for every measurement; equality in the eigenbasis of $L_\theta$.
+    \item Qubit: measure perpendicular to the Bloch vector, in the plane of motion. Pure states: $\QFI=4\Var_\psi(H)$.
+    \item $\QFI$ is the Bures metric (\Chap~\ref{C.GeometryStates}).
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The best measurement: quantum Fisher information}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch06_qfi.tex}}
+\caption{The best measurement of a rotation. The Bloch vector $\Bloch$ of a qubit rotates in the equatorial plane, and $\partial_\omega\Bloch$ is perpendicular to it. The red curve shows, as its distance from the centre in the direction of $\vec m$, the fraction $\CFI(\vec m)/\QFI$ of the quantum Fisher information gained by one measurement along $\vec m$. (a) For a pure state every direction except that of $\Bloch$ itself gives the whole of $\QFI$. (b) For a mixed state with $\abs{\Bloch}=0.6$ only the directions perpendicular to $\Bloch$ do, and $\QFI=\abs{\partial_\omega\Bloch}^2$ is itself smaller. Generated by \texttt{code/ch06\_qfi.py}.}\label{fig:ch06:qfi}
+\end{figure}}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch06_qfi.tex}}\end{center}}
+\end{frame}
+
+\begin{frame}\ft{Time as a resource: the Heisenberg limit}
+\ona{So far the shots were independent and identically prepared, and the error fell like $1/\sqrt N$. Time is a resource of a different kind. After an evolution for the time $t$ under $\ee^{-\imath\omega tH}$, the phase is proportional to $\omega t$, the quantum Fisher information about $\omega$ is $4t^2\Var_\psi(H)$, and the error from a single shot is proportional to $1/t$. If the total time available is $T$, the error of $T/t$ repetitions at a fixed short time $t$ falls only like $1/\sqrt T$, but a single long evolution would give $1/T$. The difficulty is that a long evolution determines the phase $\omega t$ only modulo $2\pi$, which is the aliasing of \Chap~\ref{C.Frequency} once more. Robust phase estimation \citep{Kimmel2015robust} overcomes it by a sequence of evolutions of doubling length, each of which selects one of the candidates allowed by the previous one, as with the combs of the multirate condition (Figure~\ref{fig:ch06:heisenberg}(a)). The error then falls like $1/T$ (Figure~\ref{fig:ch06:heisenberg}(b)), which is the \emph{Heisenberg limit} \citep{Giovannetti2006}, the best possible scaling.}
+\ona{For an open system the advantage is limited. The information gained in an evolution of length $t$ is reduced by the factor $\ee^{-2\Gamma t}$ through decoherence, so that it is best to repeat evolutions of length about $1/(2\Gamma)$, and once $T$ exceeds this the error falls once again like $1/\sqrt T$. For many-body Hamiltonians $H=\sum_\alpha\theta_\alpha P_\alpha$ with $p$ local terms, \citet{Huang2023heisenberg} interleave the evolution with random local operations that isolate one term at a time, and learn all $p$ coefficients to accuracy $\eps$ with total evolution time of order $p/\eps$, up to logarithmic factors. Without such control, learning from the natural dynamics with product preparations and local measurements obeys the $1/\eps^2$ law \citep{Bairey2019}, which is the regime of the methods of \Chaps~\ref{C.StateSpace} and~\ref{C.Frequency}.}
+\onp{\begin{itemize}
+    \item Evolution for time $t$: $\QFI\propto t^2$, but the phase is known only modulo $2\pi$ (aliasing).
+    \item Robust phase estimation: doubling times, one tooth at a time; error $\propto1/T$, the \alert{Heisenberg limit}.
+    \item Decoherence at rate $\Gamma$ caps the gain: beyond $T\approx1/\Gamma$, back to $1/\sqrt T$.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Time as a resource: the Heisenberg limit}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch06_heisenberg.tex}}
+\caption{Time as a resource. (a) Robust phase estimation for $\omega=3$. The phase measured after the time $t$ fixes $\omega$ only up to multiples of $2\pi/t$ (grey). At $t=1,2,4,8$ one keeps the single value that lies in the interval left by the stage before (shaded), and the new interval (red) is half as wide. (b) The error in $\omega$ against the total evolution time $T$: repeated experiments of length $1$ in a closed system ($\propto T^{-1/2}$); a simulation of robust phase estimation in a closed system ($\propto T^{-1}$, the Heisenberg limit); and the Cram\'er--Rao bound for the open system with $\Gamma=0.5$, with experiments of the best length $\min(T,1/(2\Gamma))$, which returns to $T^{-1/2}$ once $T$ exceeds $1/(2\Gamma)$. Generated by \texttt{code/ch06\_heisenberg.py}.}\label{fig:ch06:heisenberg}
+\end{figure}}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch06_heisenberg.tex}}\end{center}}
+\end{frame}
+
+\section{Tomography and classical shadows}\label{sec:ch06:tomography}
+
+\begin{frame}\ft{The cost of tomography}
+\ona{Quantum state tomography (\Chap~\ref{C.AlgTomography}) estimates the whole density operator $\rho$ on $\C^d$, which has $d^2-1$ real parameters. The elementary method measures each of the $d^2-1$ Pauli observables separately and assembles $\hat\rho$ from the estimates. By Theorem~\ref{thm:ch06:hoeffding}, with $N/(d^2-1)$ shots each, every coefficient is in error by about $d/\sqrt N$. The error matrix $\hat\rho-\rho$ then has a Frobenius norm of order $\sqrt{d^3/N}$, and its trace norm is at most $\sqrt d$ times as large, so that the trace distance is of order $d^2/\sqrt N$, and $N$ of order $d^4/\eps^2$ copies suffice for accuracy $\eps$. Better use of single copies reduces this to order $d^3/\eps^2$, and measurements on many copies at once reduce it further.}
+\begin{thm}[Sample complexity of tomography; \citealp{haah2016sample,ODonnell2016efficient}]\label{thm:ch06:tomography}
+There is a measurement on $N=\bigO{rd/\eps^2}$ copies of a state of rank $r$ which returns $\hat\rho$ with $\tracenorm{\hat\rho-\rho}\le\eps$ with high probability, and no procedure succeeds with substantially fewer copies. With measurements on single copies, $\bigOmega{d^3/\eps^2}$ copies are necessary for states of full rank.
+\end{thm}
+\ona{The lower bound is at heart a count of parameters: $d^2-1$ numbers, each to accuracy $\eps$, cannot be learnt from much fewer than $d^2/\eps^2$ copies, since each copy carries a bounded amount of information. For $q$ qubits, $d=2^q$, and the cost of full tomography grows exponentially with $q$ whichever method is used (Figure~\ref{fig:ch01:tomography_scaling} of \Chap~\ref{C.Motivation}). The identification methods of \Chaps~\ref{C.StateSpace} and~\ref{C.Frequency}, which take the coherence vector as their input, inherit this cost when they require it in full. The way out is to ask for less, or to use structure: locality, sparsity, or low rank.}
+\onp{\begin{itemize}
+    \item Single-copy measurements: $\bigTheta{d^3/\eps^2}$; joint measurements: $\bigTheta{d^2/\eps^2}$ for full rank \citep{haah2016sample,ODonnell2016efficient}.
+    \item $d=2^q$: exponential in the number of qubits; the escape is \alert{structure}, or asking for less.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The cost of tomography}
+\ona{Figure~\ref{fig:ch06:tomography} shows where the cost comes from, for the two qubits of \Chap~\ref{C.StateSpace}. Each of the $d^2-1$ Pauli components is estimated from its own share of the copies, and the errors are independent, so that the error matrix $\hat\rho-\rho$ behaves much as a random Hermitian matrix. By the semicircle law its trace norm is then about $(8/3\pi)\sqrt d$ times its Frobenius norm, the trace distance about $(4/3\pi)\,d^2/\sqrt N$, and the copies needed about $0.18\,d^4/\eps^2$. The simulation bears this out from three qubits onwards: each further qubit moves the line of errors about $1.2$ decades to the right, a factor of $16$ in copies. Cleverer measurements of single copies reduce the power to $d^3$, and joint measurements to $d^2$, but none of them removes the exponential growth in the number of qubits.}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch06_tomography.tex}}\end{center}
+{\small Pauli by Pauli: trace distance $\approx(4/3\pi)\,d^2/\sqrt N$, so $N\propto d^4/\eps^2$; each qubit costs a factor of $16$.}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch06_tomography.tex}}
+\caption{The cost of tomography grows with the dimension. (a) The fifteen Pauli components of the two qubits of \Chap~\ref{C.StateSpace}, each prepared in the state $\vec x_0$ of \Chap~\ref{C.Frequency}, at $t=0.5$: the true value (tick and number) and the estimate from $100$ shots (red), with one standard deviation; the shading of a tile shows the sign (blue positive, rose negative) and the size of the component. (b) The trace distance of the estimate obtained by measuring every Pauli string on $N/(d^2-1)$ copies and inverting, against $N$, for $q=1,\dots,5$ qubits (the qubit of \Chap~\ref{C.Frequency}, the pair, and products of these); every line falls like $N^{-1/2}$, and each further qubit moves it about $1.2$ decades to the right. (c) The copies needed for a trace distance of $0.05$ (dots), against the law $(4/3\pi)^2d^4/\eps^2$ (line); the dashed lines of slope $3$ and $2$, drawn through the first dot for comparison, show how the best measurements of single copies and the best joint measurements scale. Generated by \texttt{code/ch06\_tomography.py}.}\label{fig:ch06:tomography}
+\end{figure}}
 \end{frame}
 
 \begin{frame}\ft{Classical shadows}
-\ona{Often one does not need $\rho$ but only the expectation values of $M$ observables $O_1,\dots,O_M$, for instance the $p$ measured observables at each of several times that feed the Hankel matrix. The classical-shadow protocol of \citet{Huang2020} applies a random unitary $U$ from a fixed ensemble (random Pauli rotations, or random Clifford circuits), measures in the computational basis, records the outcome $\ket{b}$, and stores the \emph{classical shadow} $\hat\rho=\mathcal M^{-1}(U^\dagger\ket b\bra bU)$, where $\mathcal M$ is the (known, invertible) average measurement channel. The shadow is an unbiased estimator of $\rho$, and $\Tr[O_k\hat\rho]$ is an unbiased estimator of $\Tr[O_k\rho]$ for every $k$ simultaneously.}
+\ona{Often we need not $\rho$ itself but only the expectation values of $M$ observables $O_1,\dots,O_M$, for instance of the $p$ measured observables at each of the times that enter the Hankel matrix. The classical-shadow protocol of \citet{Huang2020} applies to each copy a random unitary $U$ from a fixed ensemble, such as a random Pauli rotation of every qubit, measures in the computational basis, and records the outcome $\ket b$. From $U$ and $b$ it forms the \emph{classical shadow} $\hat\rho=\mathcal M^{-1}(U^\dagger\ket b\bra bU)$, where $\mathcal M$ is the known average effect of the random measurement. Each shadow is an unbiased estimator of $\rho$, so that $\Tr[O_k\hat\rho]$ is an unbiased estimator of $\Tr[O_k\rho]$ for every $k$ at once.}
 \begin{thm}[\citealp{Huang2020}]\label{thm:ch06:shadows}
-With median-of-means post-processing, a number of shadows $N=\bigO{\log(M/\delta)\,\max_k\norm{O_k}_{\mathrm{shadow}}^2\,\eps^{-2}}$ suffices to estimate all $M$ expectation values to accuracy $\eps$ with probability $1-\delta$. For random Pauli measurements and $O_k$ acting on at most $w$ qubits, $\norm{O_k}^2_{\mathrm{shadow}}\le4^w\norm{O_k}_\infty^2$; for random Cliffords, $\norm{O_k}^2_{\mathrm{shadow}}\le3\Tr[O_k^2]$.
+With median-of-means post-processing,
+\[
+    N=\bigO{\frac{\log(M/\delta)}{\eps^2}\,\max_k\norm{O_k}_{\mathrm{shadow}}^2}
+\]
+shadows suffice to estimate all $M$ expectation values to accuracy $\eps$ with probability $1-\delta$. For random Pauli measurements and an observable $O_k$ acting on $w$ qubits, $\norm{O_k}^2_{\mathrm{shadow}}\le4^w\norm{O_k}_\infty^2$, and for a Pauli string of weight $w$ the variance of one shadow is $3^w-\langle O_k\rangle^2$.
 \end{thm}
-\ona{The number of copies is logarithmic in the number of observables and independent of the dimension for local observables. For the identification problems of this course this is exactly what is needed: local Pauli readouts $\sigma^{k}_{x,y,z}$ at many times, all from the same pool of shots. The dependence on $\eps$ remains $\eps^{-2}$.}
+\ona{The number of copies grows only logarithmically with the number of observables, and does not depend on the number of qubits at all for observables of fixed weight (Figures~\ref{fig:ch06:snapshots} and~\ref{fig:ch06:shadows}). This is what the identification of a local model needs: local Pauli expectation values at many times, all drawn from one pool of shots. The dependence on the accuracy remains $1/\eps^2$.}
 \onp{\begin{itemize}
-    \item Random rotation $+$ computational-basis measurement $\Rightarrow$ unbiased estimator $\hat\rho$ of $\rho$ (never stored as a matrix).
-    \item $\bigO{\log M\cdot 4^w/\eps^2}$ copies for $M$ $w$-local observables: \alert{independent of $d$}.
-    \item Ideal for local Pauli readouts at many times (Hankel data).
+    \item Random rotation and computational-basis measurement: an unbiased estimator of $\rho$, never stored as a matrix.
+    \item $\bigO{3^w\log M/\eps^2}$ copies for $M$ Pauli observables of weight $w$: \alert{independent of the number of qubits}.
 \end{itemize}}
 \end{frame}
 
-\section{Lower bounds: Fisher information}
-
-\begin{frame}\ft{Cram\'er--Rao and the quantum Fisher information}
-\ona{Concentration inequalities give upper bounds. Lower bounds come from information theory. Let the outcome distribution $p_\theta(o)$ depend on a parameter $\theta\in\R^p$.}
-\begin{defn}[Fisher information]\label{def:ch06:fisher}
-$\CFI(\theta)_{ab}=\Expect_\theta\big[\partial_a\log p_\theta(o)\,\partial_b\log p_\theta(o)\big]$. For a quantum state $\rho_\theta$ measured with a POVM $\{E_o\}$, $p_\theta(o)=\Tr[E_o\rho_\theta]$; the \emph{quantum Fisher information} $\QFI(\theta)=\max_{\mathrm{POVM}}\CFI(\theta)$ (for a single parameter) is $\QFI=\Tr[\rho_\theta L_\theta^2]$ with the symmetric logarithmic derivative $L_\theta$ defined by $\partial_\theta\rho_\theta=\tfrac12\acomm{L_\theta}{\rho_\theta}$.
-\end{defn}
-\begin{thm}[Cram\'er--Rao; quantum Cram\'er--Rao]\label{thm:ch06:cramerrao}
-Any unbiased estimator $\hat\theta$ from $N$ independent shots satisfies $\Cov(\hat\theta)\succeq\big(N\CFI(\theta)\big)^{-1}\succeq\big(N\QFI(\theta)\big)^{-1}$. The classical bound is attained asymptotically by maximum likelihood; the quantum bound is attainable for a single parameter by measuring in the eigenbasis of $L_\theta$ \citep{HOLEVO_2019}.
-\end{thm}
-\ona{For a pure state $\ket{\psi_\theta}=\ee^{-\imath\theta H}\ket\psi$, $\QFI=4\Var_\psi(H)$; for the qubit decay of Figure~\ref{fig:ch06:shots}, $p_\theta$ is Bernoulli and $\CFI(\gamma)=\sum_t\frac{(\partial_\gamma z(t))^2}{1-z(t)^2}$, which reproduces the $N^{-1/2}$ envelope of the Monte-Carlo curve with the correct constant. The quantum Fisher information is a Riemannian metric on the manifold of states, the Bures metric of \Chap~\ref{C.GeometryStates}: distinguishability of neighbouring states and the cost of estimation are the same geometric quantity. The Cram\'er--Rao bound is a local statement; the identifiability conditions of \Chap~\ref{C.StateSpace} are the global prerequisite, since $\CFI$ is singular exactly along parameter directions that are locally unidentifiable.}
-\onp{Unitary family $\ee^{-\imath\theta H}\ket\psi$: $\QFI=4\Var_\psi(H)$. $\QFI$ is the Bures metric (\Chap~\ref{C.GeometryStates}); singular $\CFI$ $\Leftrightarrow$ locally unidentifiable direction.}
+\begin{frame}\ft{How a shadow is made}
+\ona{Figure~\ref{fig:ch06:snapshots} shows the protocol at work on the pair of qubits of Figure~\ref{fig:ch06:tomography}. Every snapshot is a random choice of basis for each qubit together with the outcomes, and every snapshot is kept; but a given observable can learn only from those snapshots whose bases match it. For $\langle ZI\rangle$ these are one in three, and each is multiplied by $3$ to keep the estimate unbiased; for $\langle XX\rangle$ they are one in nine, multiplied by $9$. The larger factor pays for the rarer match, and it appears as the larger variance $3^w-\langle P\rangle^2$ of Theorem~\ref{thm:ch06:shadows}. The same snapshots serve every observable at once, and that is the point of the method.}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch06_snapshots.tex}}\end{center}
+{\small A Pauli string of weight $w$ matches one snapshot in $3^w$; the match is weighted by $3^w$: hence the variance $3^w-\langle P\rangle^2$.}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch06_snapshots.tex}}
+\caption{How a classical shadow is made. (a) The first eighteen snapshots of the pair of Figure~\ref{fig:ch06:tomography}: each qubit is measured in a basis $X$, $Y$ or $Z$ chosen at random (tiles), with the outcomes $\pm1$. A snapshot counts for $\langle ZI\rangle$ only when the first qubit was measured along $Z$ (blue frames, one in three), and then contributes $3s_1$; it counts for $\langle XX\rangle$ only when both were measured along $X$ (red frames, one in nine), and then contributes $9s_1s_2$; otherwise it contributes $0$. (b) The running means of these contributions over $10^4$ snapshots, with the bands of one standard deviation, $\sqrt{(3^w-\langle P\rangle^2)/N}$, about the true values $-0.39$ and $0.45$; the band of $\langle XX\rangle$, of weight $w=2$, is about $\sqrt3$ times wider. Generated by \texttt{code/ch06\_snapshots.py}.}\label{fig:ch06:snapshots}
+\end{figure}}
 \end{frame}
 
-\begin{frame}\ft{Heisenberg-limited Hamiltonian learning}
-\ona{The $N^{-1/2}$ law assumes independent shots on identically prepared copies. Time is a resource of a different kind: evolving for time $t$ under $\ee^{-\imath\theta Ht}$ multiplies the phase by $t$, so $\QFI=4t^2\Var_\psi(H)$ and the error in $\theta$ from a single shot scales as $1/t$. The \emph{Heisenberg limit} states that with total evolution time $T$ the error cannot be smaller than $\bigO{1/T}$, and it can be attained: robust phase estimation and its descendants estimate a frequency to accuracy $\eps$ with total time $T=\bigO{1/\eps}$ rather than $\bigO{1/\eps^2}$ \citep{Kimmel2017}. For many-body Hamiltonians $H=\sum_\alpha\theta_\alpha P_\alpha$ with $p$ local terms, one interleaves the evolution with random local Pauli twirls that isolate one term at a time (a Trotter-style ``Hamiltonian reshaping''), and learns all $p$ coefficients to accuracy $\eps$ with total time $\widetilde{O}(p/\eps)$ and $\widetilde{O}(p\,\mathrm{polylog}(1/\eps))$ experiments, independent of the system size beyond $p$ (Huang, Tong, Fang, Su 2023). Without the reshaping, i.e.\ learning from the natural dynamics with product-state preparations and local measurements, the standard-quantum-limit scaling $\bigO{p\,\mathrm{polylog}(p)/\eps^2}$ holds \citep{Bairey2019}, which is the regime of the identification methods of \Chaps~\ref{C.StateSpace}--\ref{C.Frequency}.}
-\onp{\begin{itemize}
-    \item Time as a resource: $\QFI\propto t^2$ $\Rightarrow$ error $\propto1/T$, the \alert{Heisenberg limit}.
-    \item Robust phase estimation attains $T=\bigO{1/\eps}$ per frequency \citep{Kimmel2017}.
-    \item Local $H=\sum_\alpha\theta_\alpha P_\alpha$: reshaping $\Rightarrow$ total time $\widetilde{O}(p/\eps)$ (Huang et al.\ 2023); natural dynamics: $\bigO{p\,\mathrm{polylog}(p)/\eps^2}$ \citep{Bairey2019}.
-\end{itemize}}
-\ona{\todo{Add a bib entry for Huang--Tong--Fang--Su (2023, Heisenberg-limited Hamiltonian learning) to refs.bib and cite it here.}}
+\begin{frame}\ft{Classical shadows}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch06_shadows.tex}}
+\caption{Classical shadows from random Pauli measurements. (a) The root-mean-square error of the shadow estimate from $N$ snapshots of $ZI$ ($w=1$) and $XX$ ($w=2$) for the pair of Figure~\ref{fig:ch06:tomography}, and of $ZI\,XX$ ($w=3$) and $XX\,XX$ ($w=4$) for two copies of it; dots from simulation, lines $\sqrt{(3^w-\langle P\rangle^2)/N}$. Each further qubit in the support costs a factor of three in variance. (b) The copies needed to estimate all $M=3q+9\binom q2$ Pauli observables of weight at most $2$ on $q$ qubits to $\pm0.05$ with confidence $0.95$. With classical shadows the number grows like $\log M$; measuring each observable on copies of its own, it grows like $M\log M$. The constants are indicative only. Generated by \texttt{code/ch06\_shadows.py}.}\label{fig:ch06:shadows}
+\end{figure}}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch06_shadows.tex}}\end{center}}
 \end{frame}
 
-\section{Finite-sample identification of linear systems}
+\section{Learning a Hamiltonian from its Gibbs state}\label{sec:ch06:gibbs}
 
-\begin{frame}\ft{Learning a linear system from a single trajectory}
-\ona{Classical system identification traditionally gave asymptotic guarantees (consistency, asymptotic normality). The last decade produced \emph{finite-sample} bounds, sharp in the number of data points, for the discrete system $x_{k+1}=\mathbf Gx_k+w_k$ with process noise $w_k$ observed directly \citep{simchowitz2018learning,sarkar2019near} and for the partially observed system $y_k=\mathbf Cx_k+v_k$ \citep{oymak2019non,sarkar2019nonparametric,tsiamis2022statistical}. The typical statement for ordinary least squares from $K$ samples of a fully observed, stable system is}
-\begin{equation}\label{eq:ch06:ls}
-    \norm{\hat{\mathbf G}-\mathbf G}_{\infty}\;\le\;\bigO{\sigma_w\sqrt{\frac{n+\log(1/\delta)}{K\,\lambda_{\min}(\mathbf\Sigma_K)}}}\quad\text{with probability }1-\delta,
+\begin{frame}\ft{A state in equilibrium}
+\ona{So far the data have come from dynamics: a state prepared, left to evolve, and measured at many times. There is a second, older way of learning a Hamiltonian, which needs no clock at all. A system left long enough in contact with a bath at the inverse temperature $\beta$ comes to the Gibbs state}
+\onp{Copies of the Gibbs state at a known inverse temperature $\beta$:}
+\begin{equation}\label{eq:ch06:gibbs}
+    \rho=\frac{\ee^{-\beta H}}{\Tr\ee^{-\beta H}},\qquad H=\sum_{a=1}^m\lambda_aE_a,\quad\abs{\lambda_a}\le1,
 \end{equation}
-\ona{where $\mathbf\Sigma_K$ is the empirical covariance of the states: the error decays as $K^{-1/2}$ and is governed by how well the trajectory excites every direction (the quantitative version of persistency of excitation, \Chap~\ref{C.Frequency}). For the partially observed case, \citet{oymak2019non} analyse Ho--Kalman on noisy Markov parameters: if the Hankel matrix $\Hankel$ is estimated with error $\norm{\hat\Hankel-\Hankel}\le\eps_H$ and its $n$-th singular value is $\sigma_n(\Hankel)$, then the realisation is recovered, up to a similarity transformation, with error $\bigO{\eps_H/\sigma_n(\Hankel)}$ times condition-number factors, and $\eps_H=\bigO{\sqrt{n/K}}$ for least-squares Markov parameters. \citet{tsiamis2022statistical} survey these results, and also exhibit systems that are identifiable but require exponentially many samples: structural identifiability does not imply practical identifiability.}
+\ona{where each $E_a$ is a product of Pauli matrices acting non-trivially on at most $k$ qubits, so that $H$ is \emph{$k$-local}. Given copies of $\rho$ and the value of $\beta$, we are to estimate the coefficients $\lambda_a$. The \emph{dual interaction graph} of $H$ has the terms $a=1,\dots,m$ as its vertices, with an edge between $a$ and $b$ whenever $E_a$ and $E_b$ act on a common qubit; for the lattice models of physics its degree is bounded. Two features of \eqref{eq:ch06:gibbs} govern everything that follows. First, $\rho$ does not change when a multiple of the identity is added to $H$, so that only differences of energies can be learnt. Second, the temperature does the work that the preparation did in the earlier sections: at a high temperature every level is populated but $\rho$ differs little from $\Id/d$, while at a low temperature only the ground state is populated, and the part of $H$ that acts on the excited levels is not excited at all.}
 \onp{\begin{itemize}
-    \item Fully observed: $\norm{\hat{\mathbf G}-\mathbf G}\lesssim\sigma_w\sqrt{(n+\log\frac1\delta)/(K\lambda_{\min}(\mathbf\Sigma_K))}$ \citep{simchowitz2018learning}.
-    \item Partially observed, Ho--Kalman: error $\lesssim\eps_H/\sigma_n(\Hankel)$, $\eps_H\sim\sqrt{n/K}$ \citep{oymak2019non}.
-    \item Identifiable $\neq$ learnable with few samples \citep{tsiamis2022statistical}.
+    \item $H$ is $k$-local; the \alert{dual interaction graph} joins terms that share a qubit.
+    \item Only differences of energies can be learnt; the \alert{temperature plays the part of the preparation}.
 \end{itemize}}
 \end{frame}
 
-\begin{frame}\ft{Transfer to the coherence-vector model}
-\ona{The quantum setting differs in two ways from the classical one. First, the noise is not process noise but measurement noise of a very specific kind: each $y_k$ is an average of $N$ binomial shots, with variance at most $1/N$ and independent across times and observables (since each time point uses fresh copies). Second, there is no single trajectory: every time point $t_k$ is a separate experiment, prepared afresh. Hence the Markov parameters are estimated directly, with i.i.d.\ sub-Gaussian errors of scale $N^{-1/2}$, which is the most favourable case of the Ho--Kalman analysis. Combining Hoeffding for the $rs\,p$ entries of the Hankel matrix with the perturbation bound gives}
+\begin{frame}\ft{Temperature as excitation}
+\ona{Figure~\ref{fig:ch06:gibbs} makes the point for the qubit of \Chap~\ref{C.Frequency} and for the qubit with its defect from \Chap~\ref{C.StateSpace}. Since the eigenvectors of $H$ do not depend on the parameter in either case, the quantum Fisher information is $\beta^2$ times the variance of $\partial E/\partial\theta$ under the populations, and it is attained by measuring in the basis of energies. At high temperature the state differs from $\Id/d$ only in the first order of $\beta$, each copy tells us about $H$ only to that order, and the number of copies grows like $1/\beta^2$, the rate of \citet{haah2022optimal}. At low temperature the state is nearly the ground state, and the ground state $\ket{00}$ of the pair does not depend on $g$ at all. What information remains comes from the first excited level, whose population is $\ee^{-\beta\Delta}$, and the cost grows like $\ee^{\beta\Delta}$. Between the two lies a best temperature. A level that is not populated is a mode that is not excited.}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch06_gibbs.tex}}\end{center}
+{\small Hot: $\rho\approx(\Id-\beta H)/d$, copies $\propto\beta^{-2}$, optimal \citep{haah2022optimal}. Cold: only $\ket{00}$, which does not depend on $g$; copies $\propto\ee^{\beta\Delta}$.}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch06_gibbs.tex}}
+\caption{Temperature as excitation. (a) The four levels of the qubit with its defect from \Chap~\ref{C.StateSpace}, with the frequency of \Chap~\ref{C.Frequency}, $\omega=3$, and the coupling $g=1$; the discs have areas proportional to the populations of the Gibbs state at $\beta=0.1$, $1.07$ and $4$. Only the two middle levels depend on $g$; the ground state $\ket{00}$ does not. (b) The copies of the Gibbs state needed to estimate $\omega$ of the qubit (blue) and $g$ of the pair (red) to a standard deviation of $0.01$, from the quantum Fisher information, against $\beta$. When hot, the state is close to $\Id/d$ and shows $H$ only at the strength $\beta$, and the number grows like $1/\beta^2$; when cold, only the ground state is populated, and the number grows like $\ee^{\beta\Delta}/\beta^2$, where $\Delta$ is the gap to the first excited level ($\omega$ for the qubit, $\omega-g$ for the pair). The least numbers are $2\cdot10^5$ at $\beta=0.8$ and $8\cdot10^4$ at $\beta=1.07$. Generated by \texttt{code/ch06\_gibbs.py}.}\label{fig:ch06:gibbs}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{Copies and time}
+\ona{The number of copies needed was shown to be polynomial in $m$ by \citet{anshu2021sample}, without an efficient algorithm. At high temperature, below a constant $\beta_c$ that depends on the locality, \citet{haah2022optimal} gave an efficient algorithm that uses $\bigO{\log(n/\delta)/(\beta^2\eps^2)}$ copies, and showed this number to be optimal; the factor $1/\beta^2$ comes from a state that is nearly maximally mixed. \citet{bakshi2023learning} removed the restriction on the temperature, at the cost of an analysis by polynomial optimisation, and \citet{wodecki2024learning} carried it through with Chebyshev polynomials in place of Taylor's, together with an account of the number of bits. Their result reads as follows.}
+\begin{thm}[\citealp{wodecki2024learning}]\label{thm:ch06:gibbs}
+Let $H$ be a $k$-local Hamiltonian on $n$ qubits with $m$ terms, whose dual interaction graph $G$ has bounded degree, and let $\beta$ be known. For every $\eps,\delta>0$ there is an algorithm which, with probability at least $1-\delta$, returns $\hat\lambda$ with $\abs{\hat\lambda_a-\lambda_a}\le\eps$ for all $a$, using
+\[
+    \bigO{\frac{m^6}{\eps^{\,\exp(C(k,G)\beta)}}\,\ln\frac m\delta}
+\]
+copies of $\rho$. If the numbers it computes have $\mathrm{poly}(n,\log(1/\eps))$ bits, its running time is
+\[
+    \bigl[m+m^{\bigO{1}}\eps^{-\exp(C(k,G)\beta)}\bigr]^{E},\qquad E\le2^{C(k,G)\beta+1}\bigl(\ee+\ln(1/\eps)\bigr),
+\]
+where the exponent $E$ does not depend on $n$.
+\end{thm}
+\ona{The bound on copies is polynomial in $m$ for every fixed temperature, but the exponent of $1/\eps$ grows very fast with $\beta$. The single qubit of Figure~\ref{fig:ch06:gibbs} shows why some growth is unavoidable: at a low temperature the information about the excited levels arrives only with their population, which is exponentially small in $\beta$.}
+
+\end{frame}
+
+\begin{frame}\ft{Direction and scale}
+\ona{The algorithms of \citet{bakshi2023learning} and \citet{wodecki2024learning} search for a Hamiltonian $\hat H=\sum_a\hat\lambda_aE_a$ that satisfies two families of constraints, each with a small tolerance and each evaluated on estimates of local expectation values. The first is stationarity: the Gibbs state commutes with its Hamiltonian, so that $\Tr(A[\hat H,\rho])\approx0$ for local observables $A$. These constraints are linear in $\hat\lambda$, but they cannot fix the scale, since every multiple of $H$ commutes with $\rho$. The second is the condition of Kubo, Martin and Schwinger,
+\[
+    \Tr\bigl(B_2\,\ee^{-\beta\hat H}B_1\ee^{\beta\hat H}\rho\bigr)=\Tr(B_1B_2\rho),
+\]
+which holds at the known temperature for $H$ and for no other traceless Hamiltonian. The conjugation $\ee^{X}B_1\ee^{-X}$ is the exponential of the map $B\mapsto[X,B]$; replacing the exponential by a polynomial $Q$ gives the sum $Q(X\,|\,B_1)=\sum_iq_i[X,B_1]_i$ of nested commutators, and the constraint becomes polynomial in $\hat\lambda$. Figure~\ref{fig:ch06:direction} shows the two sets for the driven qubit of \Chap~\ref{C.StateSpace}. Stationarity confines $(\hat\omega,\hat u)$ to a band through the origin, which fixes the direction only; the second family alone already fixes both direction and scale, and the band merely trims it. Both shrink like $N^{-1/2}$.}
+\onp{\begin{itemize}
+    \item Stationarity: $\Tr(A[\hat H,\rho])\approx0$, linear in $\hat\lambda$; fixes the \alert{direction} only.
+    \item KMS: $\Tr(B_2\,Q(-\beta\hat H\,|\,B_1)\,\rho)\approx\Tr(B_1B_2\rho)$, $Q\approx\exp$; fixes the \alert{scale} as well.
+\end{itemize}
+\vspace{-0.6em}
+\begin{center}\resizebox{0.82\linewidth}{!}{\input{figures/ch06_direction.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch06_direction.tex}}
+\caption{Direction and scale. The driven qubit of \Chap~\ref{C.StateSpace}, $H=-\frac\omega2\sigma_z+\frac u2\sigma_x$ with $(\omega,u)=(1,0.6)$, in its Gibbs state at $\beta=1$, estimated from $N$ shots of each Pauli observable: (a) $N=100$, (b) $N=10^4$. Gold: the $\hat H$ with $\abs{\Tr(A[\hat H,\hat\rho])}\le\eps_0$, a band through the origin, since $[cH,\rho]=0$ for every $c$. Blue: the $\hat H$ that satisfy the KMS constraints $\abs{\Tr(B_2\,Q(-\beta\hat H\,|\,B_1)\,\hat\rho)-\Tr(B_1B_2\hat\rho)}\le\eps$, with $Q$ the product of Figure~\ref{fig:ch06:flat} applied as nested commutators; this is a bounded region about the truth. Dark: both. The tolerances are chosen so that the truth satisfies each family for $95$ per cent of data sets. Generated by \texttt{code/ch06\_direction.py}.}\label{fig:ch06:direction}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{A flat approximation of the exponential}
+\ona{The polynomial $Q$ must be accurate where the spectrum of $-\beta H$ lies, and it must not be large elsewhere, since the moment/SOS relaxation works with pseudo-distributions that are not confined to the spectrum. \citet{bakshi2023learning} made this precise.}
+\begin{defn}[Flat approximation; \citealp{bakshi2023learning}]\label{def:ch06:flat}
+Let $\eps,\eta\in(0,1)$ and $K>0$. A polynomial $p$ is an $(\eps,\eta,K)$-flat approximation of the exponential if $\abs{p(x)-\ee^x}\le\eps$ for $x\in[-K,K]$, and $\abs{p(x)}\le\max(1,\ee^x)\,\ee^{\eta\abs x}$ for every real $x$.
+\end{defn}
+\ona{A truncated series fails the second condition: a polynomial of degree $D$ that is accurate on an interval grows like $\abs x^D/D!$ outside it. Bakshi and his co-authors multiplied truncated Taylor series; \citet{wodecki2024learning} multiply $k$ Chebyshev truncations $f_n$ of $\ee^{x/k}$, of degrees $2l,4l,\dots,2^kl$,
+\[
+    Q_{k,l}(x)=\prod_{i=1}^kf_{2^il}\Bigl(\frac xk\Bigr),\qquad f_n(y)=I_0(t)+2\sum_{j=1}^nI_j(t)\,T_j(y/t),
+\]
+with $I_j$ the modified Bessel functions and $T_j$ the Chebyshev polynomials. Figure~\ref{fig:ch06:flat}(a) shows that the product is far smaller, away from the interval, than a single truncation of the same degree. It also shows that the number $k$ of factors must be chosen with care: with $k=3$ and $l=6$ the product satisfies the second condition only for $\eta\ge0.78$, not for $\eta=1/3$, and for $k$ between $3$ and $8$ the least admissible $\eta$ lay between $2.3/k$ and $3.7/k$. Part (b) compares the degrees that the two series need on $[-t,t]$: Chebyshev's advantage is a factor of about $1.7$, smaller than the ratio of the sufficient conditions $\ee t+\ln(1/\eps)$ and $10t+\ln(1/\eps)$ that are usually quoted.}
+\onp{\vspace{-0.4em}\begin{center}\resizebox{0.86\linewidth}{!}{\input{figures/ch06_flat.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch06_flat.tex}}
+\caption{Approximations of the exponential, and flatness. (a) $\log_{10}\abs{p(x)}$ for $\ee^x$ (black); for its Taylor polynomial and its Chebyshev truncation on $[-3,3]$, both of degree $84$ (gold, indistinguishable at this scale); and for the product $Q_{3,6}(x)=\prod_{i=1}^3 f_{6\cdot2^i}(x/3)$ of Chebyshev truncations on $[-1,1]$, also of degree $84$ (red), with $k=3$ and the $l$ prescribed in \citet{wodecki2024learning} for $\eps=10^{-3}$. All agree with $\ee^x$ on $[-3,3]$ (green), $Q$ to $3\cdot10^{-13}$. Shaded: the bound $\abs{p(x)}\le\max(1,\ee^x)\,\ee^{\abs x/3}$ of flatness with $\eta=1/k$. Outside the interval the truncations grow like $\abs x^{84}/84!$; $Q$ grows less, but it leaves the shaded region for $-742\lesssim x\le-50$, by a factor of up to $10^{31}$ near $x=-254$ (checked in arithmetic of $400$ digits). The least $\eta$ for which $Q$ is flat is $0.78$ (dashed), against $0.96$ for the truncations. (b) The least degree for which the Taylor and Chebyshev truncations are within $10^{-6}$ of $\ee^x$ on $[-t,t]$ (dots), with the sufficient conditions $\ee t+\ln(1/\eps)$ and $10t+\ln(1/\eps)$ (dashed). Taylor needs about $\ee t$; Chebyshev needs about $1.7t$ at $t=40$. Generated by \texttt{code/ch06\_flat.py}.}\label{fig:ch06:flat}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{Samples, time and bits}
+\ona{Theorem~\ref{thm:ch06:gibbs} answers three questions, and they should be kept apart. The number of copies is a question of statistics, and the Cram\'er--Rao bound of Section~\ref{sec:ch06:fisher} limits it from below. The running time is a question of algorithms: the constraints of Figure~\ref{fig:ch06:direction} define a problem of polynomial optimisation, and its moment/SOS relaxation of fixed degree is a semidefinite programme of polynomial size. The third question is the number of bits, and it is not settled by the second. \citet{o2017sos} gave a semidefinite programme of degree two, with small coefficients, whose solutions, and indeed every constant-factor approximation of them, need exponentially many bits; \citet{raghavendra2017bit} found non-negative polynomials with proofs of degree two but no proofs of degree $\Omega(\sqrt n)$ with small coefficients. Such examples rely on equality constraints. \citet{gribling2023note} showed that if the feasible set is defined by inequalities, lies in a ball of radius $R\le2^{\mathrm{poly}(n)}$, and contains a ball of radius $r\ge2^{-\mathrm{poly}(n)}$, then the bound of fixed degree can be computed in polynomial time to an accuracy $2^{-\mathrm{poly}(n)}$. For the learning of Hamiltonians the containment of a ball can be tested instance by instance, but it is not known to hold in general \citep{wodecki2024learning}. We return to the algorithms in \Chap~\ref{C.AlgTomography}.}
+\onp{\begin{itemize}
+    \item Copies: statistics, bounded below by Cram\'er--Rao.
+    \item Time: a moment/SOS relaxation of polynomial size.
+    \item Bits: not implied by size \citep{o2017sos}; polynomial if the feasible set contains a ball \citep{gribling2023note}.
+\end{itemize}}
+\end{frame}
+
+\section{Finite samples in system identification}\label{sec:ch06:sysid}
+
+\begin{frame}\ft{Learning a linear system from data}
+\ona{The classical theory of system identification long gave only asymptotic guarantees, of consistency and asymptotic normality \citep{JANSSON19981507,KNUDSEN200181}. In the last decade it has acquired \emph{finite-sample} bounds, which state how large the error can be for a given number of data. For the discrete system $\vec x_{k+1}=\mathbf G\vec x_k+\vec w_k$, observed directly and driven by noise $\vec w_k$ of size $\sigma_w$, the least-squares estimate from $K$ samples satisfies, with probability $1-\delta$ \citep{simchowitz2018learning,sarkar2019near},}
+\onp{Fully observed, $\vec x_{k+1}=\mathbf G\vec x_k+\vec w_k$, least squares from $K$ samples \citep{simchowitz2018learning,sarkar2019near}:}
+\begin{equation}\label{eq:ch06:ls}
+    \norm{\hat{\mathbf G}-\mathbf G}_{\infty}\;\le\;\bigO{\sigma_w\sqrt{\frac{n+\log(1/\delta)}{K\,\lambda_{\min}(\mathbf\Sigma_K)}}},
+\end{equation}
+\ona{where $\mathbf\Sigma_K$ is the empirical covariance of the states. The error falls like $K^{-1/2}$, and it is governed by $\lambda_{\min}(\mathbf\Sigma_K)$, which measures how well the trajectory explores every direction of the state space: this is the quantitative persistency of excitation \citep{Coulson2022quantitative}. For a system observed through $y_k=\mathbf C\vec x_k+\vec v_k$, \citet{oymak2019non} analyse the algorithm of Ho and Kalman applied to Markov parameters estimated with noise, and \citet{tsiamis2022statistical} survey these results. They also exhibit systems which are identifiable but which require a number of samples exponential in their dimension: identifiability in principle does not imply identifiability at a reasonable cost.}
+\onp{\begin{itemize}
+    \item Error $\propto K^{-1/2}/\sqrt{\lambda_{\min}(\mathbf\Sigma_K)}$: quantitative persistency of excitation \citep{Coulson2022quantitative}.
+    \item Partially observed: Ho--Kalman with noisy Markov parameters \citep{oymak2019non}; identifiable $\neq$ cheaply learnable \citep{tsiamis2022statistical}.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Persistency of excitation, made quantitative}
+\ona{Figure~\ref{fig:ch06:persistency} shows what $\lambda_{\min}(\mathbf\Sigma_K)$ measures, for the third-order system of \Chap~\ref{C.StateSpace} and the three inputs of Figure~\ref{fig:ch04:hankel}. Driven by one sinusoid, the state goes round a flat ellipse, and the vector $(\vec x_k,u_k)$, which has four components, explores only two directions; the other two are reached only by the noise, and $\lambda_{\min}$ is of the order of $\sigma_w^2$. Two sinusoids explore all four directions, so that the input is persistently exciting in the sense of \Chap~\ref{C.StateSpace}, but one of them only weakly, and $\lambda_{\min}$ is nearly sixty times smaller than for a random input. The errors of least squares follow \eqref{eq:ch06:ls} closely: all fall like $K^{-1/2}$ in the end, at heights in proportion to $\lambda_{\min}^{-1/2}$. The qualitative notion of \Chap~\ref{C.StateSpace} asks whether a direction is explored at all; the quantitative one asks how well, and it is the latter that fixes the number of samples.}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch06_persistency.tex}}\end{center}
+{\small Every error falls like $K^{-1/2}$, at a height set by $\lambda_{\min}(\mathbf\Sigma_K)^{-1/2}$: how well, not whether, each direction is explored.}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch06_persistency.tex}}
+\caption{Persistency of excitation, made quantitative. The third-order system of Figure~\ref{fig:ch04:hankel} with process noise of standard deviation $\sigma_w=0.01$, $\vec x_{k+1}=\mathbf G\vec x_k+\mathbf Bu_k+\vec w_k$, driven by one sinusoid, by two sinusoids, and by a random input; $[\mathbf G\ \mathbf B]$ is estimated by least squares from $K$ samples. (a) The states visited, with the ellipsoid of two standard deviations, and the four eigenvalues of the empirical covariance $\mathbf\Sigma_K$ of $(\vec x_k,u_k)$ for $K=10^4$. One sinusoid keeps the state on a flat ellipse, and two of the eigenvalues are of the size of the noise; two sinusoids explore all four directions, one of them weakly; the random input explores them all. (b) The root-mean-square error of $\hat{\mathbf G}$ over $100$ repetitions (dots), with $\sigma_w\sqrt{(n+m)/(K\lambda_{\min}(\mathbf\Sigma_K))}$ (dashed), $n+m=4$, which follows it within twenty per cent. With one sinusoid the missing directions are explored only by the noise itself, and at $K=3\cdot10^4$ the error is about twenty-five times that for the random input. Generated by \texttt{code/ch06\_persistency.py}.}\label{fig:ch06:persistency}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{Ho--Kalman on quantum data}
+\ona{Quantum data differ from the classical setting in two respects. First, there is no single trajectory: every sampling time is a separate experiment, with freshly prepared copies, so that the Markov parameters are estimated directly. Second, the noise is not process noise but the noise of the shots: each entry of the data is a mean of $N$ outcomes $\pm1$, with variance at most $1/N$, independently of every other entry. This is the most favourable case of the analysis of \citet{oymak2019non}.}
 \begin{propn}[Shots for Ho--Kalman on quantum data]\label{prop:ch06:hokalman}
-Let $\Hankel_{rs}(0)$ be formed from $p$ observables at $r+s-1$ times, each expectation estimated from $N$ shots. Then $\norm{\hat\Hankel-\Hankel}_2\le\sqrt{rsp}\,\sqrt{2\ln(2rsp/\delta)/N}$ with probability $1-\delta$, and the Ho--Kalman realisation satisfies $\norm{\hat{\mathbf G}_\tau-\mathbf T\mathbf G_\tau\mathbf T^{-1}}=\bigO{\norm{\hat\Hankel-\Hankel}/\sigma_n(\Hankel)}$. Consequently $N=\bigO{rsp\,\ln(rsp/\delta)/(\sigma_n(\Hankel)^2\eps^2)}$ shots per time point suffice for accuracy $\eps$ in the discrete generator.
+Let $\Hankel_{rs}(0)$ be formed from $p$ observables at $r+s-1$ times, each expectation value estimated from $N$ shots. Then, with probability at least $1-\delta$,
+\begin{equation}\label{eq:ch06:hankelerror}
+    \norm{\hat\Hankel-\Hankel}_2\;\le\;\sqrt{rsp}\,\sqrt{\frac{2}{N}\ln\frac{2(r+s-1)p}{\delta}} .
+\end{equation}
+If this is small compared with $\sigma_n(\Hankel)$, the smallest non-zero singular value of $\Hankel$, the realisation returned by Ho--Kalman differs from a similarity transform of the true one by at most a constant multiple of $\norm{\hat\Hankel-\Hankel}_2/\sigma_n(\Hankel)$, the constant depending on $n$ and on $\norm{\Hankel}/\sigma_n(\Hankel)$. Consequently a number of shots per expectation value of order $rsp\,\ln(rsp/\delta)/(\sigma_n(\Hankel)^2\eps^2)$ suffices for accuracy $\eps$.
 \end{propn}
-\ona{The quantity $\sigma_n(\Hankel)$, the smallest nonzero singular value, is the product of the conditioning of the observability and Krylov factors of Theorem~\ref{thm:ch05:hankelrank}; it is small when a mode is weakly observed (Figure~\ref{fig:ch04:singular} of \Chap~\ref{C.StateSpace}) or weakly excited, and then the shot count explodes even though the system is identifiable. The multirate reconstruction of $\mathbf A$ from $\hat{\mathbf G}_{\tau_j}$ adds a factor $1/\tau$ from the logarithm and a condition-number factor from the eigenvector matrix $\mathbf g$.}
+\ona{\begin{pf}
+The $(r+s-1)p$ distinct entries of $\hat\Hankel-\Hankel$ are each smaller than $\sqrt{2\ln(2(r+s-1)p/\delta)/N}$ with probability $1-\delta$, by Theorem~\ref{thm:ch06:hoeffding} and the union bound. The spectral norm is at most the Frobenius norm, which is at most $\sqrt{rsp}$ times the largest entry. The perturbation bound for the realisation is that of \citet{oymak2019non}.
+\end{pf}}
+\ona{Figure~\ref{fig:ch06:hankelnoise}(a) shows the singular values of the Hankel matrix of our qubit as the number of shots grows. The noise floor of \Chap~\ref{C.Frequency} falls like $N^{-1/2}$, about $6.6/\sqrt N$ here, and a mode becomes visible when the floor falls below its singular value. For the preparation at $60^\circ$ the weakest mode emerges at about $130$ shots per sample; for the weakly excited preparation at $15^\circ$ its singular value is smaller, and about $700$ shots are needed. Below these numbers Ho--Kalman does not merely give poor estimates; it finds the wrong number of modes. Figure~\ref{fig:ch06:hankelnoise}(b) shows the errors of the poles returned by Ho--Kalman, which also fall like $N^{-1/2}$, the slow relaxation $-\gamma_1$ being the least well determined.}
+\onp{{\small Fresh copies at every time: independent errors of size $N^{-1/2}$ on every entry of $\Hankel$.}}
+\end{frame}
+
+\begin{frame}\ft{Noise in the Hankel matrix}
+\ona{Figure~\ref{fig:ch06:hankelheat} shows the matrices of Proposition~\ref{prop:ch06:hokalman} for our qubit. The error $E=\hat\Hankel-\Hankel$ is small entry by entry, but it is a Hankel matrix like $\Hankel$ itself: the error of each sample appears along a whole anti-diagonal, which is why the union bound in the proof runs over $r+s-1$ entries only. Weyl's inequality, $\abs{\sigma_i(\hat\Hankel)-\sigma_i(\Hankel)}\le\norm{E}_2$, confines every singular value of the data to a box of half-width $\norm{E}_2$ about the true one. The condition of the proposition, that $\norm{E}_2$ be small compared with $\sigma_n(\Hankel)$, is the condition that the box of the weakest mode should stay clear of the floor; at $100$ shots per sample it does not. The bound \eqref{eq:ch06:hankelerror} is about ten times the actual norm, which is the cost of passing crudely from the largest entry to the spectral norm.}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch06_hankel_heat.tex}}\end{center}
+{\small Weyl: $\abs{\sigma_i(\hat\Hankel)-\sigma_i(\Hankel)}\le\norm{E}_2$; the weakest mode is safe once $\norm{E}_2<\sigma_n(\Hankel)$.}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch06_hankel_heat.tex}}
+\caption{Shot noise in the Hankel matrix of the qubit ($\sigma_n$, $60$ samples, $\tau=0.25$, $10$ block rows and $40$ columns). (a) $\Hankel$, the error $E$ for $N=100$ shots per sample, and $\hat\Hankel=\Hankel+E$, on one colour scale, blue positive and red negative. The error of each sample is repeated along an anti-diagonal, so that $E$ has only $49$ independent entries. (b) The singular values of $\Hankel$ (dots) and of $\hat\Hankel$ (circles), for $N=10^2$ (red) and $N=10^4$ (blue). By Weyl's inequality each moves by at most $\norm{E}_2$, so that those of $\hat\Hankel$ lie in the boxes $\sigma_i(\Hankel)\pm\norm{E}_2$; beyond $i=4$ the boxes reach from $0$ to $\norm{E}_2$, the noise floor. At $N=10^2$, $\norm{E}_2=0.74$ exceeds $\sigma_4=0.58$, and the inequality no longer separates the fourth singular value from the floor; at $N=10^4$ every box is narrow. On the right, the bound \eqref{eq:ch06:hankelerror} at $\delta=0.05$ (box), about ten times the actual $\norm{E}_2$ (line). Generated by \texttt{code/ch06\_hankel\_heat.py}.}\label{fig:ch06:hankelheat}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{Ho--Kalman on quantum data}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch06_hankel_noise.tex}}
+\caption{The Hankel matrix $\Hankel(0)$ of the qubit ($\sigma_n$, $60$ samples, $\tau=0.25$) when each sample is the mean of $N$ shots. (a) The exact singular values $\sigma_1,\dots,\sigma_4$ for the preparation $\vec x_0$ at $60^\circ$ (solid) and for a preparation at $15^\circ$ (dashed), with the noise floor, the median fifth singular value of the noisy matrix, which falls like $6.6/\sqrt N$. The weakest mode rises above the floor at $N\approx130$ for $\vec x_0$, but only at $N\approx700$ for the weakly excited preparation. (b) The root-mean-square error of the poles found by Ho--Kalman over $150$ repetitions. Below the crossing the estimates fail; above it every error falls like $N^{-1/2}$, and the slow relaxation $-\gamma_1$ is the least well determined. Generated by \texttt{code/ch06\_hankel\_noise.py}.}\label{fig:ch06:hankelnoise}
+\end{figure}}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch06_hankel_noise.tex}}\end{center}}
+\end{frame}
+
+\begin{frame}\ft{The poles scatter}
+\ona{Figure~\ref{fig:ch06:poles} shows the same estimates as points rather than as errors. Above $N^*$ each pole is found in a small cloud about the true one, and the clouds shrink like $N^{-1/2}$. The cloud of the slow relaxation $-\gamma_1$ is the widest, although its residue is the largest of the four: its eigenvalue $\ee^{-\gamma_1\tau}=0.95$ lies close to that of the stationary mode, $1$, so that the two are nearly merged in the sense of the next frame, and at $10^3$ shots the noise also pushes them apart. Below $N^*$ the algorithm still returns four poles, since it was asked for four, but one of them is put wherever the noise directs it, often far out on the negative real axis. The right-hand panel shows where the error arises. Ho--Kalman estimates the eigenvalues $\mu$ of $\mathbf G_\tau$, near the unit circle, and the poles are obtained from them by the logarithm, which divides by $\tau$: with $\tau=0.25$ the clouds in the $\lambda$-plane are four or five times as large as in the $z$-plane. This is the factor $1/\tau$ in the budget of Section~\ref{sec:ch06:budget}.}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch06_poles.tex}}\end{center}
+{\small Clouds shrink like $N^{-1/2}$; below $N^*$ a pole goes astray; the logarithm magnifies by $1/(\tau\abs{\mu})$.}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch06_poles.tex}}
+\caption{The poles found by Ho--Kalman (order $4$) from the data of Figure~\ref{fig:ch06:hankelnoise}, in $150$ repetitions for each of $N=10^2$, $10^3$ and $10^4$ shots per sample. (a) Two windows on the $\lambda$-plane, drawn to the same scale, about $-\Gamma+\imath\omega$ and about the poles $0$ and $-\gamma_1$; the estimates on the real axis are drawn in rows below it, one row for each $N$. Between $10^3$ and $10^4$ the clouds of $-\Gamma+\imath\omega$ and $-\gamma_1$ shrink by about $\sqrt{10}$, and that of $-\gamma_1$ is the widest. At $N=10^2$, below $N^*\approx130$, $200$ of the $450$ estimates lie outside both windows: the weakest mode is lost, and the fourth pole is placed far out on the negative real axis or, in $21$ runs, at $\mathrm{Im}\,\lambda=\pi/\tau$. At $N=10^3$ the estimates of $-\gamma_1$ and of $0$ are also pushed apart, to about $-0.35$ and $+0.04$. (b) The eigenvalues $\mu=\ee^{\lambda\tau}$ of $\hat{\mathbf G}_\tau$ in the $z$-plane, to the same scale, with the images of the windows of (a) (dashed). The poles are obtained as $\lambda=(\log\mu)/\tau$, which magnifies distances near $\mu$ by $1/(\tau\abs\mu)\approx4.5$; before the logarithm the clouds are that much smaller, and all but $32$ of the estimates for $N=10^2$ remain in view. Generated by \texttt{code/ch06\_poles.py}.}\label{fig:ch06:poles}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{Weakly excited, weakly seen, nearly merged}
+\ona{The quantity $\sigma_n(\Hankel)$ in Proposition~\ref{prop:ch06:hokalman} is the quantitative form of the three conditions of Proposition~\ref{prop:ch05:modal} of \Chap~\ref{C.Frequency}. There a mode was lost from the data if it was not excited, not seen, or merged with another by the sampling, and the rank of the Hankel matrix fell. Short of these, the rank is full, but the smallest singular value is small when a mode is weakly excited, weakly seen, or nearly merged, and the number of shots grows like its inverse square. Figure~\ref{fig:ch06:nearly} shows the three cases for our qubit: the singular value falls to zero as the preparation approaches the $z$-axis, as the axis of measurement approaches the $z$- or the $x$-axis, and as the sampling interval approaches $\pi/\omega$, where the two modes of the precession merge. Near each of these points the system remains identifiable, but at a cost that grows without bound. This is also the content of the observation in \citet{parvaiz2025identifiability} that the error of identification diverges at sampling rates in a low-order rational ratio and degrades continuously in their neighbourhood.}
 \onp{\begin{itemize}
-    \item Quantum data: no single trajectory, i.i.d.\ binomial errors of scale $N^{-1/2}$ on each Markov parameter (fresh copies per time).
-    \item $N=\bigO{rsp\ln(rsp/\delta)/(\sigma_n(\Hankel)^2\eps^2)}$ shots per time point.
-    \item $\sigma_n(\Hankel)$ small $\Leftrightarrow$ weakly observed or weakly excited mode: identifiable, yet expensive.
+    \item $\sigma_n(\Hankel)\to0$ as a mode becomes unexcited, unseen, or merged; shots grow like $1/\sigma_n^2$.
+    \item The three ways of losing a mode (\Chap~\ref{C.Frequency}) become a continuum of cost.
 \end{itemize}}
 \end{frame}
 
-\section{From the system matrix to the master equation}
+\begin{frame}\ft{A map of the cost of the experiment}
+\ona{Figure~\ref{fig:ch06:costmap} shows the cost over the choices open to the experimenter: the preparation, the axis of measurement, and the sampling interval. The walls on which the cost is infinite are the failures of Proposition~\ref{prop:ch05:modal}; between them the cost varies smoothly, and it rises steeply only near a wall. Our example lies in a broad valley: within the quadrant of the earlier figures no choice of preparation and axis does better than about $127$ shots against its $130$. The map shows, however, that measuring along $(\vec x-\vec z)/\sqrt2$ in place of $\vec n$ would almost halve the cost, which nothing in the qualitative theory of \Chap~\ref{C.Frequency} would have suggested. The sampling interval has a valley of its own, with a wall at each multiple of $\pi/\omega$ and a slope towards $\tau=0$, where every mode is slow compared with the sampling and all the eigenvalues crowd towards $1$. The three curves of Figure~\ref{fig:ch06:nearly} are cuts through these maps.}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch06_costmap.tex}}\end{center}
+{\small Walls of infinite cost where a mode is lost; smooth valleys between them; $(\vec x-\vec z)/\sqrt2$ beats $\vec n$.}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch06_costmap.tex}}
+\caption{A map of the cost of the experiment. The number of shots per sample, $N^*=(6.6/\sigma_4)^2$, at which the weakest mode of the qubit of \Chap~\ref{C.Frequency} rises above the noise floor of Figure~\ref{fig:ch06:hankelnoise}, (a) against the angle $\psi$ of the axis of measurement from $z$ and the tilt $\phi$ of the preparation from $\ket1$, for $\tau=0.25$, and (b) against the sampling interval $\tau$ and $\phi$, measuring along $\vec n$. On the red walls $N^*$ is infinite: the precession is not excited at $\phi=0$, nothing is excited at $\ket0$, $\sigma_z$ does not see the precession, $\sigma_x$ does not see the relaxation, and modes merge at $\tau=\pi/\omega$ and $2\pi/\omega$; as $\tau\to0$ every eigenvalue $\ee^{\lambda\tau}$ tends to $1$. The dot is the example of the \chap{} ($N^*\approx130$), the star the cheapest point of each map (about $74$ at $\psi\approx134^\circ$, $\phi\approx54^\circ$, and about $95$ at $\tau\approx0.30$, $\phi\approx62^\circ$). The dotted lines are the three cuts of Figure~\ref{fig:ch06:nearly}. Generated by \texttt{code/ch06\_costmap.py}.}\label{fig:ch06:costmap}
+\end{figure}}
+\end{frame}
 
-\begin{frame}\ft{Propagating the error into the reconstructed parameters}
-\ona{The identifiability statements of \Chap~\ref{C.StateSpace} are noiseless: they concern whether the parameters are determined by exact data. In practice the system matrix is estimated from tomographic data, and estimating each $x_j=\Tr[F_j\rho]$ from $S$ copies incurs a standard error $\bigO{S^{-1/2}}$, so that $\lVert\vecop{\tilde{\mathbf{A}}}-\vecop{\mathbf{A}}\rVert=\bigO{n\,S^{-1/2}}$ up to the conditioning of the sampling map. The numerical stability of the parameter reconstruction then depends on three factors: the accuracy with which we have identified $\mathbf{A}$, the numerical error when computing $\mathbf{M}$, and the condition number $\kappa (\mathbf{M}) = \norm{\mathbf{M}}\norm{\mathbf{M}^{-1}}$. Although $\mathbf{M}$ is constructed from the structure constants of the Lie algebra, these values may contain irrational numbers which need to be truncated, so we in fact invert $\tilde{\mathbf{M}} = \mathbf{M} + \Delta\mathbf{M}$. The error in the output parameter vector $\vec y =(\vec\theta,\vecop\Koss)$ is bounded by}
-\onp{\Chap~\ref{C.StateSpace} was noiseless. With $\lVert\vecop{\tilde{\mathbf A}}-\vecop{\mathbf A}\rVert=\bigO{nS^{-1/2}}$ from $S$ copies per expectation \citep{Parvaiz2025}:}
+\begin{frame}\ft{Weakly excited, weakly seen, nearly merged}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch06_nearly.tex}}
+\caption{The three ways of losing a mode found in \Chap~\ref{C.Frequency}, followed continuously: the smallest non-zero singular value $\sigma_4$ of $\Hankel(0)$, relative to $\sigma_1$, against (a) the angle $\phi$ of the preparation from $\ket1$, (b) the angle $\psi$ of the axis of measurement from $z$, and (c) the sampling interval $\tau$ near $\pi/\omega$. Each curve vanishes, in proportion to the distance, where a mode is not excited ($\phi=0$), not seen ($\psi=0$ and $\psi=90^\circ$), or merged with another ($\tau=\pi/\omega$). Since the noise floor falls like $N^{-1/2}$, the number of shots needed grows like $(\sigma_1/\sigma_4)^2$: a mode that is nearly lost is not lost, but it is expensive. Generated by \texttt{code/ch06\_nearly.py}.}\label{fig:ch06:nearly}
+\end{figure}}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch06_nearly.tex}}\end{center}}
+\end{frame}
+
+\section{From the system matrix to the master equation}\label{sec:ch06:budget}
+
+\begin{frame}\ft{Propagating the error into the parameters}
+\ona{The identifiability results of \Chap~\ref{C.StateSpace} concern exact data. In practice the system matrix is estimated, and its error propagates into the Hamiltonian and Lindblad parameters reconstructed from it. Estimating each $x_j=\Tr[F_j\rho]$ from $S$ copies incurs a standard error of order $S^{-1/2}$, so that $\lVert\vecop{\tilde{\mathbf A}}-\vecop{\mathbf A}\rVert$ is of order $n\,S^{-1/2}$, up to the conditioning of the sampling map. The parameters are then recovered by inverting the linear map $\mathbf M$ of \eqref{eq:ch04:M}, and the accuracy depends on three things: the accuracy of $\mathbf A$, the numerical error in $\mathbf M$, and the condition number $\kappa(\mathbf M)=\norm{\mathbf M}\norm{\mathbf M^{-1}}$. Although $\mathbf M$ is built from the structure constants of the Lie algebra, these may be irrational and must be rounded, so that in fact we invert $\tilde{\mathbf M}=\mathbf M+\Delta\mathbf M$. The error of the parameter vector $\vec y=(\vec\theta,\vecop\Koss)$ then satisfies}
+\onp{With $\lVert\vecop{\tilde{\mathbf A}}-\vecop{\mathbf A}\rVert$ of order $nS^{-1/2}$ from $S$ copies per expectation value \citep{Parvaiz2025}:}
 \begin{equation}\label{eq:ch06:error_bound}
     \norm{ \vec y - \tilde{\vec{y}} }  \leq \norm{ \tilde{\mathbf{M}}^{-1} } \norm{ \vecop{\tilde{\mathbf{A}}} - \vecop{\mathbf{A}} } +   \frac{\kappa(\mathbf{M})}{\frac{\norm{ \mathbf M}}{\norm{\Delta\mathbf M }} - \kappa(\mathbf M)} \norm{\mathbf{M}^{-1} }\norm{ \vecop{\mathbf{A}} },
 \end{equation}
-\ona{which is valid provided $\kappa(\mathbf{M})\lVert\Delta\mathbf{M}\rVert<\lVert\mathbf{M}\rVert$, i.e.\ as long as the truncation error does not exceed the distance of $\mathbf{M}$ to singularity. A similar analysis applies to the symmetric-Kossakowski algorithm, replacing $\mathbf{M}$ with $\mathbf{R}_{1}$ or  $\mathbf{R}_{3}$ and $\mathbf{A}$ with $\mathbf{A}^{(l)}$ or $\mathbf{A}^{(d)}$ respectively. Combined with the sampling error, the achievable precision of the reconstructed parameters therefore degrades as $\kappa(\mathbf{M})\,n\,S^{-1/2}$ \citep{Parvaiz2025}. Once the identifiability conditions are satisfied, one can increase the number of samples and gradually increase the precision of the identification method; the asymptotic \citep{JANSSON19981507,KNUDSEN200181} and finite-sample \citep{oymak19,xin22} theory of the previous section quantifies the rate. Since the reconstruction is linear, the projection of $\hat\Koss$ onto the positive semidefinite cone (\Chap~\ref{C.StateSpace}) is non-expansive and does not amplify \eqref{eq:ch06:error_bound}.}
+\ona{provided that $\kappa(\mathbf{M})\lVert\Delta\mathbf{M}\rVert<\lVert\mathbf{M}\rVert$, that is, provided that the rounding error does not exceed the distance of $\mathbf{M}$ from singularity. A similar analysis applies to the reconstruction for a symmetric Kossakowski matrix, with $\mathbf{M}$ replaced by $\mathbf{R}_{1}$ or $\mathbf{R}_{3}$ and $\mathbf{A}$ by $\mathbf{A}^{(l)}$ or $\mathbf{A}^{(d)}$. With the sampling error, the precision of the reconstructed parameters is therefore of order $\kappa(\mathbf{M})\,n\,S^{-1/2}$ \citep{Parvaiz2025}. Since the reconstruction is linear, the projection of $\hat\Koss$ onto the cone of positive semidefinite matrices (\Chap~\ref{C.StateSpace}) does not increase the error.}
 \onp{\begin{itemize}
-    \item First term: tomography error amplified by $\norm{\mathbf M^{-1}}$; second: truncation of irrational structure constants.
-    \item Net precision of $(\vec\theta,\Koss)$: $\kappa(\mathbf M)\,n\,S^{-1/2}$.
-    \item PSD projection of $\hat\Koss$ is non-expansive: no amplification.
+    \item First term: error of $\mathbf A$ amplified by $\norm{\mathbf M^{-1}}$; second: rounding of irrational structure constants.
+    \item Precision of $(\vec\theta,\Koss)$ of order $\kappa(\mathbf M)\,n\,S^{-1/2}$; the projection onto the PSD cone does not amplify it.
 \end{itemize}}
 \end{frame}
 
-\begin{frame}\ft{Putting the pieces together}
-\ona{We can now give a complete, if crude, shot budget for the pipeline of \Chaps~\ref{C.StateSpace}--\ref{C.Frequency}: $N$ shots per expectation value, $p$ observables, $K$ times, $n+2$ sampling rates.}
-\begin{itemize}\setlength\itemsep{0.4em}
-    \item Expectation values: error $\eps_0=\bigO{\sqrt{\ln(pK/\delta)/N}}$ each (Hoeffding), total shots $N p K (n+2)$.
-    \item Discrete generator by Ho--Kalman: error $\eps_1=\bigO{\sqrt{rsp}\,\eps_0/\sigma_n(\Hankel)}$.
-    \item Continuous generator by multirate logarithm: error $\eps_2=\bigO{\kappa(\mathbf g)\,\eps_1/\tau_{\min}}$.
-    \item Master-equation parameters: error $\eps_3=\bigO{\kappa(\mathbf M)\,\eps_2}$ by \eqref{eq:ch06:error_bound}.
+\begin{frame}\ft{The reconstruction map}
+\ona{For the qubit the map $\mathbf M$ is as well conditioned as one could wish. Its singular values are $2$, in the directions of the three coefficients of the Hamiltonian and of the trace of $\Koss$, and $1$ in the remaining eight. An error of $\mathbf A$ is therefore at worst carried over unchanged, and the Hamiltonian is recovered twice as accurately as the dissipator (Figure~\ref{fig:ch06:reconstruction}(a)). The second term of \eqref{eq:ch06:error_bound} is of no practical concern here. With an error of $0.05$ in $\mathbf A$, the rounding of the structure constants begins to matter only when its relative size exceeds about $6\cdot10^{-3}$, that is, when they are kept to fewer than three figures, whereas double precision gives $10^{-16}$. In larger systems $\kappa(\mathbf M)$ need not be so small, and the bound then warns that a map near singularity amplifies both errors without limit.}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch06_reconstruction.tex}}\end{center}
+{\small Qubit: $\sigma(\mathbf M)\in\{1,2\}$, $\kappa(\mathbf M)=2$; rounding matters only above $\delta\approx6\cdot10^{-3}$; the bound is infinite at $\delta=1/\kappa(\mathbf M)$.}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch06_reconstruction.tex}}
+\caption{The reconstruction map. (a) A circle of errors of size $\rho=0.05$ in $\vecop{\mathbf A}$ (left) and its image under $\mathbf M^{-1}$ in the plane of $(\gamma_1,\gamma_\phi)$ (right), an ellipse with semi-axes $\rho$ and $\rho/\sqrt2$. The singular values of $\mathbf M$ are $2$, for the three coefficients of the Hamiltonian and the trace of $\Koss$, and $1$ for the rest, so that every error of the parameters lies between the circles of radii $\rho/\sigma_{\max}(\mathbf M)=\rho/2$ (green) and $\rho/\sigma_{\min}(\mathbf M)=\rho$ (red). The plane of the rates contains a direction of the largest magnification, $\gamma_1-\gamma_\phi$, but none of the smallest. The cloud shows the images of $400$ errors of size $\rho$ in random directions of all twelve coordinates. (b) The bound \eqref{eq:ch06:error_bound} for an error $\rho$ of $\mathbf A$, against the relative rounding $\delta=\norm{\Delta\mathbf M}/\norm{\mathbf M}$ of the map (black), with its first term (blue, using $\norm{\tilde{\mathbf M}^{-1}}\le\norm{\mathbf M^{-1}}/(1-\kappa(\mathbf M)\delta)$) and its second (gold); the dots are the errors for random $\Delta\mathbf M$ and random errors of $\mathbf A$ of these sizes. The rounding matters only above $\delta\approx6\cdot10^{-3}$, and the bound becomes infinite at $\delta=1/\kappa(\mathbf M)=1/2$. Generated by \texttt{code/ch06\_reconstruction.py}.}\label{fig:ch06:reconstruction}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{The whole budget}
+\ona{We can now draw up a complete, if crude, budget of shots for the identification of a master equation by the methods of \Chaps~\ref{C.StateSpace} and~\ref{C.Frequency}, with $N$ shots per expectation value, $p$ observables, and Hankel matrices with $r$ block rows and $s$ columns:}
+\begin{itemize}\setlength\itemsep{0.3em}
+    \item expectation values: error $\eps_0$ of order $\sqrt{\ln(rsp/\delta)/N}$ each (Theorem~\ref{thm:ch06:hoeffding});
+    \item discrete generator by Ho--Kalman: error $\eps_1$ of order $\sqrt{rsp}\,\eps_0/\sigma_n(\Hankel)$ (Proposition~\ref{prop:ch06:hokalman});
+    \item continuous generator by the logarithm: error $\eps_2$ of order $\kappa(\mathbf g)\,\eps_1/\tau$, with $\mathbf g$ the matrix of eigenvectors;
+    \item master-equation parameters: error $\eps_3$ of order $\kappa(\mathbf M)\,\eps_2$ by \eqref{eq:ch06:error_bound}.
 \end{itemize}
-\ona{Every factor is a condition number of an object we met before: the observability/Krylov factors (\Chap~\ref{C.StateSpace}), the eigenvector matrix (\Chap~\ref{C.Frequency}), and the reconstruction map. Inverting, with $\kappa=\kappa(\mathbf M)\kappa(\mathbf g)/(\sigma_n(\Hankel)\tau_{\min})$, we need $N=\bigO{\kappa^2\,rsp\,\ln(pK/\delta)/\eps_3^2}$ shots per expectation value: the $\eps^{-2}$ of the standard quantum limit, times the square of the total conditioning. Lower bounds from Cram\'er--Rao show the $\eps^{-2}$ cannot be improved with independent shots; only coherent, time-as-resource protocols (Heisenberg-limited learning) change the exponent, and only for the Hamiltonian part. \Chap~\ref{C.AlgTomography} turns these estimates into algorithms; \Chap~\ref{C.Revisited} evaluates them on the running examples.}
-\onp{Total: $N=\bigO{\kappa^2\,rsp\,\ln(pK/\delta)/\eps^2}$ with $\kappa=\kappa(\mathbf M)\kappa(\mathbf g)/(\sigma_n(\Hankel)\tau_{\min})$. The $\eps^{-2}$ is the standard quantum limit; the $\kappa^2$ is the geometry of the problem.}
+\ona{Every factor is a condition number of an object that we have met before: the observability and Krylov factors of the Hankel matrix (\Chaps~\ref{C.StateSpace} and~\ref{C.Frequency}), the eigenvector matrix of the generator (\Chap~\ref{C.Frequency}), and the reconstruction map (\Chap~\ref{C.StateSpace}). Writing $\kappa=\kappa(\mathbf M)\,\kappa(\mathbf g)/(\sigma_n(\Hankel)\,\tau)$, we need of order $\kappa^2\,rsp\,\ln(rsp/\delta)/\eps_3^2$ shots per expectation value: the $1/\eps^2$ of independent shots, multiplied by the square of the conditioning of the whole problem. Figure~\ref{fig:ch06:budget} evaluates the factors for our qubit: $20$, $1.72$, $9.66$ and $2$, an amplification of about $660$ in all. By the bound, a relative accuracy of $1\%$ in the parameters would need about $9\cdot10^8$ shots per expectation value, whereas a simulation reaches it with about $2\cdot10^4$. The bound is pessimistic by a large factor, since it compounds a worst case at every stage and the worst cases do not occur together; but it shows where the shots go, and which stage to improve. The $1/\eps^2$ cannot be improved with independent shots, by the Cram\'er--Rao bound; only coherent protocols that use time as a resource change the exponent, and only for the Hamiltonian part. \Chap~\ref{C.AlgTomography} turns these estimates into algorithms, and \Chap~\ref{C.Revisited} applies them to the examples of \Chap~\ref{C.Motivation}.}
+\onp{$N$ of order $\kappa^2\,rsp\,\ln(rsp/\delta)/\eps^2$, with $\kappa=\kappa(\mathbf M)\kappa(\mathbf g)/(\sigma_n(\Hankel)\tau)$: the $\eps^{-2}$ of independent shots, times the square of the conditioning.}
+\end{frame}
+
+\begin{frame}\ft{Sample complexity at large}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch06_budget.tex}}
+\caption{The error budget of the pipeline for the qubit. Each stage multiplies the error of the stage before by a factor that can be computed: $\sqrt{rsp}=20$ from the noise of the shots to the Hankel matrix, $1/\sigma_4(\Hankel)=1.72$ through Ho--Kalman, $\kappa(\mathbf g)/\tau=9.66$ through the eigenvectors and the logarithm, and $\kappa(\mathbf M)=2$ through the reconstruction map. The rows give the bound and a simulation for $N=10^4$ shots per expectation value. By the bound a relative accuracy of $1\%$ in the parameters needs about $9\cdot10^8$ shots, whereas the simulated eigenvalues of $\mathbf A$ reach that accuracy at about $2\cdot10^4$: each factor is a worst case, and the worst cases do not occur together. Generated by \texttt{code/ch06\_budget.py}.}\label{fig:ch06:budget}
+\end{figure}}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch06_budget.tex}}\end{center}}
+\end{frame}
+
+\begin{frame}\ft{One noise followed through the pipeline}
+\ona{Figure~\ref{fig:ch06:pipeline} follows one family of noisy data sets through every stage, and shows where the bound is pessimistic. Forming the Hankel matrix multiplies the error by about $9$, against the $20$ of the bound. Ho--Kalman then reduces it tenfold where the bound allows an increase by $1.72$: the eigenvalues of $\mathbf G_\tau$ depend on the whole matrix, and much of the noise cancels in them. The logarithm divides by $\tau$, a factor of $4$, and the conditioning of the eigenvectors, which enters the bound, plays no part in the eigenvalues. The slow relaxation is the least well determined throughout. Its pole moves only along the real axis, and the fitted $\gamma_1$ is on average too large by about $0.02$, a bias of half its spread which the bound, concerned only with the size of the error, does not see.}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch06_pipeline.tex}}\end{center}
+{\small Bound: $\times20$, $\times1.72$, $\times9.66$, $\times2$; seen: $\times8.6$, $\times0.10$, $\times4.2$, $\times0.96$. The worst cases do not occur together.}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch06_pipeline.tex}}
+\caption{One noise followed through the pipeline. The same $150$ data sets of the qubit, each sample the mean of $N=10^4$ shots ($\sigma_n$, $60$ samples, $\tau=0.25$, $R=10$, $S=40$), at every stage, all panels drawn to the same scale: (a) the errors of the samples of three data sets, with the band of one standard deviation; (b) the errors of the singular values of the Hankel matrix, which by Weyl's inequality never exceed $\norm{\hat\Hankel-\Hankel}_2$, and the fifth singular value, the noise floor; (c) the errors of the eigenvalues $\ee^{\lambda_i\tau}$ of $\mathbf G_\tau$ and (d) of the poles $\lambda_i$, grey for $0$, red for $-\gamma_1$, blue for $-\Gamma\pm\imath\omega$, with thumbnails of where these values lie; (e) the errors of $(\gamma_1,\gamma_\phi)$ read from the poles, the cross marking their mean. Under each panel is the median error of the stage; above each arrow, the factor of the bound in Figure~\ref{fig:ch06:budget} and the ratio observed. The parameters are read from the poles rather than through $\mathbf M$, since Ho--Kalman determines $\mathbf A$ only up to similarity. Generated by \texttt{code/ch06\_pipeline.py}.}\label{fig:ch06:pipeline}
+\end{figure}}
 \end{frame}
 
 \begin{frame}\ft{Summary}
-\begin{itemize}\setlength\itemsep{0.5em}
-    \item Shots to expectation values: $\eps^{-2}\ln(1/\delta)$ (Hoeffding); the $N^{-1/2}$ law is tight for independent shots (Cram\'er--Rao).
-    \item Tomography: $\bigTheta{d^2/\eps^2}$ copies with entangled measurements, $\bigTheta{d^3/\eps^2}$ single-copy; classical shadows give $M$ local observables for $\bigO{\log M/\eps^2}$ copies.
-    \item Time is a resource: Heisenberg-limited Hamiltonian learning reaches $\bigO{1/\eps}$ total time.
-    \item Finite-sample system identification: Ho--Kalman error $\propto\norm{\hat\Hankel-\Hankel}/\sigma_n(\Hankel)$; identifiable is not the same as cheaply learnable.
-    \item Master-equation reconstruction adds $\kappa(\mathbf M)$; the whole pipeline costs $\bigO{\kappa^2/\eps^2}$ shots.
+\begin{itemize}\setlength\itemsep{0.3em}
+    \item A shot is a coin toss: $N$ shots give an error of order $1/\sqrt N$, and Hoeffding's inequality asks for $\frac{2}{\eps^2}\ln\frac2\delta$ of them; many observables cost only a logarithm more.
+    \item Fisher information measures what a shot can tell; the Cram\'er--Rao bound makes the $1/\sqrt N$ law a law of nature for independent shots; the error ellipse is the bottom of the least-squares valley.
+    \item The cost of a mode is proportional to $1/\abs{r_i}^2$: weakly excited, weakly seen or nearly merged modes are identifiable but expensive.
+    \item The best measurement attains the quantum Fisher information; long coherent evolution gives the Heisenberg limit $1/T$, which decoherence caps.
+    \item Tomography costs $d^2/\eps^2$ to $d^3/\eps^2$ copies; classical shadows estimate many local observables at a cost independent of the number of qubits.
+    \item Ho--Kalman needs $N$ of order $rsp\ln(rsp/\delta)/(\sigma_n(\Hankel)^2\eps^2)$ shots; the whole pipeline costs $\kappa^2/\eps^2$.
 \end{itemize}
+\end{frame}
+
+\begin{frame}\ft{The chapter in nine pictures}
+\ona{Figure~\ref{fig:ch06:summary} collects the laws of this \chap{} in the manner of the dictionary at the end of \Chap~\ref{C.Frequency}, each beside a small picture computed for our examples.}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch06_summary.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch06_summary.tex}}
+\caption{The \chap{} in nine pictures, each computed for the examples of the \chap{}. (1) The mean of $N$ outcomes $\pm1$ settles within $\sqrt{(1-\mu^2)/N}$ of $\mu$. (2) With the union bound, $M$ expectation values need only $\frac{2}{\eps^2}\ln\frac{2M}{\delta}$ shots each, which rises from $738$ to $3501$ as $M$ goes from $1$ to $10^6$. (3) The information about $\omega$ of one shot of $\sigma_x$ against $t$, under its envelope, which is greatest at $t=1/\Gamma$. (4) The shots needed for $\omega$ grow like $1/\sin^2\phi$ as the precession is less excited. (5) Coherent evolution gives an error $1/T$; with decoherence the error returns to $T^{-1/2}$ beyond $T\approx1/(2\Gamma)$. (6) Classical shadows need a number of copies that hardly depends on the number $q$ of qubits, against $M\log M$ for observables measured one at a time. (7) The copies needed to learn $\omega$ from Gibbs states of the qubit grow like $\beta^{-2}$ at high temperature and like $\ee^{\beta\Delta}$, $\Delta=\omega$, at low temperature. (8) A mode is found by Ho--Kalman once the noise floor $c/\sqrt N$ falls below its singular value, at $N^*\approx130$ here. (9) Each stage of the identification multiplies the error, by $20$, $1.72$, $9.66$ and $2$ for the qubit, so that the shots needed grow like the square of the product. Generated by \texttt{code/ch06\_summary.py}.}\label{fig:ch06:summary}
+\end{figure}}
 \end{frame}
 
 \biblio
