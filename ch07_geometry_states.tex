@@ -8,7 +8,7 @@
 \chapter{Geometry of Quantum States}\label{C.GeometryStates}
 
 \begin{frame}\ft{Outline}
-\ona{In \Chap~\ref{C.Closed} we met the density operator as a point of a convex set, with the coherence vector as its coordinates, and in \Chap~\ref{C.SampleComplexity} we found that the cost of identifying a parameter depends on how far a change in it moves the state. Both matters belong to the geometry of the set of states, which is the subject of this \chap. We begin with the shape of the set: its faces, which prove to be smaller state spaces, and its boundary, on which lie the pure and nearly pure states that control aims at. We then ask what unitary control can do to a mixed state, and find that it can do no more than move the state over a manifold fixed by its spectrum; majorisation describes what lies within reach and what does not. The second half of the \chap{} is concerned with distances. The trace distance measures how well two states can be told apart by a single measurement, and no noise can increase it. The fidelity, and the Fubini--Study and Bures metrics built from it, make the set of states a Riemannian manifold, in which the length of a trajectory bounds the time needed to traverse it, and the Bures metric proves to be the quantum Fisher information of \Chap~\ref{C.SampleComplexity} seen from the side of geometry. We close with systems of two parts, where the separable states form a convex set of their own and entanglement shows itself as the mixedness of a part. The ideas are illustrated throughout on the running examples of the previous \chaps.}
+\ona{In \Chap~\ref{C.Closed} we met the density operator as a point of a convex set, with the coherence vector as its coordinates, and in \Chap~\ref{C.SampleComplexity} we found that the cost of identifying a parameter depends on how far a change in it moves the state. Both matters belong to the geometry of the set of states, which is the subject of this \chap. We begin with the shape of the set: its faces, which prove to be smaller state spaces, and its boundary, on which lie the pure and nearly pure states that control aims at. We then ask what unitary control can do to a mixed state, and find that it can do no more than move the state over a manifold fixed by its spectrum; majorisation describes what lies within reach and what does not. The second half of the \chap{} is concerned with distances. The trace distance measures how well two states can be told apart by a single measurement, and no noise can increase it. The fidelity, and the Fubini--Study and Bures metrics built from it, make the set of states a Riemannian manifold, in which the length of a trajectory bounds the time needed to traverse it, and the Bures metric proves to be the quantum Fisher information of \Chap~\ref{C.SampleComplexity} seen from the side of geometry. We then turn to systems of two parts, where the separable states form a convex set of their own, entanglement shows itself as the mixedness of a part, and the two-qubit gates, up to local operations, fill a tetrahedron in which the perfect entanglers occupy half the volume; and to systems of many parts, where tensor networks describe the states and operators of physical interest through their ranks across cuts, and the matrix product states form a manifold of small dimension within an exponentially large space. The ideas are illustrated throughout on the running examples of the previous \chaps.}
 \onp{Outline of today's lecture:
 \begin{itemize}\setlength\itemsep{0.35em}
     \item the shape of the state space: faces, boundary, a section of the qutrit;
@@ -17,10 +17,12 @@
     \item fidelity, Bures and Fubini--Study; length, distance and the speed limit;
     \item the Bures metric is the quantum Fisher information;
     \item two qubits: separable and entangled states;
+    \item two-qubit gates: the Weyl chamber, Makhlin's invariants, perfect entanglers;
+    \item many qubits: matrix product states and operators, a cut is a rank, the manifold of MPS, the cost of control;
     \item which distance for which task.
 \end{itemize}}
-\ona{\endgraf\noindent\textit{Sources.} The standard monograph on the subject is \citet{bengtsson2017geometry}, which we follow in several places. The examples are those of \Chaps~\ref{C.StateSpace}--\ref{C.SampleComplexity}, taken from \citet{parvaiz2025identifiability}.}
-\onp{\vfill{\scriptsize Further reading: \citet{bengtsson2017geometry}. Examples from \Chaps~\ref{C.StateSpace}--\ref{C.SampleComplexity} and \citep{parvaiz2025identifiability}.}}
+\ona{\endgraf\noindent\textit{Sources.} The standard monograph on the subject is \citet{bengtsson2017geometry}, which we follow in several places. The examples are those of \Chaps~\ref{C.StateSpace}--\ref{C.SampleComplexity}, taken from \citet{parvaiz2025identifiability}. The account of two-qubit gates follows \citet{zhang2003geometric}, and the section on tensor networks draws on \citet{baladagaggioli2025time}, several of whose passages it follows closely.}
+\onp{\vfill{\scriptsize Further reading: \citet{bengtsson2017geometry}. Examples from \Chaps~\ref{C.StateSpace}--\ref{C.SampleComplexity} and \citep{parvaiz2025identifiability}; tensor networks after \citep{baladagaggioli2025time}.}}
 \end{frame}
 
 \section{The shape of the state space}\label{sec:ch07:shape}
@@ -354,6 +356,256 @@ A state of $\Hil_A\otimes\Hil_B$ is \emph{separable} if it is a mixture $\sum_kp
 \end{figure}}
 \end{frame}
 
+\begin{frame}\ft{Two-qubit gates up to local operations}
+\ona{So far we have considered the states of two qubits. Let us now consider the gates that act on them, and ask how much entanglement a gate can create. Two gates $U$ and $U'$ in $\SU[4]$ are \emph{locally equivalent} if $U=k_1U'k_2$ with $k_1,k_2\in\SU[2]\otimes\SU[2]$, that is, if they differ only by operations on each qubit separately. Local operations neither create nor destroy entanglement, and in most devices they are cheap and fast compared with the coupling of the qubits, so that what a gate can do to entanglement, and much of what it costs, depends only on its class. By the Cartan decomposition $\SU[4]=KAK$ used in \Chap~\ref{C.GeometryControl} \citep{khaneja2001cartan,kraus2001optimal}, every two-qubit gate can be written as}
+\onp{Locally equivalent: $U=k_1U'k_2$, $k_i\in\SU[2]\otimes\SU[2]$. Cartan decomposition \citep{khaneja2001cartan,kraus2001optimal}:}
+\begin{equation}\label{eq:ch07:kak}
+    U=k_1\exp\Big(\tfrac{\imath}{2}\big(c_1\,\sigma_x\otimes\sigma_x+c_2\,\sigma_y\otimes\sigma_y+c_3\,\sigma_z\otimes\sigma_z\big)\Big)k_2
+\end{equation}
+\ona{with local $k_1$ and $k_2$, so that the class of $U$ is described by three real numbers $\vec c=(c_1,c_2,c_3)$. (\Chap~\ref{C.GeometryControl} uses the coordinates $-c_k/2$; we follow \citet{zhang2003geometric}.) The middle factor is diagonal in the Bell basis, as were the states \eqref{eq:ch07:belldiag}: the three operators $\sigma_i\otimes\sigma_i$ that served as coordinates on the Bell-diagonal states serve also as coordinates on the non-local part of every gate. The coordinates are not unique. Each $c_k$ matters only modulo $\pi$, since adding $\pi$ to it multiplies the gate by the local gate $\imath\,\sigma_k\otimes\sigma_k$, so that $\vec c$ lies on a three-dimensional torus, the cube $[0,\pi]^3$ with opposite faces identified. Moreover, permuting the $c_k$, or replacing two of them by $\pi-c_j$ and $\pi-c_k$, can be done by local gates and leaves the class unchanged. These symmetries generate the \emph{Weyl group} of the decomposition.}
+\onp{\begin{itemize}
+    \item The class of $U$ is a point $\vec c$; the same $\sigma_i\otimes\sigma_i$ as for the Bell-diagonal states.
+    \item $c_k$ modulo $\pi$: a torus, the cube $[0,\pi]^3$. Permutations and $(c_j,c_k)\mapsto(\pi-c_j,\pi-c_k)$: the Weyl group.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The Weyl chamber}
+\ona{The mirrors of the Weyl group are the planes $c_j\pm c_k\in\{0,\pi\}$. They cut the cube into $24$ congruent tetrahedra, the \emph{Weyl chambers}, each of volume $\pi^3/24$, and every class of gates has one point in each chamber, with an exception on the boundary (Figure~\ref{fig:ch07:weyl}). We use the chamber $\pi-c_2\ge c_1\ge c_2\ge c_3\ge0$, the tetrahedron with the vertices $O=[0,0,0]$, $A_1=[\pi,0,0]$, $A_2=[\tfrac\pi2,\tfrac\pi2,0]$ and $A_3=[\tfrac\pi2,\tfrac\pi2,\tfrac\pi2]$. The exception is its base $c_3=0$, on which $[c_1,c_2,0]$ and $[\pi-c_1,c_2,0]$ are the same class, so that the base is folded along the line from $L=[\tfrac\pi2,0,0]$ to $A_2$ \citep{zhang2003geometric}. The chamber is a map of all two-qubit gates. The local gates are at $O$ and $A_1$, CNOT and CZ at $L$, SWAP at $A_3$, iSWAP at $A_2$, its square root at $Q=[\tfrac\pi4,\tfrac\pi4,0]$, and the two square roots of SWAP, which are inverse to each other, at $P=[\tfrac\pi4,\tfrac\pi4,\tfrac\pi4]$ and $N=[\tfrac{3\pi}4,\tfrac\pi4,\tfrac\pi4]$. The controlled-$U$ gates, for every single-qubit $U$, fill the edge $OL$.}
+\onp{\begin{itemize}
+    \item Mirrors $c_j\pm c_k\in\{0,\pi\}$ cut the cube into $24$ Weyl chambers, each a map of all classes \citep{zhang2003geometric}.
+    \item Chamber $OA_1A_2A_3$: $\pi-c_2\ge c_1\ge c_2\ge c_3\ge0$; its base is folded along $LA_2$.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The Weyl chamber, pictured}
+\onp{\begin{center}\resizebox{!}{0.78\textheight}{\input{figures/ch07_weyl.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{0.8\linewidth}{!}{\input{figures/ch07_weyl.tex}}
+\caption{The Weyl chamber of two-qubit gates, after \citet{zhang2003geometric}. (a) The coordinates $(c_1,c_2,c_3)$ of the non-local part of a gate fill a cube of side $\pi$, the three-torus. The mirrors $c_i=c_3$ and $c_i+c_3=\pi$ meet along its diagonals and cut it into six square pyramids with their apex at the centre. (b) The planes $c_1=c_2$ and $c_1+c_2=\pi$ cut one pyramid into four tetrahedra. (c) One of them, $OA_1A_2A_3$, is a Weyl chamber; $24$ such chambers fill the cube, each of volume $\pi^3/24$. (d) Every class of gates under local operations has one point in the chamber, except on the base, where $[c_1,c_2,0]$ and $[\pi-c_1,c_2,0]$ are the same class, so that the halves $OLA_2$ and $A_1LA_2$ are one. The local gates sit at $O$ and $A_1$, CNOT and CZ at $L$, SWAP at $A_3$, iSWAP at $A_2$, and the two square roots of SWAP at $P$ and $N$; the controlled-$U$ gates fill the edge $OL$ (blue). Generated by \texttt{code/ch07\_weyl.py}.}\label{fig:ch07:weyl}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{Makhlin's local invariants}\mop{\small}
+\ona{The coordinates in the chamber require the decomposition \eqref{eq:ch07:kak}, which does not come with the gate. \citet{makhlin2002nonlocal} found invariants that can be computed from the matrix of the gate directly. In the \emph{magic basis}, the Bell basis with suitable phases, given by the columns of}
+\onp{Magic basis $Q$; $U_B=Q^\dagger UQ$, $m(U)=U_B^\top U_B$; local gates become $\mathrm{SO}(4)$, so the spectrum of $m$ is invariant \citep{makhlin2002nonlocal}:}
+\begin{equation}\label{eq:ch07:magic}
+    Q=\frac1{\sqrt2}\begin{pmatrix}1&0&0&\imath\\ 0&\imath&1&0\\ 0&\imath&-1&0\\ 1&0&0&-\imath\end{pmatrix},
+\end{equation}
+\ona{the local gates $\SU[2]\otimes\SU[2]$ become the real orthogonal matrices $\mathrm{SO}(4)$. Hence, with $U_B=Q^\dagger UQ$, the matrix $m(U)=U_B^\top U_B$ changes under local gates only by an orthogonal similarity, and its spectrum is an invariant of the class. Since $m$ is unitary, the spectrum is determined by two numbers,}
+\begin{equation}\label{eq:ch07:makhlin}
+    G_1=\frac{\Tr^2m(U)}{16\det U},\qquad G_2=\frac{\Tr^2m(U)-\Tr m(U)^2}{4\det U},
+\end{equation}
+\ona{the division by $\det U$ removing the global phase, and two gates are locally equivalent if and only if their invariants $G_1\in\C$ and $G_2\in\R$ agree. In the coordinates of the chamber \citep{zhang2003geometric},}
+\onp{In the coordinates of the chamber \citep{zhang2003geometric}:}
+\begin{equation}\label{eq:ch07:makhlinc}
+\begin{aligned}
+    G_1&=\cos^2c_1\cos^2c_2\cos^2c_3-\sin^2c_1\sin^2c_2\sin^2c_3+\tfrac{\imath}{4}\sin2c_1\sin2c_2\sin2c_3,\\
+    G_2&=4\cos^2c_1\cos^2c_2\cos^2c_3-4\sin^2c_1\sin^2c_2\sin^2c_3-\cos2c_1\cos2c_2\cos2c_3 .
+\end{aligned}
+\end{equation}
+\ona{The map from the chamber to the space of the invariants, with the real coordinates $(\operatorname{Re}G_1,\operatorname{Im}G_1,G_2)$, is drawn in Figure~\ref{fig:ch07:makhlin}. The flat tetrahedron becomes a curved solid. Its two local vertices $O$ and $A_1$ meet at the identity $(1,0,3)$, and its base, on which $\operatorname{Im}G_1=0$, is folded along $LA_2$, so that the two halves of the base cover the same region of a plane: the identification that the chamber had to keep as an exception, the invariants make of themselves. CNOT lies at $(0,0,1)$, iSWAP at $(0,0,-1)$, SWAP at $(-1,0,-3)$, and the square roots of SWAP at $(0,\pm\tfrac14,0)$. The origin, $G_1=G_2=0$, is the class $[\tfrac\pi2,\tfrac\pi4,0]$ of the gate that \citet{zhang2004minimum} called B, two applications of which, with local gates between them, suffice for every two-qubit gate.}
+\onp{\begin{itemize}
+    \item Locally equivalent $\Leftrightarrow$ same $(G_1,G_2)$; no decomposition needed.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The space of local invariants}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch07_makhlin.tex}}\end{center}
+{\small The chamber seen through Makhlin's invariants: curved, and folded at the base.}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch07_makhlin.tex}}
+\caption{The Weyl chamber seen through Makhlin's local invariants. (a) The map $\vec c\mapsto(\operatorname{Re}G_1,\operatorname{Im}G_1,G_2)$ carries the flat tetrahedron $OA_1A_2A_3$ to a curved solid, drawn in an oblique view with the axes to different scales. The reflection $c_1\mapsto\pi-c_1$ conjugates $G_1$, so that the half of the chamber with $c_1\le\pi/2$ lies behind the plane $\operatorname{Im}G_1=0$ (dashed) and its mirror image in front of it. The base and the triangle $LA_2A_3$ both land in that plane (gold), and the two local vertices $O$ and $A_1$ meet at the identity $(1,0,3)$. The extremes $\operatorname{Im}G_1=\pm\tfrac14$ are reached at the two square roots of SWAP, and the blue curves are the images of the edges of the perfect entanglers $LMNPQA_2$. (b) The fold of the base. The triangle $OA_1A_2$ with $c_3=0$ is split by $LA_2$ into two halves, and the points $[c_1,c_2,0]$ and $[\pi-c_1,c_2,0]$ have the same invariants, so that both halves map onto one region of the plane of $(G_1,G_2)$. That region is bounded by the line $G_2=2G_1+1$, the segment $G_1=0$, $\abs{G_2}\le1$, and the curve $(\cos^4t,\,4\cos^4t-\cos^22t)$; each ring on the right is the image of the two rings of its colour on the left. Generated by \texttt{code/ch07\_makhlin.py}.}\label{fig:ch07:makhlin}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{Perfect entanglers}
+\ona{A gate is a \emph{perfect entangler} if it takes some product state to a maximally entangled one, a state of concurrence one. Whether it does depends only on its class, and the answer is again geometric.}
+\begin{thm}[Perfect entanglers]\label{thm:ch07:pe}
+A two-qubit gate $U$ is a perfect entangler if and only if the convex hull of the eigenvalues of $m(U)$ contains $0$. In the Weyl chamber the perfect entanglers fill the polyhedron with the vertices $L$, $M=[\tfrac{3\pi}4,\tfrac\pi4,0]$, $N$, $P$, $Q$ and $A_2$, given by $c_1+c_2\ge\tfrac\pi2$, $c_1-c_2\le\tfrac\pi2$ and $c_2+c_3\le\tfrac\pi2$; its volume, $\pi^3/48$, is half that of the chamber.
+\end{thm}
+\ona{The criterion was stated by \citet{makhlin2002nonlocal}, and proved, with the description of the polyhedron, by \citet{zhang2003geometric}. For the gate \eqref{eq:ch07:kak} the eigenvalues of $m$ are the four points $\ee^{\imath(c_1-c_2+c_3)}$, $\ee^{\imath(c_1+c_2-c_3)}$, $\ee^{-\imath(c_1+c_2+c_3)}$ and $\ee^{\imath(-c_1+c_2+c_3)}$ of the unit circle, and their hull contains the origin if and only if no two neighbouring points are more than half a turn apart (Figure~\ref{fig:ch07:entanglers}(b)). The polyhedron is what remains of the chamber when three corners are cut off (Figure~\ref{fig:ch07:entanglers}(a)). Near the identity at $O$, where $c_1+c_2<\tfrac\pi2$, the gate is too weak; near SWAP, where $c_2+c_3>\tfrac\pi2$, it comes close to exchanging the qubits, which creates no entanglement; and near the other copy of the identity at $A_1$, where $c_1-c_2>\tfrac\pi2$, it is again too weak. Of the controlled-$U$ gates on the edge $OL$, only CNOT, at $L$, is a perfect entangler. That half the chamber consists of perfect entanglers is a statement about volume in the coordinates $\vec c$. The Haar measure on $\mathrm U(4)$ gives little weight to the faces of the chamber, and under it the perfect entanglers make up about $85\%$ of all gates \citep{watts2013metric}.}
+\ona{For control the theorem provides a target larger than a single gate. An entangling gate is needed, in a circuit, only up to local operations, which are cheap; an optimiser may therefore be asked for any perfect entangler, that is, for any point of the polyhedron, rather than for CNOT in particular, and the functionals that measure the distance from the polyhedron through the invariants \eqref{eq:ch07:makhlin} make this practicable \citep{watts2015optimizing,goerz2015optimizing}.}
+\onp{\begin{itemize}
+    \item Hull of the eigenvalues of $m(U)$ contains $0$ \citep{makhlin2002nonlocal,zhang2003geometric}.
+    \item Half of the chamber by volume; about $85\%$ of gates by the Haar measure \citep{watts2013metric}.
+    \item Control: ask for any perfect entangler, not for CNOT \citep{watts2015optimizing,goerz2015optimizing}.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Perfect entanglers, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch07_entanglers.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch07_entanglers.tex}}
+\caption{The perfect entanglers, after \citet{zhang2003geometric}. (a) In the Weyl chamber the gates that turn some product state into a maximally entangled one fill the polyhedron $LMNPQA_2$ (blue). The three corner tetrahedra (rose), $c_1+c_2\le\pi/2$, $c_2+c_3\ge\pi/2$ and $c_1-c_2\ge\pi/2$, are not perfect entanglers. The polyhedron has volume $\pi^3/48$, half the chamber, and of the controlled-$U$ gates on the edge $OL$ it contains only CNOT. (b) Makhlin's criterion: a gate is a perfect entangler if and only if the convex hull of the four eigenvalues of $m(U)$, which lie on the unit circle, contains $0$. For $[\tfrac\pi4,0,0]$ the hull misses $0$, and the best product input reaches a concurrence of only $\sin\tfrac\pi4=0.71$. For CNOT, $0$ lies on the hull, and for $[\tfrac\pi2,\tfrac\pi4,0]$ inside it; both reach the concurrence $1$. The three gates are marked in (a). (c) The perfect entanglers are half of the chamber by volume, but about $85\%$ of all gates under the Haar measure \citep{watts2013metric}. Generated by \texttt{code/ch07\_entanglers.py}.}\label{fig:ch07:entanglers}
+\end{figure}}
+\end{frame}
+
+\section{Many systems: tensor networks}\label{sec:ch07:tn}
+
+\begin{frame}\ft{The exponential wall, and the pictures of tensors}
+\ona{A pure state of fifty qubits has $2^{50}\approx10^{15}$ amplitudes, and an operator on them $4^{50}$ entries, beyond the memory of any computer. The difficulty is not one of storage alone: identification would need as many expectation values, and control would have to steer a point in a space of that dimension. Yet the states and operators that arise in physics are not typical points of these spaces. A Hamiltonian with local interactions has a number of terms proportional to the number of sites, and its low-energy states, and the states reached from simple ones in a short time, carry little entanglement across any cut of the system. \emph{Tensor networks} describe such objects by a number of parameters that grows only polynomially with the size of the system, and their geometry is that of the preceding sections applied to the cuts of the system. Throughout this section $N$ denotes the number of sites, as in \citet{baladagaggioli2025time}, and not the dimension of the Hilbert space; each site has the local dimension $d$, which is $2$ for qubits, and the Hilbert space $(\C^d)^{\otimes N}$ has the dimension $d^N$.}
+\ona{The notation is graphical (Figure~\ref{fig:ch07:tn:notation}). A tensor, that is, an array of numbers with several indices, is drawn as a shape with one leg for each index: a vector has one leg, a matrix two, and the coefficients $\psi_{s_1\dots s_N}$ of a state of $N$ sites have $N$ legs. Joining two legs means summing over the index they share, so that the product of matrices, the action of a matrix on a vector, the trace and the inner product are all drawn by joining legs, and two shapes with no edge between them stand for their tensor product. The notation goes back to Penrose; a gentle introduction is \citet{bridgeman2017handwaving}, and the standard reviews are \citet{orus2014practical} and \citet{schollwock2011density}.}
+\onp{\begin{itemize}
+    \item $N$ sites (here $N$ is not $\dim\Hil$!), local dimension $d$: $d^N$ amplitudes, $d^{2N}$ operator entries.
+    \item States and operators of local physics carry little entanglement across cuts.
+    \item A leg is an index; joining legs sums over it \citep{bridgeman2017handwaving,orus2014practical}.
+\end{itemize}
+\begin{center}\resizebox{0.9\linewidth}{!}{\input{figures/ch07_tn_notation.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch07_tn_notation.tex}}
+\caption{The graphical calculus of tensors. (a) A tensor is drawn as a shape with one leg for each of its indices. A scalar has none, a vector one, a matrix two, and the order-three tensor $A_{\alpha s\beta}$ from which a matrix product state is built has two bonds and a physical leg. (b) Joining two legs sums over the shared index, so that the product $M\psi$, the matrix product $AB$, the trace (a loop) and the inner product $\braket{\phi|\psi}$ (a bra over a ket) are all contractions. (c) Two shapes side by side with no edge form a tensor product, and two legs of dimensions $d_1$ and $d_2$ bundled into one leg of dimension $d_1d_2$ turn the tensor into a matrix. Generated by \texttt{code/ch07\_tn\_notation.py}.}\label{fig:ch07:tn:notation}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{Matrix product states and operators}
+\ona{A \emph{matrix product state} (MPS) writes each amplitude as a product of matrices, one for each site,}
+\onp{Matrix product state (MPS), $A^{[k]}_s$ of size $D_{k-1}\times D_k$, $D_0=D_N=1$:}
+\begin{equation}\label{eq:ch07:mps}
+    \psi_{s_1s_2\dots s_N}=A^{[1]}_{s_1}A^{[2]}_{s_2}\cdots A^{[N]}_{s_N},
+\end{equation}
+\ona{where $A^{[k]}_s$ is a $D_{k-1}\times D_k$ matrix for each value $s$ of the $k$-th index, and $D_0=D_N=1$. The numbers $D_k$ are the \emph{bond dimensions}; with $D=\max_kD_k$ the state is described by at most $NdD^2$ numbers instead of $d^N$. A \emph{matrix product operator} (MPO) does the same for an operator,}
+\onp{Matrix product operator (MPO), $W^{[k]}_{ss'}$ of size $r_{k-1}\times r_k$ \citep{pirvu2010matrix,baladagaggioli2025time}:}
+\begin{equation}\label{eq:ch07:mpo}
+    O=\sum_{\mathbf s,\mathbf s'}W^{[1]}_{s_1s'_1}W^{[2]}_{s_2s'_2}\cdots W^{[N]}_{s_Ns'_N}\,\ket{\mathbf s}\bra{\mathbf s'},
+\end{equation}
+\ona{where $W^{[k]}_{ss'}$ is an $r_{k-1}\times r_k$ matrix and $\ket{\mathbf s}=\ket{s_1s_2\dots s_N}$ \citep{pirvu2010matrix,baladagaggioli2025time}. In pictures the two are one object (Figure~\ref{fig:ch07:tn:networks}): a chain of tensors joined by bonds, with one open leg at each site for a state and two for an operator. An MPS is an MPO without input legs. A density operator, a Hamiltonian, a propagator and a channel are all MPOs, and an expectation value $\braket{\psi|O|\psi}$ is a network with no open legs at all, and so a number. The chain is the simplest graph. On a tree one obtains the tree tensor networks, and on a square grid the projected entangled pair states (PEPS) of two-dimensional systems; in every case the tensors sit on the vertices of a graph, the summed indices on its edges and the physical indices on its open legs. Matrix product states first appeared as the finitely correlated states of \citet{fannes1992finitely}, and \citet{ostlund1995thermodynamic} recognised them as the states produced by the density-matrix renormalisation group of \citet{white1992density}, which remains the most accurate method for chains.}
+\onp{\begin{itemize}
+    \item MPS: $NdD^2$ numbers; MPO: $Nd^2r^2$; an MPS is an MPO without input legs.
+    \item Every network is a graph: tensors on vertices, sums on edges, physical indices on open legs.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{One picture for states, operators and networks}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch07_tn_networks.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch07_tn_networks.tex}}
+\caption{One graphical language for states, operators and networks. (a) A state of $N=6$ qubits is a single tensor with $N$ legs, $2^N$ numbers. (b) A matrix product state writes it as a chain of order-three tensors joined by bonds of dimension $D$, about $NdD^2$ numbers. (c) A matrix product operator has an output leg $s_k$ and an input leg $s'_k$ at each site, and bonds of dimension $r$, about $Nd^2r^2$ numbers. (d) The expectation value $\braket{\psi|O|\psi}$ is the closed network of a bra, an operator and a ket; having no open legs, it is a number, and it is contracted site by site from the left. (e) Networks need not be chains: a tree, and a grid, the projected entangled pair state. For fifty qubits and $D=r=8$, the state has $1.1\cdot10^{15}$ amplitudes and its MPS at most $6\,400$ numbers; the operator has $1.3\cdot10^{30}$ entries and its MPO at most $12\,800$. Generated by \texttt{code/ch07\_tn\_networks.py}.}\label{fig:ch07:tn:networks}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{A cut is a rank}
+\ona{Cut the chain between the sites $k$ and $k+1$. Grouping the indices $s_1\dots s_k$ into a row index and $s_{k+1}\dots s_N$ into a column index turns $\psi$ into a $d^k\times d^{N-k}$ matrix $\psi^{(k)}$, the \emph{unfolding} at the cut, and \eqref{eq:ch07:mps} writes it as the product of a $d^k\times D_k$ matrix, the left part of the chain, with a $D_k\times d^{N-k}$ matrix, the right part (Figure~\ref{fig:ch07:tn:cut}(a)). Hence $\rank\psi^{(k)}\le D_k$. By the Schmidt decomposition of Section~\ref{sec:ch07:composite}, this rank is the Schmidt rank of $\psi$ across the cut, so that the bond dimension bounds the entanglement between the two parts.}
+\onp{Unfolding at the cut $k$: $\psi^{(k)}$, a $d^k\times d^{N-k}$ matrix $=$ (left part)$\times$(right part), so $\rank\psi^{(k)}\le D_k$, the Schmidt rank.}
+\begin{thm}[Minimal matrix product states]\label{thm:ch07:ttsvd}
+Every $\psi\in(\C^d)^{\otimes N}$ has a matrix product representation with $D_k=\rank\psi^{(k)}$ for $k=1,\dots,N-1$, and none with smaller bond dimensions. Two such minimal representations differ by invertible matrices on the bonds, $A^{[k]}_s\mapsto X_{k-1}^{-1}A^{[k]}_sX_k$, with $X_0=X_N=1$.
+\end{thm}
+\ona{\begin{pf}
+The lower bound was shown above. For the construction, take a singular value decomposition $\psi^{(1)}=U_1\Sigma_1V_1^\dagger$ with $\rank\psi^{(1)}$ singular values; the columns of $U_1$ give $A^{[1]}$, and $\Sigma_1V_1^\dagger$, reshaped, is a tensor of the remaining $N-1$ sites with one bond index attached, to which the same step applies. At the $k$-th step one keeps $\rank\psi^{(k)}$ singular vectors. If two minimal representations are given, their left parts at the cut $k$ are two bases of the column space of $\psi^{(k)}$, and so differ by an invertible $D_k\times D_k$ matrix $X_k$; comparing neighbouring cuts gives the stated relation.
+\end{pf}}
+\ona{The construction by successive singular value decompositions is due to \citet{vidal2003efficient}, and, as the tensor-train decomposition, to \citet{oseledets2011tensor}. If at each cut only the $D$ largest singular values are kept, the result is an MPS of bond dimension at most $D$ whose distance from $\psi$ is at most $\sqrt{\sum_k\eps_k^2}$, where $\eps_k^2$ is the weight discarded at the cut $k$; this is within a factor $\sqrt{N-1}$ of the best approximation of that bond dimension \citep{oseledets2011tensor}.}
+\onp{\begin{itemize}
+    \item Successive SVDs \citep{vidal2003efficient,oseledets2011tensor}; truncation within $\sqrt{N-1}$ of the best.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{A realisation in space}
+\ona{The reader of \Chap~\ref{C.Frequency} will recognise the argument. There the Hankel matrix of a linear system factorised through its state space, $\Hankel_{rs}(0)=\Obsv_r\Ctrb_s$, so that its rank bounded the order of every realisation, and the algorithm of Ho and Kalman found a realisation of the least order by a singular value decomposition (Theorem~\ref{thm:ch05:hankelrank}); minimal realisations were unique up to a similarity of the state space (Theorem~\ref{thm:ch04:similarity}). A matrix product state is a realisation in space rather than in time (Figure~\ref{fig:ch07:tn:cut}(c)). The left part of the chain plays the role of the past, the right part that of the future, the bond that of the state, and the gauge matrices $X_k$ of Theorem~\ref{thm:ch07:ttsvd} are the similarities. The bond dimension is to a chain of sites what the order of the hidden state of \Chap~\ref{C.StateSpace} is to a time series, and the process tensor of \Chap~\ref{C.AlgTomography}, an MPO in time whose bond dimension measures the memory of the environment, makes the correspondence literal. The same principle holds for every network: the rank of the unfolding along any division of the open legs into two groups is at most the product of the bond dimensions of the edges that must be cut to separate the groups.}
+\onp{\begin{center}\resizebox{!}{0.7\textheight}{\input{figures/ch07_tn_cut.tex}}\end{center}
+{\small Left $=$ past, right $=$ future, bond $=$ state, gauge $=$ similarity (\Chaps~\ref{C.StateSpace}, \ref{C.Frequency}).}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch07_tn_cut.tex}}
+\caption{A cut through a matrix product state is a rank. (a) Cutting the chain of six sites between the third and the fourth, and bundling the legs on each side, turns the state into an $8\times8$ matrix. The network writes it as the product $LR$ through the bond, so that its rank is at most $D_3$. Its singular value decomposition $U\Lambda V^\dagger$ gives the Schmidt coefficients across the cut, drawn for the ground state of the Ising chain at $u=1$: all eight are needed for an exact representation, but the last four together weigh about $10^{-8}$. (b) A matrix $X$ and its inverse inserted on a bond change the tensors into $A^{[3]}X$ and $X^{-1}A^{[4]}$ but leave the state as it was, as a similarity leaves a realisation in \Chap~\ref{C.StateSpace}. (c) The Hankel matrix of \Chap~\ref{C.Frequency} factorises through the state space, $\Hankel=\Obsv\Ctrb$, and its rank is the least order of a realisation; the unfolding factorises through the bond, $\psi=LR$, and its rank is the least bond dimension. Generated by \texttt{code/ch07\_tn\_cut.py}.}\label{fig:ch07:tn:cut}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{Area law and volume law}
+\ona{How large must the bond dimension be? With the Schmidt coefficients $\lambda_i$ of the cut, the \emph{entanglement entropy} $S_k=-\sum_i\lambda_i^2\log_2\lambda_i^2$ is at most $\log_2D_k$ bits, and a state can be approximated well with the bond dimension $D$ only if the squared Schmidt coefficients beyond the $D$ largest are small. For a typical state, drawn at random from the unit sphere, the two parts are almost maximally entangled: $S_k$ is close to $\min(k,N-k)$ bits \citep{page1993average}, the entropy grows with the volume of the smaller part, and the bond dimension must be $d^{N/2}$. The ground states of gapped Hamiltonians with local interactions on a chain are quite different. Their entropy is bounded independently of $N$, an \emph{area law}, the boundary between the two parts of a chain being a single bond, and they can be approximated to any fixed accuracy by MPS whose bond dimension grows only polynomially with $N$ \citep{hastings2007area,eisert2010colloquium}. Figure~\ref{fig:ch07:tn:entropy} shows both kinds for fourteen sites, with the ground states of the Ising chain $H=J\sum_i\sigma^z_i\sigma^z_{i+1}+u\sum_i\sigma^x_i$ of \citet{baladagaggioli2025time} for constant fields $u$. Across the middle cut the ground states carry $1.00$, $0.59$ and $0.13$ bits for $u=0.5$, $1$ and $2$, and bond dimensions of $6$, $6$ and $4$ reproduce them to within $10^{-8}$ of the weight; the random state carries $6.28$ bits, and needs all $2^7=128$ Schmidt coefficients. The states of physics occupy a small corner of the Hilbert space.}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch07_tn_entropy.tex}}\end{center}
+{\small Ground states of local gapped chains: area law \citep{hastings2007area}. Random states: volume law \citep{page1993average}.}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch07_tn_entropy.tex}}
+\caption{Entanglement in the Ising chain $H=\sum_i\sigma^z_i\sigma^z_{i+1}+u\sum_i\sigma^x_i$ with $N=14$ sites. (a) The entropy $S_k$ across the cut after the site $k$. In the ground states it stays bounded: in the paramagnet ($u=2$) it is small; at the critical point ($u=1$) it grows slowly towards the middle; and in the ordered chain ($u=0.5$) the ground state of the finite chain is a cat state, which carries about one bit across every cut. A random state follows the tent $\min(k,N-k)$, less about $0.72$ bits at the middle, as \citet{page1993average} found; this is a volume law. (b) The squared Schmidt coefficients $p_\alpha$ across the middle cut, against the index on a logarithmic scale. Those of the ground states fall off rapidly, and $D=6$, $6$ and $4$ (dots) leave out less than $10^{-8}$ of the weight. The $128$ weights of the random state all lie near $2^{-7}$, and every one of them is needed. Generated by \texttt{code/ch07\_tn\_entropy.py}.}\label{fig:ch07:tn:entropy}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{The manifold of matrix product states}
+\ona{Fix the bond dimensions. The states whose unfoldings have the ranks $D_1,\dots,D_{N-1}$ form a smooth submanifold $\mathcal M_D$ of $(\C^d)^{\otimes N}$ \citep{holtz2012manifolds}, of complex dimension}
+\onp{States with $\rank\psi^{(k)}=D_k$: a smooth manifold \citep{holtz2012manifolds,haegeman2014geometry} of complex dimension}
+\begin{equation}\label{eq:ch07:mpsdim}
+    \dim\mathcal M_D=\sum_{k=1}^Nd\,D_{k-1}D_k-\sum_{k=1}^{N-1}D_k^2 ,
+\end{equation}
+\ona{the second sum removing the gauge freedom of Theorem~\ref{thm:ch07:ttsvd}. For fifty qubits and $D=8$ this is about three thousand, against $10^{15}$ for the whole space. The manifold is curved, and its geometry in the Fubini--Study metric of Section~\ref{sec:ch07:metrics} has been worked out by \citet{haegeman2014geometry}. Two operations on it are basic. Truncation, keeping the $D$ largest Schmidt coefficients at every cut, takes a state to a nearby point of $\mathcal M_D$. Evolution under a Hamiltonian does not preserve $\mathcal M_D$, since entanglement grows: the velocity $-\imath H\psi$ points out of the manifold. The \emph{time-dependent variational principle} of Dirac and Frenkel keeps the state on the manifold by replacing the velocity with its orthogonal projection onto the tangent space, which is the admissible velocity nearest to the true one in the Fubini--Study metric \citep{haegeman2011time,haegeman2016unifying}. How far the exact evolution strays from the manifold is measured by the distances of this \chap{} (Figure~\ref{fig:ch07:tn:manifold}). In a quench of the Ising chain from a product state, the entropy of the middle cut grows almost linearly with time, and the Fubini--Study distance of the exact state from its truncation to the bond dimension $D$ stays near zero until the entropy comes within about a bit of $\log_2D$; it then rises, so that each doubling of $D$ buys only a fixed extension of the time that can be simulated faithfully.}
+\onp{\begin{itemize}
+    \item Truncation: back to $\mathcal M_D$. Time-dependent variational principle: project $-\imath H\psi$ onto the tangent space, nearest in the Fubini--Study metric \citep{haegeman2011time,haegeman2016unifying}.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Leaving the manifold}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch07_tn_manifold.tex}}\end{center}
+{\small Entanglement grows; the state leaves $\mathcal M_D$ once $S\approx\log_2D$.}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch07_tn_manifold.tex}}
+\caption{The manifold of matrix product states. (a) The states of bond dimension $D$ form a curved manifold $\mathcal M_D$. At a point $\psi$ of it, the velocity $-\imath H\psi$ of the Schr\"odinger equation leaves the manifold. The time-dependent variational principle keeps its orthogonal projection onto the tangent plane $T_\psi\mathcal M_D$, the residual being orthogonal to the plane, so that the variational trajectory stays on $\mathcal M_D$ while the exact one leaves it; truncation by singular values steps back onto the manifold. (b) A quench of the Ising chain ($N=12$, $J=u=1$) from the product state $\ket{0\dots0}$. Above, the entropy $S(t)$ of the middle cut, which grows almost linearly. Below, the Fubini--Study distance between the exact state and its truncation to the bond dimension $D=2$, $4$ and $8$. Each distance remains near zero until $S(t)$ comes within about a bit of $\log_2D$, and exceeds $0.1$ at $t=1.05$, $1.85$ and $2.70$ (dashed). Since truncation comes within a factor $\sqrt{N-1}$ of the nearest point of $\mathcal M_D$ \citep{oseledets2011tensor}, each curve bounds the distance from $\mathcal M_D$ from above, up to that factor. Generated by \texttt{code/ch07\_tn\_manifold.py}.}\label{fig:ch07:tn:manifold}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{A Hamiltonian written by an automaton}
+\ona{Hamiltonians with local interactions have MPOs of small bond dimension, independent of $N$. For the controlled Ising chain $H(t)=H_0+u(t)H_c$ with $H_0=J\sum_{i=1}^{N-1}\sigma^z_i\sigma^z_{i+1}$ and $H_c=\sum_{i=1}^N\sigma^x_i$, the free Hamiltonian has the boundary and central tensors \citep{baladagaggioli2025time}}
+\onp{Controlled Ising chain $H_0=J\sum_i\sigma^z_i\sigma^z_{i+1}$, $H_c=\sum_i\sigma^x_i$ \citep{baladagaggioli2025time}:}
+\begin{equation}\label{eq:ch07:isingmpo}
+    W^{[1]}=\begin{pmatrix}0&J\sigma^z&\Id\end{pmatrix},\qquad
+    W^{[i]}=\begin{pmatrix}\Id&0&0\\ \sigma^z&0&0\\ 0&J\sigma^z&\Id\end{pmatrix},\qquad
+    W^{[N]}=\begin{pmatrix}\Id\\ \sigma^z\\ 0\end{pmatrix},
+\end{equation}
+\ona{and the control Hamiltonian has the tensors $\begin{pmatrix}\Id&\sigma^x\end{pmatrix}$, $\left(\begin{smallmatrix}\Id&\sigma^x\\ 0&\Id\end{smallmatrix}\right)$ and $\begin{pmatrix}\sigma^x&\Id\end{pmatrix}^{\!\top}$, so that the bond dimensions are $3$ and $2$. Each entry is a $2\times2$ matrix acting on one qubit, and multiplying out the product \eqref{eq:ch07:mpo} gives back the Hamiltonian. The way to read \eqref{eq:ch07:isingmpo} is as a finite automaton \citep{crosswhite2008finite}. The bond index is the state of the automaton, the entry $W_{ab}$ is the operator written on the current site when the automaton passes from the state $a$ to the state $b$, and the MPO is the sum, over all the paths through the automaton, of the products of the operators written along them (Figure~\ref{fig:ch07:tn:automaton}). The automaton of $H_0$ waits in its first state, writing $\Id$, until it writes $J\sigma^z$; it must then write $\sigma^z$ on the next site, and writes $\Id$ ever after. Each path writes one term $J\sigma^z_i\sigma^z_{i+1}$, and the MPO stores $4Nr^2$ numbers instead of the $4^N$ entries of the matrix.}
+\onp{\begin{itemize}
+    \item Bond dimensions $3$ ($H_0$) and $2$ ($H_c$), independent of $N$: $4Nr^2$ numbers instead of $4^N$.
+    \item Read as an automaton \citep{crosswhite2008finite}: each path writes one term.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{A Hamiltonian written by an automaton, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch07_tn_automaton.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch07_tn_automaton.tex}}
+\caption{A matrix product operator as a finite automaton that writes the Hamiltonian \citep{crosswhite2008finite}. (a) The tensors $W^{[i]}$ of $H_0=J\sum_k\sigma^z_k\sigma^z_{k+1}$, read as the operators written in passing from one state of the automaton to another. Every path from \emph{not yet} to \emph{done} places $J\sigma^z$ on one site and $\sigma^z$ on the next, and so writes one term. (b) The same for $H_c=\sum_k\sigma^x_k$, with two states. (c) The MPO of $H_0$ on six sites. The bond index between two tensors is the state of the automaton, and the path through the states $3,3,2,1,1$ writes $J\sigma^z_3\sigma^z_4$. The bond dimension is $3$ whatever the number of sites; for $N=20$ the MPO holds $672$ numbers where the matrix holds $4^{20}\approx1.1\cdot10^{12}$. Generated by \texttt{code/ch07\_tn\_automaton.py}.}\label{fig:ch07:tn:automaton}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{The arithmetic of matrix product operators}
+\ona{To compute with MPOs one needs three operations \citep{baladagaggioli2025time}. A scalar multiple $aO$ multiplies one tensor by $a$. A sum is formed tensor by tensor as a direct sum, and a product by contracting the physical legs and taking the Kronecker product of the bonds,}
+\onp{Scalar: one tensor. Sum: direct sum, bonds add. Product: Kronecker product of the bonds, bonds multiply:}
+\begin{equation}\label{eq:ch07:mpoarith}
+    (O+O')^{[k]}_{ss'}=W^{[k]}_{ss'}\oplus V^{[k]}_{ss'},\qquad
+    (OO')^{[k]}_{ss'}=\sum_lW^{[k]}_{sl}\otimes V^{[k]}_{ls'},
+\end{equation}
+\ona{so that bond dimensions add under sums and multiply under products (Figure~\ref{fig:ch07:tn:algebra}). These suffice to write the propagator of the controlled chain as an MPO. The Magnus expansion $\Omega^{(n)}$ of Proposition~\ref{prop:ch02:magnus}, truncated at the order $n$, is a linear combination of products of $H_0$ and $H_c$, with coefficients that are integrals of the control, and its exponential can be approximated by a Chebyshev polynomial of degree $p$ in $\Omega^{(n)}$, whose coefficients are values of Bessel functions. The price is the growth of the bond dimension. With both Hamiltonians of bond dimension $3$, the generator $\Omega^{(1)}=aH_0+bH_c$ has bond dimension $6$ and its polynomial of degree $p$ has $1+6+\dots+6^p$; the second order of Magnus with the third of Chebyshev, or the other way round, keeps the bond dimension near $10^4$, which a laptop can handle. A Trotter splitting into $K$ steps fares worse: each step is a product of three MPOs of bond dimensions $1$, $2$ and $2$, hence of bond dimension $4$, and $K$ steps give $4^K$, so that a bond dimension of $10^4$ allows about seven steps. For states one would now truncate, as in Theorem~\ref{thm:ch07:ttsvd}, but for the propagator there is no truncation that respects the physics, and entries that are polynomials in unknown control parameters cannot be truncated numerically at all.}
+\onp{\begin{itemize}
+    \item Magnus order $n$, Chebyshev degree $p$: bond $1+b_n+\dots+b_n^p$; Trotter: $4^K$ after $K$ steps.
+    \item No truncation for the propagator, nor for symbolic entries.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The arithmetic of matrix product operators, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch07_tn_algebra.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch07_tn_algebra.tex}}
+\caption{The arithmetic of matrix product operators. (a) The sum of two MPOs is an MPO whose middle tensors are the block-diagonal direct sums $W\oplus V$, and whose end tensors stand side by side, so that the bond dimensions add. (b) The product is obtained by stacking the tensors of one MPO on those of the other and fusing the two bonds into one, so that the bond dimensions multiply. (c) Hence the cost of computing the propagator of the controlled Ising chain. The Magnus generator $\Omega^{(n)}$ of order $n$ has the bond dimension $b_n=6$, $24$, $186$, $1158$, and its exponential, approximated by a Chebyshev polynomial of degree $p$, has $\sum_{k\le p}b_n^k$, which for $n,p\ge2$ soon exceeds the $10^4$ or so that a laptop can handle; $K$ Trotter steps cost $4^K$ (dashed). The counts are those of \citet{baladagaggioli2025time}. Generated by \texttt{code/ch07\_tn\_algebra.py}.}\label{fig:ch07:tn:algebra}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{Generators are cheap, unitaries are dear}
+\ona{The growth of the bond dimension with the degree of the Chebyshev polynomial, and the absence of a truncation, suggest working with the generator rather than with the propagator. The idea is a geometric one. The generator $\Omega^{(n)}(T,\mathbf x)$ lies in the Lie algebra, which is a flat vector space, and its bond dimension grows only with the order of the Magnus expansion; the propagator lies in the curved group, and its approximations by truncated series leave the group, as the truncated Dyson series of Figure~\ref{fig:ch02:magnus} did. For the synthesis of a gate $U^\star=\ee^{\imath\Theta}$, the method QCPOP of \Chap~\ref{C.AlgControl} \citep{bondar2025globally,baladagaggioli2025unitary} therefore compares generators rather than unitaries,}
+\onp{Compare generators in the flat Lie algebra, not unitaries in the curved group \citep{bondar2025globally,baladagaggioli2025unitary}:}
+\begin{equation}\label{eq:ch07:qcpopmpo}
+    \min_{\mathbf x}\ \norm{\Omega^{(n)}(T,\mathbf x)-\imath\Theta}_F^2
+    =\min_{\mathbf x}\ \Tr\Big(\big(\Omega^{(n)}(T,\mathbf x)-\imath\Theta\big)^\dagger\big(\Omega^{(n)}(T,\mathbf x)-\imath\Theta\big)\Big),
+\end{equation}
+\ona{which is a polynomial in the control parameters $\mathbf x$, since the entries of $\Omega^{(n)}$ are. When $\Omega^{(n)}$ and $\Theta$ are MPOs, the trace is a closed network, a ladder, which is contracted from left to right at a cost proportional to $N$ (Figure~\ref{fig:ch07:tn:ladder}). The coefficients of the polynomial are thus obtained in time and memory linear in $N$, and the moment and sum-of-squares hierarchy of \Chap~\ref{C.Motivation} then seeks its global minimum. In the computations of \citet{baladagaggioli2025time}, the MPO computation of the propagator became cheaper than the dense one beyond about eight qubits, and the time and memory needed for the polynomial \eqref{eq:ch07:qcpopmpo} grew linearly with $N$, against exponentially for the dense computation; since the polynomial is the same, nothing is lost in accuracy.}
+\onp{\begin{itemize}
+    \item A closed ladder: contracted left to right in time linear in $N$.
+    \item Same polynomial as the dense computation; cheaper beyond about eight qubits \citep{baladagaggioli2025time}.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Generators are cheap, unitaries are dear, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch07_tn_ladder.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch07_tn_ladder.tex}}
+\caption{Generators are cheap, unitaries are dear. (a) A cartoon of a Lie group, the sphere, and its Lie algebra, the tangent plane at $\Id$. QCPOP compares the truncated Magnus generator $\Omega^{(n)}(T,\mathbf x)$ with the generator $\imath\Theta$ of the target in the flat algebra (dashed), rather than $U(T,\mathbf x)$ with $U^\star$ on the curved group. A generator of Magnus order $n$ has the bond dimension $b_n$, its exponential about $b_n^{\,p}$, and a truncated series for the exponential lands off the group (open circle), as the truncated Dyson series of \Chap~\ref{C.Closed} did; for four qubits the Chebyshev truncations of degree $1$ to $4$ miss unitarity by $\norm{U_p^\dagger U_p-\Id}=0.41$, $0.033$, $0.0098$ and $0.00029$. (b) The cost $\Tr(X^\dagger X)$, $X=\Omega^{(n)}-\imath\Theta$, as a closed network: the MPO of $X$ and its complex conjugate, joined site by site by the legs $s$ and $s'$. A sweep from left to right absorbs one site at a time into an environment $E_k$ of $R^2$ numbers ($R=17$ for the controlled Ising chain at Magnus order two), so that the work grows linearly with the number of sites. Generated by \texttt{code/ch07\_tn\_ladder.py}.}\label{fig:ch07:tn:ladder}
+\end{figure}}
+\end{frame}
+
 \section{Distances in identification and control}\label{sec:ch07:which}
 
 \begin{frame}\ft{Which distance for which task?}
@@ -373,13 +625,15 @@ Bures / $\QFI$ & statistical speed & Cram\'er--Rao bounds (\Chap~\ref{C.SampleCo
 \onp{Converting: $\HSnorm{X}\le\tracenorm{X}\le\sqrt{N}\HSnorm{X}$, a factor $\sqrt{\dim\Hil}$; fidelity $1-\eps$ $\Rightarrow$ $D\le\sqrt\eps$.}
 \end{frame}
 
-\begin{frame}\ft{Summary}\mop{\small}
-\begin{itemize}\setlength\itemsep{0.4em}
+\begin{frame}\ft{Summary}\mop{\footnotesize}
+\begin{itemize}\setlength\itemsep{0.25em}
     \item The state space is a spectrahedron whose faces are smaller state spaces; its boundary consists of the singular states, and the pure states that control aims at lie on it.
     \item Unitary control moves a state only over its orbit, the states with the same spectrum; the populations it can reach are those majorised by the spectrum, and it can neither purify nor cool.
     \item The trace distance measures single-shot distinguishability, and no channel increases it; an increase in time reveals memory in the environment.
     \item Fidelity gives the Bures and Fubini--Study metrics. Length bounds time (the speed limit), and the Bures metric is the quantum Fisher information.
     \item For two qubits the separable states form an octahedron within the tetrahedron of Bell-diagonal states; the entanglement of a pure state is the mixedness of its parts.
+    \item Two-qubit gates up to local operations form the Weyl chamber, a tetrahedron, mapped by Makhlin's invariants to a curved solid; half of it consists of perfect entanglers.
+    \item Tensor networks describe many sites through ranks across cuts: the bond dimension is the Schmidt rank, matrix product states form a manifold of small dimension, and the generators of control have cheap MPOs while the propagators do not.
     \item Next: the same questions for the maps between states, the quantum channels.
 \end{itemize}
 \end{frame}
