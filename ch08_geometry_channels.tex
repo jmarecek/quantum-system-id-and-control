@@ -8,220 +8,266 @@
 \chapter{Geometry of Quantum Channels}\label{C.GeometryChannels}
 
 \begin{frame}\ft{Outline}
-\ona{\Chap~\ref{C.GeometryStates} described the set of states. This \chap{} describes the set of \emph{maps} between states: the dynamical maps, or channels, that an open quantum system implements between two times. The set of channels is again convex, again a slice of a positive semidefinite cone (via the Choi--Jamio{\l}kowski isomorphism), and again comes with several distances. On top of that it carries a composition structure, and the question of which channels arise from GKSL dynamics, and of what ``Markovian'' should mean for a quantum process, is a question about divisibility along that composition. We follow the survey of open quantum system descriptions in the Perspective paper, and then add the geometric facts needed for control (gate fidelity, \Chap~\ref{C.GeometryControl}) and for process tomography (\Chap~\ref{C.AlgTomography}).}
+\ona{\Chap~\ref{C.GeometryStates} described the set of states; this \chap{} describes the set of the maps between them, the channels, which an open quantum system implements between two instants. We met channels in \Chap~\ref{C.Open}, where we took the Kraus representation on trust and drew what three kinds of noise do to the Bloch ball. Here we prove the representation, by way of the matrix of Choi, and find that the channels, like the states, form a spectrahedron, now one level up; for a qubit the unital channels make a tetrahedron which, through the Choi matrix, is the tetrahedron of Bell-diagonal states of \Chap~\ref{C.GeometryStates}. We then ask how far apart two channels are. The answer depends on whether one asks about the average case, as the fidelities used in control do, or about the worst case, as the diamond norm does, and the two can differ by orders of magnitude. Channels can also be composed, and the question of which families of channels arise from a master equation with non-negative rates, and of what Markovian should mean for a quantum process, is a question about dividing a channel into channels. We close with the two algebraic structures that sit inside the set of channels: the Lie group of the unitary channels, on which \Chaps~\ref{C.GeometryControl} and~\ref{C.Complexity} build, and the Lie semigroup of the Markovian ones, which is not convex.}
 \onp{Outline of today's lecture:
-\begin{itemize}\setlength\itemsep{0.8em}
-    \item dynamical maps: trace preservation and complete positivity, Kraus, Stinespring, Choi;
-    \item the convex set of CPTP maps as a slice of the PSD cone; extreme points;
-    \item quantum Markovianity: classical divisibility, P- and CP-divisibility, dynamical semigroups;
-    \item distances between channels: diamond norm, process and average gate fidelity;
-    \item unitaries as a Lie group; the semigroup of GKSL channels inside the CPTP body.
+\begin{itemize}\setlength\itemsep{0.4em}
+    \item the Choi matrix, Kraus operators and Stinespring dilations, in pictures;
+    \item channels form a spectrahedron; the tetrahedron of qubit Pauli channels;
+    \item distances between channels: the diamond norm, process and average gate fidelity; average case against worst case;
+    \item divisibility: what Markovian means for a quantum process; nested images;
+    \item the hierarchy of families: semigroups, CP-divisible, P-divisible;
+    \item the Lie group of unitaries and the Lie semigroup of Markovian channels.
 \end{itemize}}
-\ona{\medskip\noindent\textit{Sources.} This \chap{} draws on \citep{parvaiz2026survey}; passages from these papers are reproduced with light editing. The lecture notes of \citet{wolf2012quantum} are a good general guide to channels.}
-\onp{\vfill{\scriptsize Sources: \citep{parvaiz2026survey}. Further reading: \citet{wolf2012quantum}.}}
+\ona{\endgraf\noindent\textit{Sources.} The section on divisibility follows the survey of \citet{parvaiz2026survey}, several of whose passages it reproduces with light editing. Good general guides to channels are the lecture notes of \citet{wolf2012quantum} and the monograph of \citet{watrous2018theory}.}
+\onp{\vfill{\scriptsize Sources: \citep{parvaiz2026survey}. Further reading: \citet{wolf2012quantum,watrous2018theory}.}}
 \end{frame}
 
-\section{Dynamical maps}
+\section{Channels and their representations}\label{sec:ch08:rep}
 
-\begin{frame}\ft{From the full unitary to a map on the system}
-\ona{A dynamical map (or channel) $\mathcal{E}_{t_1,t_2}$ describes the evolution of the state from $\rho(t_1)$ to $\rho(t_2)$ over $[t_1,t_2]$. For convenience of notation we set $t_1=0$ and $t_2=t$ in the following. Using this formalism, the evolution of a state of an open quantum system $\rho_S$ can be described by}
-\onp{Channel $\mathcal{E}_{t_1,t_2}$: $\rho(t_1)\mapsto\rho(t_2)$. From the closed system$+$bath:}
-\begin{equation}\label{eq:ch08:dynmap}
-    \rho_S(t)=\mathcal{E}(\rho_S(0))=\Tr_B\big[U(t)\rho_{\mathrm{full}}(0)U^\dagger(t)\big],
-\end{equation}
-\ona{where $U=\exp[-\imath H_{\mathrm{full}}t]$ represents the unitary evolution operator of the full system. For maps of the form \eqref{eq:ch08:dynmap} to be considered dynamical maps, additional conditions need to be fulfilled: the map is not allowed to increase the trace,}
-\begin{equation}\label{eq:ch08:trace}
-    \Tr[\mathcal{E}(\rho_S(0))]=\Tr[\rho_S(t)]\le1,
-\end{equation}
-\ona{and it needs to be completely positive (CP),}
-\begin{equation}\label{eq:ch08:cp}
-    \rho_{\mathrm{full}}\succeq0\quad\Longrightarrow\quad(\mathcal{E}\otimes I_n)(\rho_{\mathrm{full}})\succeq0,\qquad\forall n\in\N,
-\end{equation}
-\ona{where $I_n$ denotes the identity map acting on an $n$-dimensional ancillary subsystem, and $\rho_{\mathrm{full}}$ is an arbitrary positive operator on the joint Hilbert space. If the above holds only up to some finite $n$, the map is called $n$-positive rather than completely positive. The map is always required to take Hermitian matrices to Hermitian matrices. Restricting the positivity of the dynamical map alone does not suffice~\cite{NielsenChuang,KrausBook} to ensure that the evolution is physical: complete positivity ensures that the map remains positive when the system is entangled with a bystander. If the trace is preserved, $\Tr[\mathcal{E}(\rho)]=1$, we call $\mathcal{E}$ trace preserving, and CPTP for short.}
-\onp{\begin{itemize}
-    \item Trace non-increasing (or preserving: TP), Hermiticity preserving.
-    \item Completely positive: $(\mathcal{E}\otimes I_n)$ positive for all $n$; positivity alone is not enough (transpose!).
-    \item CPTP maps $=$ physical evolutions; $n$-positive if only up to ancilla dimension $n$.
+\begin{frame}\ft{Channels recalled}
+\ona{A channel, by Definition~\ref{def:ch03:channel}, is a linear map $\Phi$ on the operators of $\Hil$ that preserves the trace and is completely positive: $\Phi\otimes\mathrm{id}_d$ maps positive semidefinite operators to positive semidefinite operators for every $d$. The reduced dynamics of a system that starts uncorrelated with its environment, $\rho_S(t)=\Tr_B\big[U(t)(\rho_S(0)\otimes\rho_B)U(t)^\dagger\big]$, is a channel for every $t$, and we write it $\Phi_t$, or $\mathcal E_{t,s}$ for the map from the time $s$ to the time $t$. If some of the population leaves the space we model, as when a transmon leaks into its third level (\Chap~\ref{C.Open}), the map is only trace non-increasing, $\Tr\Phi(\rho)\le\Tr\rho$; such maps are sometimes called quantum operations, and everything below holds for them with the obvious changes. Complete positivity cannot be weakened to positivity. The transposition $\rho\mapsto\rho^\top$ maps states to states, but applied to one half of the Bell state $\ket{\Phi^+}$ it produces the operator $\tfrac12\mathrm{SWAP}$, which has the eigenvalue $-\tfrac12$; a physical process acting on one of two entangled systems must leave the pair in a state.}
+\onp{\begin{itemize}\setlength\itemsep{0.5em}
+    \item Channel: linear, trace preserving, completely positive (Definition~\ref{def:ch03:channel}); $\Phi_t$ or $\mathcal E_{t,s}$.
+    \item Leakage (\Chap~\ref{C.Open}): trace non-increasing maps, ``quantum operations''.
+    \item Positivity is not enough: transposition on half of $\ket{\Phi^+}$ gives $\tfrac12\mathrm{SWAP}$, eigenvalue $-\tfrac12$.
 \end{itemize}}
 \end{frame}
 
-\begin{frame}\ft{Kraus, Stinespring, Choi}
-\ona{If we assume that the full system is initially separable, $\rho_{\mathrm{full}}(0)=\rho_S(0)\otimes\rho_B(0)$, we have the classic representation result of \citet{KrausBook}: any dynamical map $\mathcal{E}$ satisfying \eqref{eq:ch08:trace} and \eqref{eq:ch08:cp} may be written as}
-\begin{equation}\label{eq:ch08:kraus}
-    \mathcal{E}(\rho)=\sum_{k=1}^{\ell}E_k\,\rho\,E_k^\dagger,\qquad\sum_{k=1}^{\ell}E_k^\dagger E_k\preceq\Id,
+\begin{frame}\ft{The Choi matrix}
+\ona{A linear map on $N\times N$ matrices is fixed by its values on the matrix units $\ket i\bra j$, and these can be collected in a single matrix. With $\ket\Omega=\sum_i\ket{ii}$, the unnormalised maximally entangled vector, the \emph{Choi matrix} of $\Phi$ is}
+\onp{Choi matrix, $\ket\Omega=\sum_i\ket{ii}$:}
+\begin{equation}\label{eq:ch08:choi}
+    \Choi\Phi\coloneqq\sum_{i,j=1}^N\ket i\bra j\otimes\Phi(\ket i\bra j)=(\mathrm{id}\otimes\Phi)\big(\ket\Omega\bra\Omega\big),
 \end{equation}
-\ona{with equality $\sum_kE_k^\dagger E_k=\Id$ in the trace-preserving case. Note that while the Kraus map \eqref{eq:ch08:kraus} is always CP, it is not always divisible and therefore is not guaranteed to be Markovian~\cite{Abunada2024}. The Kraus form, the Stinespring dilation $\mathcal{E}(\rho)=\Tr_B[V\rho V^\dagger]$ with an isometry $V:\Hil\to\Hil\otimes\Hil_B$, the matrix of \citet{CHOI1975285}, the process matrix~\cite{NielsenChuang} and the Liouville superoperator (the matrix acting on $\vecop\rho$ that we used in \Chap~\ref{C.Open}) are all equivalent descriptions; Ref.~\cite{wood2015tensor} details the relationships between them.}
-\begin{thm}[Choi~\citeyearpar{CHOI1975285}]\label{thm:ch08:choi}
-Let $\Choi{\mathcal{E}}\coloneqq\sum_{i,j}\ket i\bra j\otimes\mathcal{E}(\ket i\bra j)=(I\otimes\mathcal{E})(\ket\Omega\bra\Omega)\cdot N$ with $\ket\Omega=\tfrac{1}{\sqrt N}\sum_i\ket{ii}$. Then $\mathcal{E}$ is completely positive iff $\Choi{\mathcal{E}}\succeq0$, and trace preserving iff $\Tr_2\Choi{\mathcal{E}}=\Id$. The Kraus operators are the (reshaped) eigenvectors of $\Choi{\mathcal{E}}$, scaled by the square roots of its eigenvalues; the minimal number of Kraus operators is $\rank\Choi{\mathcal{E}}\le N^2$.
+\ona{the result of sending one half of a maximally entangled pair through the channel (Figure~\ref{fig:ch08:choi}(a)). The correspondence $\Phi\mapsto\Choi\Phi$ is a linear bijection between maps and $N^2\times N^2$ matrices; it is due to \citet{jamiolkowski1972linear} and \citet{CHOI1975285}, and the action of the map is recovered as $\Phi(\rho)=\Tr_1\big[(\rho^\top\otimes\Id)\Choi\Phi\big]$.}
+\begin{thm}[Choi]\label{thm:ch08:choi}
+$\Phi$ is completely positive if and only if $\Choi\Phi\succeq0$, and trace preserving if and only if $\Tr_2\Choi\Phi=\Id$. A completely positive $\Phi$ has a Kraus representation $\Phi(\rho)=\sum_{k=1}^\ell K_k\rho K_k^\dagger$ with $\ell=\rank\Choi\Phi\le N^2$, and $\sum_kK_k^\dagger K_k=\Id$ if $\Phi$ is trace preserving.
 \end{thm}
+\ona{\begin{pf}
+If $\Phi$ is completely positive, $\Choi\Phi=(\mathrm{id}\otimes\Phi)(\ket\Omega\bra\Omega)\succeq0$ by definition. Conversely, let $\Choi\Phi=\sum_k\ket{v_k}\bra{v_k}$ be a decomposition into $\ell=\rank\Choi\Phi$ vectors, for instance the eigenvectors scaled by the square roots of the eigenvalues, and define $K_k$ by $\braket{m|K_k|i}=\big(\bra i\otimes\bra m\big)\ket{v_k}$, so that $\ket{v_k}=(\Id\otimes K_k)\ket\Omega$. Then $\sum_k(\Id\otimes K_k)\ket\Omega\bra\Omega(\Id\otimes K_k^\dagger)=\Choi\Phi$, and since a map is fixed by its Choi matrix, $\Phi(\rho)=\sum_kK_k\rho K_k^\dagger$. A map of this form is completely positive, since $(\mathrm{id}_d\otimes\Phi)(X)=\sum_k(\Id\otimes K_k)X(\Id\otimes K_k)^\dagger\succeq0$ for $X\succeq0$. Finally, $\Tr_2\Choi\Phi=\sum_{ij}\ket i\bra j\Tr\Phi(\ket i\bra j)$, which is $\Id$ if and only if $\Tr\Phi(\ket i\bra j)=\delta_{ij}$, that is, if and only if $\Phi$ preserves the trace; in terms of the Kraus operators this is $\sum_kK_k^\dagger K_k=\Id$.
+\end{pf}}
 \onp{\begin{itemize}
-    \item Kraus: $\mathcal{E}(\rho)=\sum_kE_k\rho E_k^\dagger$, $\sum_kE_k^\dagger E_k=\Id$. Stinespring: $\Tr_B[V\rho V^\dagger]$.
-    \item Choi matrix $\Choi{\mathcal{E}}$: CP $\Leftrightarrow\Choi{\mathcal{E}}\succeq0$; TP $\Leftrightarrow\Tr_2\Choi{\mathcal{E}}=\Id$; Kraus rank $=\rank\Choi{\mathcal{E}}$.
+    \item $\Phi(\rho)=\Tr_1[(\rho^\top\otimes\Id)\Choi\Phi]$ \citep{jamiolkowski1972linear,CHOI1975285}.
+    \item Proof of the Kraus form: eigenvectors of $\Choi\Phi$, reshaped.
 \end{itemize}}
 \end{frame}
 
-\begin{frame}[fragile]\ft{Choi matrix in code}
-\ona{The Choi matrix is the cheapest way to test whether a candidate map, e.g.\ one produced by process tomography (\Chap~\ref{C.AlgTomography}), is physical: assemble it from the action on the matrix units and check its eigenvalues and partial trace.}
-\ona{\lstinputlisting[style=python,title={},firstline=13,lastline=30]{code/ch08_channels.py}}
-\onp{\lstinputlisting[style=python,title={},basicstyle=\ttfamily\scriptsize,firstline=13,lastline=30]{code/ch08_channels.py}}
-\end{frame}
-
-\section{The convex body of channels}
-
-\begin{frame}\ft{CPTP maps as a slice of the PSD cone}
-\ona{Theorem~\ref{thm:ch08:choi} says that the set $\Chan[\Hil]$ of CPTP maps is affinely isomorphic to}
-\begin{equation}\label{eq:ch08:slice}
-    \{J\in\C^{N^2\times N^2}: J\succeq0,\ \Tr_2J=\Id\},
+\begin{frame}\ft{Stinespring dilations and the freedom in the Kraus operators}
+\ona{Collect the Kraus operators into one operator $V=\sum_kK_k\otimes\ket k_E$ from $\Hil$ into $\Hil\otimes\Hil_E$, where $\Hil_E$ is an auxiliary space with the orthonormal basis $\ket k_E$. Trace preservation, $\sum_kK_k^\dagger K_k=\Id$, says that $V^\dagger V=\Id$, so that $V$ is an isometry, and}
+\onp{Stinespring: $V=\sum_kK_k\otimes\ket k_E$, $V^\dagger V=\Id$ \citep{stinespring1955positive}:}
+\begin{equation}\label{eq:ch08:stinespring}
+    \Phi(\rho)=\Tr_E\big[V\rho V^\dagger\big].
 \end{equation}
-\ona{the intersection of the positive semidefinite cone with $N^2$ real affine constraints: a spectrahedron of real dimension $N^4-N^2$, exactly like $\Dens[\Hil]$ but one level up. Consequently, optimising a linear functional over channels, e.g.\ maximising the fidelity to a target unitary over all channels compatible with some measured data, is a semidefinite programme, which is why the conic optimisation of Lecture~\ref{C.Motivation} reappears throughout process tomography (\Chap~\ref{C.AlgTomography}).}
-\begin{thm}[Choi; extreme points]\label{thm:ch08:extreme}
-$\mathcal{E}\in\Chan[\Hil]$ with Kraus operators $E_1,\dots,E_\ell$ (linearly independent) is an extreme point of $\Chan[\Hil]$ iff the $\ell^2$ operators $\{E_j^\dagger E_k\}_{j,k}$ are linearly independent. In particular, extreme channels have Kraus rank $\ell\le N$, and unitary channels $\rho\mapsto U\rho U^\dagger$ are extreme.
-\end{thm}
-\ona{Unlike $\Dens$, whose extreme points are all unitarily equivalent, $\Chan$ has extreme points of several kinds: unitaries, but also, e.g., the amplitude damping channel of Figure~\ref{fig:ch08:channels} (Kraus rank 2, with the four products $E_j^\dagger E_k$ linearly independent). The unital channels, $\mathcal{E}(\Id)=\Id$, form a sub-spectrahedron; among them the mixed-unitary channels $\sum_ip_iU_i\rho U_i^\dagger$ are those generated by the random Schr\"odinger equation of \Chap~\ref{C.Open}, and for $N=2$ every unital channel is mixed-unitary, whereas for $N\ge3$ this fails.}
+\ona{This is the \emph{Stinespring dilation} \citep{stinespring1955positive}. Every channel is thus an isometric embedding of the system into a larger one, which can always be completed to a unitary evolution of the system together with an environment of dimension at most $N^2$, followed by discarding the environment: the system--bath picture of \Chap~\ref{C.Open} is not an assumption but a theorem. The Kraus operators are not unique. If $u$ is a unitary on $\Hil_E$, the operators $L_k=\sum_lu_{kl}K_l$ define the same channel, since $(\Id\otimes u)V$ gives the same partial trace over $E$; conversely, any two Kraus representations of one channel are related in this way, after padding the shorter with zeros. In pictures the freedom is a unitary and its inverse inserted on the environment leg (Figure~\ref{fig:ch08:choi}(b)), as the gauge freedom of a matrix product state was an invertible matrix and its inverse inserted on a bond (Figure~\ref{fig:ch07:tn:cut}). What is unique is the span of the Kraus operators, and their least number, the \emph{Kraus rank} $\rank\Choi\Phi$: one for a unitary channel, and at most $N^2$ (Figure~\ref{fig:ch08:choi}(c)).}
 \onp{\begin{itemize}
-    \item $\Chan[\Hil]\cong\{J\succeq0,\ \Tr_2J=\Id\}$: a spectrahedron of dimension $N^4-N^2$; linear objectives over channels $=$ SDP (Lecture~\ref{C.Motivation}).
-    \item Extreme points: unitaries, but also e.g.\ amplitude damping; several unitarily inequivalent kinds.
-    \item Unital channels $\supseteq$ mixed-unitary channels ($=$ random Schr\"odinger noise, \Chap~\ref{C.Open}); equal for $N=2$ only.
+    \item Every channel $=$ unitary on system $+$ environment ($\dim\le N^2$), then discard: \Chap~\ref{C.Open} as a theorem.
+    \item Freedom: $L_k=\sum_lu_{kl}K_l$, a unitary on the environment leg, like the gauge of an MPS (\Chap~\ref{C.GeometryStates}).
+    \item Kraus rank $=\rank\Choi\Phi\in\{1,\dots,N^2\}$; $1$ for a unitary channel.
 \end{itemize}}
 \end{frame}
 
-\begin{frame}\ft{What a channel does to the Bloch ball}
-\ona{For a qubit, a channel acts on the Bloch vector affinely, $\Bloch\mapsto M\Bloch+\vec c$ with $M\in\R^{3\times3}$, so the image of the Bloch ball is an ellipsoid inside the ball. Complete positivity constrains $(M,\vec c)$ beyond the obvious requirement that the ellipsoid fit inside the ball; the conditions were found by \citet{fujiwara1999one}. Unital channels have $\vec c=0$ and shrink the ball towards the centre; the amplitude damping channel, $E_1=\mathrm{diag}(1,\sqrt{1-\gamma})$, $E_2=\sqrt\gamma\ket0\bra1$, shifts it towards the pure state $\ket0$ and is the model of $T_1$ relaxation from Lecture~\ref{C.Motivation}.}
-\onp{Qubit channels act affinely on Bloch vectors, $\Bloch\mapsto M\Bloch+\vec c$: the ball becomes an ellipsoid. Unital $\Rightarrow\vec c=0$.
-\begin{center}\resizebox{!}{0.5\textheight}{\input{figures/ch08_channels.tex}}\end{center}}
-\ona{\begin{figure}[h]\centering
-\resizebox{0.95\textwidth}{!}{\input{figures/ch08_channels.tex}}
-\caption{The $(x,z)$-section of the Bloch ball (black) and its image under amplitude damping with $\gamma\in\{0.3,0.6,0.9\}$ (left; the image shifts towards $\ket0$ at the top) and under dephasing with $p\in\{0.15,0.3,0.45\}$ (right; the $z$-axis is fixed, coherences shrink by $1-2p$). Computed from the Kraus operators in \texttt{code/ch08\_channels.py}, which also verifies CP and TP through the Choi matrix.}
-\label{fig:ch08:channels}
+\begin{frame}\ft{Channels in pictures}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch08_choi.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch08_choi.tex}}
+\caption{The Choi matrix and the Stinespring dilation, drawn in the graphical calculus of \Chap~\ref{C.GeometryStates}. (a) The Choi matrix $\Choi\Phi$ is the channel applied to one half of the unnormalised maximally entangled vector $\sum_i\ket{ii}$, drawn as a cup. Complete positivity is the positivity of $\Choi\Phi$; trace preservation says that discarding the output of $\Phi$ (the ground symbol, a trace) is the same as discarding its input, that is, $\Tr_2\Choi\Phi=\Id$. (b) Every channel is an isometry $V=\sum_kK_k\otimes\ket k_E$ into the system and an environment, followed by discarding the environment, the environment legs of $V$ and $V^\dagger$ being joined. A unitary $u$ on the environment, with $u^\dagger$ on the other side, leaves $\Phi$ unchanged and replaces the Kraus operators by $\sum_ku_{lk}K_k$, as the gauge matrices on a bond leave a matrix product state unchanged (Figure~\ref{fig:ch07:tn:cut}). (c) The eigenvalues of $\Choi\Phi/N$ for five qubit channels. A unitary channel has one non-zero eigenvalue; amplitude damping ($\gamma=0.5$) and dephasing ($p=0.2$) have two; the depolarising channel ($\lambda=0.5$) has four; and the damped qubit of \Chap~\ref{C.Frequency}, over the time $t=1$, has three. Their number is the Kraus rank. The transposition, whose Choi matrix is the swap, has the eigenvalue $-\tfrac12$. Generated by \texttt{code/ch08\_choi.py}.}\label{fig:ch08:choi}
 \end{figure}}
 \end{frame}
 
-\section{Quantum Markovianity and divisibility}
+\begin{frame}[fragile]\ft{The Choi matrix in code}
+\ona{The Choi matrix is the cheapest test of whether a candidate map, such as one estimated by process tomography (\Chap~\ref{C.AlgTomography}), is physical: assemble it from the action on the matrix units, check its eigenvalues and its partial trace, and read off Kraus operators from its eigenvectors (\texttt{code/ch08\_choi.py}).}
+\ona{\lstinputlisting[style=python,title={},firstline=24,lastline=45]{code/ch08_choi.py}}
+\onp{\lstinputlisting[style=python,title={},basicstyle=\ttfamily\scriptsize,firstline=24,lastline=39]{code/ch08_choi.py}}
+\end{frame}
+
+\section{The convex body of channels}\label{sec:ch08:body}
+
+\begin{frame}\ft{Channels form a spectrahedron}\mop{\small}
+\ona{By Theorem~\ref{thm:ch08:choi}, the set $\Chan[\Hil]$ of channels on $\Hil=\C^N$ is affinely isomorphic to}
+\begin{equation}\label{eq:ch08:slice}
+    \{J\in\Herm[\C^N\otimes\C^N]:\ J\succeq0,\ \Tr_2J=\Id\},
+\end{equation}
+\ona{the intersection of the cone of positive semidefinite $N^2\times N^2$ matrices with an affine subspace of codimension $N^2$: a spectrahedron of real dimension $N^4-N^2$, which is $12$ for a qubit, the nine entries of the matrix $M$ and the three of the vector $\vec c$ in the affine map $\Bloch\mapsto M\Bloch+\vec c$ of the Bloch vector (\Chap~\ref{C.Open}). The normalised Choi matrices $\Choi\Phi/N$ are density operators of $\Hil\otimes\Hil$ whose reduced state on the first factor is maximally mixed, so that the channels are a slice of the states of a system twice as large. Optimising a linear function over channels, such as the fidelity with a target over all channels compatible with some data, is therefore a semidefinite programme, and the conic optimisation of \Chap~\ref{C.Motivation} returns in process tomography (\Chap~\ref{C.AlgTomography}). The \emph{process matrix} $\chi$ of that \chap, defined by $\Phi(\rho)=\sum_{mn}\chi_{mn}P_m\rho P_n^\dagger$ for a basis $\{P_m\}$ of Pauli strings, is the Choi matrix written in another basis.}
+\onp{\begin{itemize}
+    \item $\Chan[\C^N]\cong\{J\succeq0,\ \Tr_2J=\Id\}$: a spectrahedron of dimension $N^4-N^2$ ($12$ for a qubit).
+    \item $\Choi\Phi/N$: states of $\Hil\otimes\Hil$ with maximally mixed marginal. Linear objectives: SDPs (\Chap~\ref{C.Motivation}).
+    \item Process matrix $\chi$ (\Chap~\ref{C.AlgTomography}) $=$ Choi matrix in the Pauli basis.
+\end{itemize}}
+\begin{thm}[Choi; extreme points]\label{thm:ch08:extreme}
+A channel with linearly independent Kraus operators $K_1,\dots,K_\ell$ is an extreme point of $\Chan[\Hil]$ if and only if the $\ell^2$ operators $K_j^\dagger K_k$ are linearly independent. Hence an extreme channel has Kraus rank at most $N$, and every unitary channel is extreme.
+\end{thm}
+\ona{Unlike the extreme points of $\Dens$, which are all unitarily equivalent pure states, those of $\Chan$ are of several kinds: the unitary channels, but also, for instance, amplitude damping, whose two Kraus operators $\operatorname{diag}(1,\sqrt{1-\gamma})$ and $\sqrt\gamma\ket0\bra1$ give four linearly independent products $K_j^\dagger K_k$ for $0<\gamma<1$.}
+\onp{Extreme channels: unitaries, but also amplitude damping; Kraus rank $\le N$.}
+\end{frame}
+
+\begin{frame}\ft{Unital qubit channels: a tetrahedron}
+\ona{For a qubit the body is twelve-dimensional, but its most important part can be drawn. A channel is \emph{unital} if $\Phi(\Id)=\Id$; for a qubit this means $\vec c=0$, so that the channel acts linearly on Bloch vectors, $\Bloch\mapsto M\Bloch$. Writing $M=R_1\operatorname{diag}(\lambda_1,\lambda_2,\lambda_3)R_2$ with rotations $R_1$, $R_2$, which are unitary channels, reduces every unital qubit channel to a diagonal one, and the diagonal ones are the \emph{Pauli channels} $\Phi(\rho)=\sum_{i=0}^3p_i\sigma_i\rho\sigma_i$, with $\lambda_1=p_0+p_1-p_2-p_3$, $\lambda_2=p_0-p_1+p_2-p_3$ and $\lambda_3=p_0-p_1-p_2+p_3$ \citep{king2001minimal}. In the coordinates $\vec\lambda$ the picture is complete (Figure~\ref{fig:ch08:pauli}(a)). The map is positive if and only if the ellipsoid with the semi-axes $\abs{\lambda_i}$ lies in the ball, that is, if $\vec\lambda$ lies in the cube $[-1,1]^3$. It is completely positive if and only if $\abs{\lambda_1\pm\lambda_2}\le\abs{1\pm\lambda_3}$ \citep{fujiwara1999one,ruskai2002analysis}, that is, if $\vec\lambda$ lies in the tetrahedron whose vertices are the four unitary channels $\Id$, $\sigma_x$, $\sigma_y$, $\sigma_z$, at the corners of the cube with $\lambda_1\lambda_2\lambda_3=1$. The other four corners, with $\lambda_1\lambda_2\lambda_3=-1$, are positive but not completely positive; one of them is the transposition $(1,-1,1)$. The Choi matrix of a Pauli channel is a Bell-diagonal state, with $\vec t=(\lambda_1,-\lambda_2,\lambda_3)$ in the coordinates \eqref{eq:ch07:belldiag}, so that this tetrahedron is the tetrahedron of states of Figure~\ref{fig:ch07:bell}, reflected. The separable octahedron of that figure becomes the octahedron $\abs{\lambda_1}+\abs{\lambda_2}+\abs{\lambda_3}\le1$ of the \emph{entanglement-breaking} channels, those whose output is separable from any ancilla, or equivalently those that can be implemented by measuring the input and preparing a state according to the outcome \citep{horodecki2003entanglement,ruskai2003qubit}. Every unital qubit channel is a mixture of unitary channels, as the tetrahedron shows, but for $N\ge3$ there are unital channels that are not \citep{landau1993birkhoff}; the mixtures of unitaries are those produced by the random Schr\"odinger equation of \Chap~\ref{C.Open} \citep{lawrence2026geometric}.}
+\onp{\begin{itemize}
+    \item Unital qubit channels $=$ rotations $\circ$ Pauli channels $\circ$ rotations; coordinates $\vec\lambda$ \citep{king2001minimal}.
+    \item Positive: the cube. CP: the tetrahedron of $\Id,\sigma_x,\sigma_y,\sigma_z$ \citep{fujiwara1999one,ruskai2002analysis}. Transposition: a corner outside.
+    \item Via Choi: the Bell-diagonal tetrahedron of \Chap~\ref{C.GeometryStates}; the separable octahedron $=$ entanglement-breaking channels \citep{horodecki2003entanglement,ruskai2003qubit}.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The tetrahedron of Pauli channels}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch08_pauli.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch08_pauli.tex}}
+\caption{The unital maps of a qubit, and the Markovian ones among them. (a) After rotations before and after it, a unital map acts on the Bloch vector as $\Bloch\mapsto\operatorname{diag}(\lambda_1,\lambda_2,\lambda_3)\Bloch$. It is positive when $\vec\lambda$ lies in the cube $\abs{\lambda_i}\le1$, completely positive when it lies in the tetrahedron whose vertices are the identity and the unitary channels $\rho\mapsto\sigma\rho\sigma$ of the Pauli matrices, and entanglement breaking when it lies in the octahedron $\abs{\lambda_1}+\abs{\lambda_2}+\abs{\lambda_3}\le1$ (blue). The four remaining corners of the cube (rose) are positive but not completely positive; one of them is the transposition $T$. Since the Choi state of a Pauli channel is Bell-diagonal with $\vec t=(\lambda_1,-\lambda_2,\lambda_3)$, the tetrahedron and the octahedron are those of Figure~\ref{fig:ch07:bell}. Marked are the depolarising channels $(\lambda,\lambda,\lambda)$, $-\tfrac13\le\lambda\le1$, entanglement breaking for $\abs\lambda\le\tfrac13$ (dashed); complete dephasing; and the bit flip of \Chap~\ref{C.Open} with $p=0.3$. (b) The channels $\ee^{t\Lind}$ of the Pauli semigroups, $\Lind(\rho)=\sum_i\gamma_i(\sigma_i\rho\sigma_i-\rho)$ with $\gamma_i\ge0$, have $\lambda_j=\ee^{-2t(\gamma_k+\gamma_l)}$, and fill the region $\lambda_i\ge\lambda_j\lambda_k$, bounded by three saddles, which is not convex. Its section by the plane $\lambda_3=0.3$ is bounded by the hyperbola $\lambda_1\lambda_2=0.3$, which curves inwards. The channels $A=(0.9,0.3,0.3)$ and $B=(0.3,0.9,0.3)$ are Markovian, but their even mixture $(0.6,0.6,0.3)$ is not, since its rate $\gamma_3$ would be $-0.046$. Generated by \texttt{code/ch08\_pauli.py}.}\label{fig:ch08:pauli}
+\end{figure}}
+\end{frame}
+
+\section{Distances between channels}\label{sec:ch08:distances}
+
+\begin{frame}\ft{The diamond norm}
+\ona{How well can two channels $\Phi$ and $\Psi$ be told apart if we may use each once? We may prepare any input, and Helstrom's theorem (Theorem~\ref{thm:ch07:helstrom}) tells us how well the two outputs can be distinguished; but the input may also be entangled with an ancilla that the channel does not touch, and this can help.}
+\begin{defn}[Diamond norm]\label{def:ch08:diamond}
+For a linear map $\Delta$ on the operators of $\C^N$,
+\[
+    \dnorm\Delta\coloneqq\max_{\rho\in\Dens[\C^N\otimes\C^N]}\tracenorm{(\Delta\otimes\mathrm{id}_N)(\rho)} .
+\]
+The \emph{diamond distance} of two channels is $\tfrac12\dnorm{\Phi-\Psi}$.
+\end{defn}
+\ona{By Helstrom's theorem, the greatest probability of naming correctly, in one use, which of two equally likely channels was applied is $\tfrac12\big(1+\tfrac12\dnorm{\Phi-\Psi}\big)$. The norm was introduced by \citet{kitaev1997quantum}, who showed that an ancilla of the dimension $N$ of the system is always enough, and that the norm is stable: adding further idle systems does not increase it. It can be computed by a semidefinite programme \citep{watrous2009semidefinite}. Without the ancilla one obtains a smaller quantity, and the difference can be large. For the qubit maps $\Phi_\pm(\rho)=\tfrac{1}{2\pm1}\big(\Tr(\rho)\Id\pm\rho^\top\big)$ of \citet{werner2002counterexample}, which are channels, no single-qubit input makes their outputs further apart than $\tfrac23$ in trace distance; but sent through one half of the Bell state $\ket{\Phi^+}$ they produce the singlet and the normalised projector onto its orthogonal complement, which are perfectly distinguishable, so that $\tfrac12\dnorm{\Phi_+-\Phi_-}=1$ (Figure~\ref{fig:ch08:diamond}(a)).}
+\onp{\begin{itemize}
+    \item One use, best guess: success $\tfrac12(1+\tfrac12\dnorm{\Phi-\Psi})$; ancilla of dimension $N$ suffices; stable \citep{kitaev1997quantum}; an SDP \citep{watrous2009semidefinite}.
+    \item The ancilla matters: for the Werner--Holevo pair \citep{werner2002counterexample}, $\tfrac23$ without it, $1$ with it.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Average case and worst case}
+\ona{In control and in experiments one more often uses fidelities, which are averages. The \emph{process fidelity} of a channel $\Phi$ with a unitary target $U$ is the fidelity of the normalised Choi states, $\Fid_{\mathrm{pro}}=\Fid\big(\Choi\Phi/N,\Choi{U\cdot U^\dagger}/N\big)=\tfrac1{N^2}\sum_k\abs{\Tr(U^\dagger K_k)}^2$, and the \emph{average gate fidelity} is the fidelity of the output with the target output, averaged over pure inputs drawn uniformly,}
+\onp{Process fidelity $\Fid_{\mathrm{pro}}=\tfrac1{N^2}\sum_k\abs{\Tr(U^\dagger K_k)}^2$; average gate fidelity \citep{horodecki1999general,nielsen2002simple}:}
+\begin{equation}\label{eq:ch08:avgfid}
+    \bar\Fid(\Phi,U)=\int\braket{\psi|U^\dagger\Phi(\ket\psi\bra\psi)U|\psi}\,\mathrm d\psi=\frac{N\Fid_{\mathrm{pro}}+1}{N+1}
+\end{equation}
+\ona{\citep{horodecki1999general,nielsen2002simple}. For a unitary channel $V\cdot V^\dagger$ the process fidelity is $\abs{\Tr(U^\dagger V)}^2/N^2$, the gate fidelity used as an objective in \Chaps~\ref{C.Motivation}, \ref{C.GeometryControl} and~\ref{C.AlgControl}. Since the Choi state of a unitary target is pure, the Fuchs--van de Graaf inequalities of \Chap~\ref{C.GeometryStates} and the comparison of the diamond norm with the trace norm of Choi states give}
+\onp{Bounds, from Fuchs--van de Graaf (\Chap~\ref{C.GeometryStates}):}
+\begin{equation}\label{eq:ch08:dnbounds}
+    1-\Fid_{\mathrm{pro}}\ \le\ \tfrac12\dnorm{\Phi-U\cdot U^\dagger}\ \le\ N\sqrt{1-\Fid_{\mathrm{pro}}} .
+\end{equation}
+\ona{The gap between the two sides is not an artefact of the proof. A stochastic error, such as $\sigma_z$ applied with the probability $p$, has a diamond distance from the identity proportional to its infidelity, but a coherent error, such as the over-rotation $\ee^{-\imath\theta\sigma_z/2}$, has a diamond distance proportional to the square root of its infidelity. At an average infidelity $r=1-\bar\Fid=10^{-4}$, typical of a good gate today, the stochastic error has the diamond distance $1.5\cdot10^{-4}$ and the coherent one $1.2\cdot10^{-2}$ (Figure~\ref{fig:ch08:diamond}(b)). The thresholds of fault-tolerant quantum computation are stated in the diamond norm, while experiments report average fidelities, and the conversion between the two depends on the nature of the error \citep{sanders2016bounding,kueng2016comparing}.}
+\onp{\begin{itemize}
+    \item Stochastic errors: diamond $\propto$ infidelity. Coherent errors: diamond $\propto\sqrt{\text{infidelity}}$.
+    \item At $r=10^{-4}$: $1.5\cdot10^{-4}$ against $1.2\cdot10^{-2}$; thresholds are stated in the diamond norm \citep{sanders2016bounding,kueng2016comparing}.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Distinguishing channels, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch08_diamond.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch08_diamond.tex}}
+\caption{Distinguishing channels. (a) The qubit channels $\Phi_+(\rho)=\tfrac13(\Tr(\rho)\Id+\rho^\top)$ and $\Phi_-(\rho)=\Tr(\rho)\Id-\rho^\top=\sigma_y\rho\sigma_y$ of \citet{werner2002counterexample}. On the left, the $(x,z)$ section of the Bloch ball: $\Phi_+$ shrinks it to a ball of radius $\tfrac13$, and $\Phi_-$ turns it through $\pi$ about the $y$-axis, so that the two images of a pure input lie at the trace distance $\tfrac23$, and no single-qubit input does better. On the right, one half of the maximally entangled state $\ket{\Phi^+}$ is sent through the channel; the outputs, $\tfrac13\Pi_{\rm sym}$ and the singlet, are orthogonal, so that with an ancilla the two channels are perfectly distinguishable. (b) The diamond distance from the identity against the average gate infidelity $r=1-\bar\Fid$ for a qubit, on logarithmic scales. Every channel lies in the band between the bounds \eqref{eq:ch08:dnbounds}, here $\tfrac32r$ and $2\sqrt{3r/2}$. A stochastic $\sigma_z$ error lies on the lower bound, and a coherent over-rotation $\ee^{-\imath\theta\sigma_z/2}$ follows $\sqrt{3r/2}$; at $r=10^{-4}$ the two differ by almost two orders of magnitude. Generated by \texttt{code/ch08\_diamond.py}.}\label{fig:ch08:diamond}
+\end{figure}}
+\end{frame}
+
+\section{Divisibility and Markovianity}\label{sec:ch08:markov}
 
 \begin{frame}\ft{Why the classical definition does not transfer}
-\ona{When computing the dynamics of an open quantum system, assumptions are often made in order to simplify the description and facilitate the efficient modelling of the system. One of the most well-known assumptions is the Markovian property~\cite{Bhattacharya2016}. Intuitively, a system's evolution is called Markovian in the classical sense if the evolution of the state only depends on the state at the current time: the system has no history and is memoryless. Mathematically, a stochastic process is Markovian if}
+\ona{When computing the dynamics of an open quantum system, assumptions are often made in order to simplify the description and facilitate the efficient modelling of the system. One of the best known is the Markovian property \citep{Bhattacharya2016}. Intuitively, a system's evolution is called Markovian in the classical sense if the evolution of the state depends only on the state at the current time: the system has no history and is memoryless. Mathematically, a stochastic process is Markovian if}
 \begin{equation}\label{eq:ch08:classical-markov}
-    P(x_n,t_n\,|\,x_{n-1},t_{n-1};\dots;x_0,t_0)=P(x_n,t_n\,|\,x_{n-1},t_{n-1}),\qquad\forall t_n>t_{n-1}>\dots>t_0 .
+    P(x_n,t_n\,|\,x_{n-1},t_{n-1};\dots;x_0,t_0)=P(x_n,t_n\,|\,x_{n-1},t_{n-1}),\qquad t_n>t_{n-1}>\dots>t_0 .
 \end{equation}
-\ona{In the context of quantum systems, this definition is problematic due to the equality of conditional probabilities in the above equation. The left-hand side contains a series of measurements which represent device-dependent perturbations introduced into the system when extracting data. This causes the definition to be inherently dependent on the measurement, which collapses the system partially and introduces a significant change into the system. One must therefore search for an alternative description of a quantum Markovian process. There is no overall consensus on such an analogous definition, as many criteria and Markovian-related concepts have been proposed but fail to capture the memorylessness of open quantum systems fully. These concepts can be divided into two categories~\cite{LI20181}: (i) those that only consider the dynamics of the reduced system~\cite{rivas_14,Rivas_entanglement,Breuer2016,Breuer_09}, and (ii) those that consider the interaction between the reduced system and its environment. The choice of definition is highly context dependent; we discuss the concept of a divisible process from the first category, as we choose the common Lindbladian definition of Markovianity.}
+\ona{In the context of quantum systems this definition is problematic. The left-hand side conditions on a series of measurements, which are device-dependent perturbations introduced into the system when extracting data; the definition is thus inherently dependent on the measurement, which partially collapses the system and changes it significantly. One must therefore look for another description of a quantum Markovian process. There is no consensus on such a definition: many criteria and related concepts have been proposed, none of which captures the memorylessness of open quantum systems fully. They fall into two categories \citep{LI20181}: those that consider only the dynamics of the reduced system \citep{rivas_14,Breuer2016,Breuer_09}, and those that consider its interaction with the environment. The choice is context dependent; we discuss divisibility, which belongs to the first category and leads to the common Lindbladian definition of Markovianity.}
 \onp{\begin{itemize}
-    \item Classical: $P(x_n,t_n|x_{n-1},\dots,x_0)=P(x_n,t_n|x_{n-1},t_{n-1})$: memoryless.
-    \item Quantum: the conditioning events are \emph{measurements}, which disturb the system $\Rightarrow$ the definition depends on the measurement device.
-    \item No consensus~\cite{LI20181}; two families: (i) reduced dynamics only (divisibility, we follow this), (ii) system--environment.
+    \item Classical: the future depends on the past only through the present.
+    \item Quantum: conditioning on the past means \emph{measuring} it, which disturbs the system.
+    \item No consensus \citep{LI20181}; we follow the reduced dynamics: divisibility \citep{rivas_14,Breuer2016}.
 \end{itemize}}
 \end{frame}
 
 \begin{frame}\ft{Divisibility}
-\ona{Besides Markov processes, one may study the slightly weaker notion of divisibility. A random process is called divisible if the transitions are governed by $P(x_1,t_1)=\sum_{x_0}T(x_1,t_1|x_0,t_0)P(x_0,t_0)$ where $T$ is called the transition matrix. For Markovian processes $T(x_1,t_1|x_0,t_0)=P(x_1,t_1|x_0,t_0)$, and for consecutive times $t_2\ge t_1\ge t_0$ these matrices are stochastic and satisfy the composition law $T(x_2,t_2|x_0,t_0)=\sum_{x_1}T(x_2,t_2|x_1,t_1)T(x_1,t_1|x_0,t_0)$. Any process described by these equations is said to be divisible. Hence all Markovian processes are divisible, but the converse does not hold~\cite{Markov_div_13,Vacchini_2011}. Divisibility refers to the ability to break down the evolution from $t_0$ to $t_1$ into intermediate steps without implying memorylessness.}
-\ona{By equating the dynamical map of a quantum process with the transition matrices, these maps will also obey the composition law}
-\onp{Classical: divisible $\Leftarrow$ Markov, transition matrices compose. Quantum analogue:}
-\begin{equation}\label{eq:ch08:composition}
-    \mathcal{E}_{t_2,t_0}=\mathcal{E}_{t_2,t_1}\,\mathcal{E}_{t_1,t_0},\qquad t_2\ge t_1\ge t_0 .
-\end{equation}
+\ona{A classical process is called divisible if its transition matrices compose, $T(t_2|t_0)=T(t_2|t_1)T(t_1|t_0)$, with every factor stochastic. All Markovian processes are divisible, but not conversely \citep{Markov_div_13,Vacchini_2011}; divisibility is the ability to break the evolution into intermediate steps, without implying that the process is memoryless in the sense of \eqref{eq:ch08:classical-markov}. The quantum analogue replaces the transition matrices by the dynamical maps.}
 \begin{defn}[P- and CP-divisibility]\label{def:ch08:divisible}
-A family $\{\mathcal{E}_{t,s}\}$ of channels satisfying \eqref{eq:ch08:composition} with all intermediate maps $\mathcal{E}_{t_2,t_1}$ positive and trace preserving is called P-divisible~\cite{rivas_14}; if the intermediate maps are completely positive, CP-divisible.
+A family of channels $\{\Phi_t\}_{t\ge0}$ is \emph{P-divisible} if for all $t\ge s\ge0$ there is a positive trace-preserving map $\mathcal E_{t,s}$ with $\Phi_t=\mathcal E_{t,s}\Phi_s$, and \emph{CP-divisible} if every $\mathcal E_{t,s}$ can be taken completely positive \citep{rivas_14}.
 \end{defn}
+\begin{propn}[Nested images]\label{prop:ch08:nested}
+If $\{\Phi_t\}$ is P-divisible, then $\Phi_t(\Dens)\subseteq\Phi_s(\Dens)$ and $D(\Phi_t\rho,\Phi_t\sigma)\le D(\Phi_s\rho,\Phi_s\sigma)$ for all $t\ge s$ and all states $\rho,\sigma$.
+\end{propn}
+\ona{\begin{pf}
+$\Phi_t(\Dens)=\mathcal E_{t,s}\big(\Phi_s(\Dens)\big)\subseteq\Phi_s(\Dens)$, since $\mathcal E_{t,s}$ maps states to states; and the trace distance cannot increase under the positive trace-preserving map $\mathcal E_{t,s}$ (Theorem~\ref{thm:ch07:contract}).
+\end{pf}}
+\ona{The second statement is the criterion of \citet{Breuer_09}: an increase of the trace distance between two evolving states, a flow of information back from the environment, rules out divisibility. The first gives a picture. For a qubit the image $\Phi_t(\Dens)$ is an ellipsoid in the Bloch ball, and a divisible family of channels has ellipsoids that shrink into one another as time goes on (Figure~\ref{fig:ch08:nested}(a)). For the qubit with the hidden defect of \Chap~\ref{C.StateSpace}, the reduced channel is amplitude damping with the time-dependent amplitude $c(t)$ of \Chap~\ref{C.GeometryStates}, and its image is the ellipse with the semi-axes $\abs{c(t)}$ and $c(t)^2$. At $t=1.81$, where $c$ vanishes, the image collapses to the single point $\ket0$, and afterwards it grows again (Figure~\ref{fig:ch08:nested}(b)). No map whatever, positive or not, can turn a point into an ellipse, so this family is not divisible at all: the excitation that returns from the defect carries information that the qubit alone had lost.}
 \onp{\begin{itemize}
-    \item CP-divisible $\Rightarrow$ P-divisible $\Rightarrow$ trace distance $D(\mathcal{E}_t\rho,\mathcal{E}_t\sigma)$ non-increasing (\citet{Breuer_09}): information only flows out.
-    \item Converses fail: P-divisible maps with negative rates exist~\cite{CHRUSCINSKI20131425}.
+    \item P-divisible $\Rightarrow$ images nested and trace distance non-increasing \citep{Breuer_09}.
+    \item Hidden defect (\Chap~\ref{C.StateSpace}): the image collapses to $\ket0$ at $t=1.81$, then grows: not divisible at all.
 \end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Nested images}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch08_nested.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch08_nested.tex}}
+\caption{Nested images. (a) The qubit of \Chap~\ref{C.Frequency}, a semigroup: the section of the image of the Bloch ball under $\Phi_t$ is an ellipse with the semi-axes $\ee^{-\Gamma t}$ and $\ee^{-\gamma_1t}$, centred at $(0,1-\ee^{-\gamma_1t})$. Drawn for $t=0.5$, $1$, $2$ and $4$, each image lies inside the one before, and they close in on $\ket0$. (b) The qubit with the hidden defect of \Chap~\ref{C.StateSpace}, in the frame rotating at $\omega$: its channel is amplitude damping with the amplitude $c(t)$, and its image the ellipse with the semi-axes $\abs{c}$ and $c^2$. At $t=1.81$, where $c=0$, the image is the single point $\ket0$; at $t=3.21$ it is larger again (dashed). Since no map whatever can take a point to a larger set, the family cannot be divided into maps at all. (c) The time-local rate $\gamma(t)=-2\tfrac{\mathrm d}{\mathrm dt}\ln\abs{c(t)}$ of the defect, infinite where $c$ vanishes (dotted) and negative, shaded, while $\abs{c}$ grows; for comparison, the constant rate $\gamma_1=0.2$ of the qubit of \Chap~\ref{C.Frequency} (dashed). Generated by \texttt{code/ch08\_nested.py}.}\label{fig:ch08:nested}
+\end{figure}}
 \end{frame}
 
 \begin{frame}\ft{CP-divisibility and time-local master equations}
-\begin{propn}[Consequence of CP-divisibility~\cite{wolf06,Rivas2011OpenQS,Kossakowski10}]\label{prop:ch08:cpdiv}
-Let $\{\mathcal{E}_{t,t_0}\}_{t\ge t_0}$ be a family of CPTP maps that is differentiable in $t$ and invertible for every $t\ge t_0$. The dynamics are governed by a CP-divisible dynamical map if and only if there exists a master equation of the form
+\begin{propn}[\citealp{wolf06,Rivas2011OpenQS,Kossakowski10}]\label{prop:ch08:cpdiv}
+Let $\{\Phi_t\}_{t\ge0}$ be a family of channels, differentiable in $t$ and invertible for every $t$. It is CP-divisible if and only if it satisfies a master equation of the form
 \begin{equation}\label{eq:ch08:timelocal}
-    \dot\rho(t)=-\imath\comm{H(t)}{\rho(t)}+\sum_k\gamma_k(t)\Big[V_k(t)\rho(t)V_k(t)^\dagger-\tfrac12\acomm{V_k(t)^\dagger V_k(t)}{\rho(t)}\Big],
+    \dot\rho(t)=-\imath\comm{H(t)}{\rho(t)}+\sum_k\gamma_k(t)\Big[V_k(t)\rho(t)V_k(t)^\dagger-\tfrac12\acomm{V_k(t)^\dagger V_k(t)}{\rho(t)}\Big]
 \end{equation}
-where $H$ is self-adjoint, $\gamma_k(t)\ge0$ and $V_k$ are time-dependent operators.
+with $H(t)$ Hermitian and all rates $\gamma_k(t)\ge0$.
 \end{propn}
-\ona{Note that mere positivity of the evolution is not sufficient to guarantee the positivity of the rates $\gamma_k$, as examples of P-divisible maps with negative rates have been found~\cite{CHRUSCINSKI20131425}. CP-divisibility is only one of several possible definitions for quantum Markovianity and does not imply Markovianity in the operational, multi-time sense~\cite{Milz2019}. The ``if'' direction holds without the differentiability and invertibility assumptions; the converse requires them, since the time-local generator is constructed as $\Lind(t)=\dot{\mathcal{E}}_{t,t_0}\mathcal{E}_{t,t_0}^{-1}$. Geometrically: CP-divisible evolutions are exactly the curves in $\Chan$ whose \emph{logarithmic derivative} stays in the cone of GKSL generators at every instant.}
+\ona{The generator is $\Lind(t)=\dot\Phi_t\Phi_t^{-1}$, which is where invertibility is needed; the canonical form of $\Lind(t)$, with the rates $\gamma_k(t)$ as the eigenvalues of a Kossakowski matrix, is that of Theorem~\ref{thm:ch03:gksl} \citep{Hall2014}. The rates of the defect are $\gamma(t)=-2\,\tfrac{\mathrm d}{\mathrm dt}\ln\abs{c(t)}$, negative while $\abs c$ grows and infinite where $c$ vanishes, so that the generator does not exist at those instants (Figure~\ref{fig:ch08:nested}(c)); this is the non-Markovianity foreshadowed in \Chap~\ref{C.Open}. Positivity of the intermediate maps is weaker than complete positivity, and P-divisible families with a rate that is negative for all $t>0$ exist: for the Pauli dynamics with the rates $\gamma_1=\gamma_2=1$ and $\gamma_3(t)=-\tanh t$ of \citet{Hall2014}, every $\Phi_t$ is a channel and the family is P-divisible, but it is not CP-divisible at any time. CP-divisibility is one of several possible definitions of quantum Markovianity, and it does not imply Markovianity in the operational, multi-time sense \citep{Milz2019}. Geometrically, the CP-divisible families are the curves in $\Chan$ whose logarithmic derivative $\dot\Phi_t\Phi_t^{-1}$ lies at every instant in the convex cone of GKSL generators.}
 \onp{\begin{itemize}
-    \item CP-divisible $\Leftrightarrow$ time-local GKSL with $\gamma_k(t)\ge0$ (given differentiability, invertibility).
-    \item Generator $\Lind(t)=\dot{\mathcal{E}}_{t,t_0}\mathcal{E}_{t,t_0}^{-1}$: a curve in $\Chan$ whose log-derivative stays in the GKSL cone.
-    \item Negative $\gamma_k(t)$ $\Leftrightarrow$ information back-flow (non-Markovian in this sense).
+    \item $\Lind(t)=\dot\Phi_t\Phi_t^{-1}$ in canonical form \citep{Hall2014}; negative rate $\Leftrightarrow$ not CP-divisible.
+    \item Defect: $\gamma(t)=-2\tfrac{\mathrm d}{\mathrm dt}\ln\abs{c(t)}$, negative while the image grows.
+    \item P- but not CP-divisible: $\gamma_1=\gamma_2=1$, $\gamma_3(t)=-\tanh t$ \citep{Hall2014}.
+    \item CP-divisible $\not\Rightarrow$ Markovian in the multi-time sense \citep{Milz2019}.
 \end{itemize}}
-\end{frame}
-
-\begin{frame}\ft{Information back-flow: a toy example}
-\ona{Pure dephasing multiplies the off-diagonal element of a qubit density matrix by a function $c(t)$, and is CPTP for every $t$ as long as $\abs{c(t)}\le1$. For the pair $\rho_\pm=\ket\pm\bra\pm$ the trace distance is $D(t)=\abs{c(t)}$. With $c(t)=\ee^{-\gamma t}$ the family is a semigroup and $D$ decreases monotonically; with $c(t)=\ee^{-\gamma t}\cos\omega t$ (a qubit coupled to a single oscillator mode produces such revivals) the trace distance increases on some intervals: the intermediate maps $\mathcal{E}_{t_2,t_1}$ are not even positive, the time-local rate $\gamma(t)=-\dd{t}\log\abs{c(t)}$ is negative there, and the process is non-Markovian by any of the divisibility criteria.}
-\onp{Dephasing $\rho_{01}\mapsto c(t)\rho_{01}$: CPTP for each $t$ iff $\abs{c(t)}\le1$; $D(\mathcal{E}_t\rho_+,\mathcal{E}_t\rho_-)=\abs{c(t)}$; rate $\gamma(t)=-\dd{t}\log\abs{c(t)}$.
-\begin{center}\resizebox{!}{0.5\textheight}{\input{figures/ch08_divisibility.tex}}\end{center}}
-\ona{\begin{figure}[h]\centering
-\input{figures/ch08_divisibility.tex}
-\caption{Trace distance between two evolving qubit states under pure dephasing with coherence factor $c(t)$, from \texttt{code/ch08\_divisibility.py} ($\gamma=0.4$, $\omega=2$). Monotone decay for the semigroup; revivals, i.e.\ information flowing back from the environment, for the non-Markovian toy model.}
-\label{fig:ch08:divisibility}
-\end{figure}}
 \end{frame}
 
 \begin{frame}\ft{Dynamical semigroups}
-\ona{Another important way to express quantum evolution is by considering the evolution operators to be governed by a semigroup. This is a much stronger notion than the divisibility of \eqref{eq:ch08:composition}. In addition to the composition law, we require the evolution to be invariant under translations in time. We call the family $\{\mathcal{E}_{t_1,t_2}\}$ \emph{time homogeneous} if $\mathcal{E}_{t_1,t_2}$ depends on $t_1$ and $t_2$ only through the elapsed time $t_2-t_1$, so that we may write $\mathcal{E}_{t_1,t_2}=\mathcal{E}_{t_2-t_1}$. In that case \eqref{eq:ch08:composition} reduces to the one-parameter relation}
+\ona{A stronger requirement than divisibility is invariance under translations in time. A family is \emph{time homogeneous} if $\mathcal E_{t,s}$ depends only on $t-s$, and then the composition law reduces to}
 \begin{equation}\label{eq:ch08:semigroup}
-    \mathcal{E}_{\tau_1}\mathcal{E}_{\tau_2}=\mathcal{E}_{\tau_1+\tau_2}\qquad\forall\tau_1,\tau_2\ge0 .
+    \Phi_{\tau_1}\Phi_{\tau_2}=\Phi_{\tau_1+\tau_2}\qquad\tau_1,\tau_2\ge0 .
 \end{equation}
-\ona{A \emph{quantum dynamical semigroup} is a one-parameter family $\{\mathcal{E}_\tau\}_{\tau\ge0}$ of CPTP maps satisfying \eqref{eq:ch08:semigroup} together with $\mathcal{E}_0=\mathrm{id}$ and $\lim_{\tau\to0^+}\norm{\mathcal{E}_\tau(X)-X}=0$ for every $X$. Commutativity is then automatic, and the continuity condition is what guarantees the existence of a generator: $\mathcal{E}_\tau=\ee^{\tau\Lind}$ with $\Lind$ of GKSL form with \emph{constant} $H$ and Kossakowski matrix $\gamma\succeq0$~\cite{gorini1976completely,Lindblad1976}. In the coherence-vector picture this is the autonomous linear system $\dot{\vec x}=\mathbf A\vec x+\vec\beta$ of \Chap~\ref{C.Open}, and identifying $\Lind$ from data is the subject of \Chaps~\ref{C.StateSpace}--\ref{C.SampleComplexity}.}
+\ona{A \emph{quantum dynamical semigroup} is a family of channels satisfying \eqref{eq:ch08:semigroup} with $\Phi_0=\mathrm{id}$, and with $\Phi_\tau(X)\to X$ as $\tau\to0^+$ for every $X$. The continuity guarantees a generator: $\Phi_\tau=\ee^{\tau\Lind}$ with $\Lind$ of the GKSL form with a constant Hamiltonian and a constant Kossakowski matrix $\gamma\succeq0$ \citep{gorini1976completely,Lindblad1976}. In the coordinates of the coherence vector this is the autonomous linear system $\dot{\vec x}=\mathbf A\vec x+\vec\beta$ of \Chap~\ref{C.Open}, and the identification of $\Lind$ from data is the subject of \Chaps~\ref{C.StateSpace}--\ref{C.SampleComplexity}. The qubit of \Chap~\ref{C.Frequency} is a semigroup; the dephasing by Ornstein--Uhlenbeck noise of \Chap~\ref{C.Open}, whose rate $b_{\rm rms}^2\tau_c\big(1-\ee^{-t/\tau_c}\big)$ is non-negative but grows with time, is CP-divisible but not a semigroup, and becomes one only in the white-noise limit. Figure~\ref{fig:ch08:families} places the examples of this section in the hierarchy of families.}
 \onp{\begin{itemize}
-    \item Time homogeneous $+$ divisible: $\mathcal{E}_{\tau_1}\mathcal{E}_{\tau_2}=\mathcal{E}_{\tau_1+\tau_2}$, $\mathcal{E}_0=\mathrm{id}$, strongly continuous.
-    \item Then $\mathcal{E}_\tau=\ee^{\tau\Lind}$ with a constant GKSL generator~\cite{gorini1976completely,Lindblad1976}: the autonomous linear system $\dot{\vec x}=\mathbf A\vec x+\vec\beta$ (\Chap~\ref{C.Open}).
-    \item Identification of $\Lind$: \Chaps~\ref{C.StateSpace}--\ref{C.SampleComplexity}.
+    \item Time homogeneous $+$ divisible: $\Phi_\tau=\ee^{\tau\Lind}$, constant GKSL generator \citep{gorini1976completely,Lindblad1976}: $\dot{\vec x}=\mathbf A\vec x+\vec\beta$.
+    \item Ornstein--Uhlenbeck dephasing (\Chap~\ref{C.Open}): rate $\ge0$ but time dependent; CP-divisible, not a semigroup.
 \end{itemize}}
 \end{frame}
 
-\begin{frame}\ft{The hierarchy at a glance}
-\ona{Figure~\ref{fig:ch08:hierarchy} arranges the classes of maps met so far by inclusion. The Perspective paper organises the corresponding \emph{equations} (Nakajima--Zwanzig, Redfield, Lindblad, dynamical maps, linear and bilinear systems) in a dendrogram of approximations---separability, Born, Markov---which we discussed in \Chap~\ref{C.Open}; the picture below is its static counterpart in terms of the maps themselves.}
-\ona{\begin{figure}[h]\centering
-\resizebox{0.9\textwidth}{!}{\input{figures/ch08_hierarchy.tex}}
-\caption{Nested classes of trace-preserving maps, from Hermiticity-preserving linear maps down to unitary conjugations; the Markovian descriptions of \Chap~\ref{C.Open} live in the two innermost classes. Drawn by \texttt{code/ch08\_hierarchy.py}.}
-\label{fig:ch08:hierarchy}
+\begin{frame}\ft{The hierarchy of families}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch08_families.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{0.85\linewidth}{!}{\input{figures/ch08_families.tex}}
+\caption{The hierarchy of families of channels. In a P-divisible family every later channel is an earlier one followed by a positive map, in a CP-divisible family by a channel, and a semigroup has moreover a generator that does not change in time. In each class is one example with a sketch of its rates. The qubit of \Chap~\ref{C.Frequency} has constant rates. The dephasing of \Chap~\ref{C.Open} by Ornstein--Uhlenbeck noise, with $b_{\rm rms}=1$ and $\tau_c=0.5$, has the rate $\gamma(t)=b_{\rm rms}^2\tau_c(1-\ee^{-t/\tau_c})$, never negative but growing. The Pauli dynamics of \citet{Hall2014} has the rates $\gamma_1=\gamma_2=1$ and $\gamma_3=-\tanh t$: every sum of two rates is non-negative, so that the family is P-divisible, but $\gamma_3<0$, and the map from $t=0.5$ to $t=1$ is not completely positive. The trace distance of the qubit with the hidden defect of \Chap~\ref{C.StateSpace} revives, so that this family is not even P-divisible. Generated by \texttt{code/ch08\_families.py}.}\label{fig:ch08:families}
 \end{figure}}
-\onp{\begin{center}\resizebox{!}{0.7\textheight}{\input{figures/ch08_hierarchy.tex}}\end{center}}
 \end{frame}
 
-\section{Distances between channels}
+\section{Groups and semigroups of channels}\label{sec:ch08:lie}
 
-\begin{frame}\ft{Diamond norm, process fidelity, gate fidelity}
-\begin{defn}\label{def:ch08:distances}
-For channels $\mathcal{E},\mathcal{F}$ on $\Hil$:
-\begin{itemize}
-    \item diamond distance $\tfrac12\dnorm{\mathcal{E}-\mathcal{F}}\coloneqq\tfrac12\max_{\rho\in\Dens[\Hil\otimes\Hil]}\tracenorm{(\mathcal{E}\otimes I-\mathcal{F}\otimes I)(\rho)}$;
-    \item process (entanglement) fidelity $\Fid_{\mathrm{pro}}(\mathcal{E},\mathcal{F})\coloneqq\Fid\big(\Choi{\mathcal{E}}/N,\Choi{\mathcal{F}}/N\big)$, which for a unitary target $\mathcal{F}=U\cdot U^\dagger$ equals $\tfrac{1}{N^2}\sum_k\abs{\Tr(U^\dagger E_k)}^2$;
-    \item average gate fidelity $\bar\Fid(\mathcal{E},U)\coloneqq\int\braket{\psi|U^\dagger\mathcal{E}(\ket\psi\bra\psi)U|\psi}\,\mathrm d\psi=\dfrac{N\Fid_{\mathrm{pro}}+1}{N+1}$ \citep{nielsen2002simple}.
-\end{itemize}
-\end{defn}
-\ona{The diamond distance is the channel analogue of the trace distance: it is the best probability of telling $\mathcal{E}$ from $\mathcal{F}$ in one use, with an ancilla allowed (the ancilla matters: the maximisation over $\Dens[\Hil]$ alone gives a smaller, non-stabilised quantity). It is the norm in which fault-tolerance thresholds are stated, and it can be computed by a semidefinite programme \citep{watrous2009semidefinite}. The process fidelity is the fidelity of the normalised Choi states, i.e.\ a statement about $\Chan$ as a subset of $\Dens[\Hil\otimes\Hil]$; for a unitary channel $\mathcal{E}(\rho)=V\rho V^\dagger$ it reduces to $\abs{\Tr(U^\dagger V)}^2/N^2$, the gate fidelity used as an objective in Lecture~\ref{C.Motivation} and \Chap~\ref{C.GeometryControl}. The three are related by Fuchs--van de Graaf-type inequalities, $1-\Fid_{\mathrm{pro}}\le\tfrac12\dnorm{\mathcal{E}-\mathcal{F}}\le N\sqrt{1-\Fid_{\mathrm{pro}}}$, with the dimension factor again appearing when converting an average-case quantity into a worst-case one.}
-\onp{\begin{itemize}
-    \item Diamond: worst-case one-shot distinguishability with ancilla; an SDP \citep{watrous2009semidefinite}; used for error thresholds.
-    \item Process fidelity: fidelity of Choi states; for unitaries $\abs{\Tr U^\dagger V}^2/N^2$, the objective of \Chap~\ref{C.GeometryControl}.
-    \item $1-\Fid_{\mathrm{pro}}\le\tfrac12\dnorm{\mathcal{E}-\mathcal{F}}\le N\sqrt{1-\Fid_{\mathrm{pro}}}$: average vs.\ worst case, a factor $N$.
+\begin{frame}\ft{Unitary channels: a Lie group}
+\ona{The unitary channels $\rho\mapsto U\rho U^\dagger$ form a copy of the projective unitary group $\mathrm{PU}(N)$, the unitaries up to a phase, inside $\Chan$, and they lie among its extreme points (Theorem~\ref{thm:ch08:extreme}). As a compact Lie group it carries the bi-invariant Riemannian metric $\inner XY=\Tr(X^\dagger Y)$ on $\liesu[N]$, whose geodesics through $\Id$ are the one-parameter groups $t\mapsto\ee^{-\imath Ht}$; the distance from $\Id$ to $U$ is the length of the vector of the eigenphases of $U$, taken in $(-\pi,\pi]$ and shifted by a common phase to make it shortest. In \Chap~\ref{C.GeometryControl} the controls restrict the velocities $-\imath H$ to the drift and the span of the control Hamiltonians, which replaces this Riemannian geometry by a sub-Riemannian one and makes the length of a trajectory, and hence the least time, a measure of the complexity of $U$ (\Chap~\ref{C.Complexity}).}
+\onp{\begin{itemize}\setlength\itemsep{0.5em}
+    \item Unitary channels $\cong\mathrm{PU}(N)$: a compact Lie group, among the extreme points of $\Chan$.
+    \item Bi-invariant metric $\Tr(X^\dagger Y)$; geodesics $\ee^{-\imath Ht}$; distance from the eigenphases.
+    \item Restricted velocities: sub-Riemannian geometry (\Chap~\ref{C.GeometryControl}); length and complexity (\Chap~\ref{C.Complexity}).
 \end{itemize}}
 \end{frame}
 
-\section{Lie group and Lie semigroup}
-
-\begin{frame}\ft{Unitaries: a compact Lie group with a bi-invariant metric}
-\ona{The unitary channels form a copy of $\SU[N]/\{\text{phases}\}=\mathrm{PU}(N)$ inside $\Chan$, sitting among the extreme points. As a compact Lie group it carries the bi-invariant Riemannian metric $\inner{X}{Y}=\Tr(X^\dagger Y)$ on $\liesu[N]$, whose geodesics through $\Id$ are the one-parameter groups $t\mapsto\ee^{-\imath Ht}$; the distance from $\Id$ to $U$ is $\norm{\vec\phi}$ where $\ee^{\imath\phi_k}$ are the eigenvalues of $U$ with phases taken in $(-\pi,\pi]$. In \Chap~\ref{C.GeometryControl} the control problem restricts the allowed velocities $-\imath H$ to the drift plus the span of the control Hamiltonians, which replaces this Riemannian geometry by a sub-Riemannian one and makes the length of a trajectory, hence the minimum time, a measure of the complexity of $U$ (\Chap~\ref{C.Complexity}).}
-\onp{\begin{itemize}
-    \item Unitary channels $\cong\mathrm{PU}(N)$: compact Lie group, extreme points of $\Chan$.
-    \item Bi-invariant metric $\Tr(X^\dagger Y)$ on $\liesu[N]$; geodesics $\ee^{-\imath Ht}$; $d(\Id,U)=\norm{\vec\phi}$ from the eigenphases.
-    \item Restricting velocities to drift $+$ controls $\Rightarrow$ sub-Riemannian geometry (\Chap~\ref{C.GeometryControl}), length $=$ complexity (\Chap~\ref{C.Complexity}).
+\begin{frame}\ft{Markovian channels: a Lie semigroup}
+\ona{The channels of the form $\ee^{\Lind}$, with $\Lind$ a GKSL generator, and more generally those reached by CP-divisible families, are closed under composition and contain the identity, and they are generated by the convex cone of GKSL generators; they form a \emph{Lie semigroup}. They are not closed under mixtures. For Pauli channels the semigroup is the curved region $\lambda_i\ge\lambda_j\lambda_k$ of the positive octant, and the midpoint of the Markovian channels $(0.9,0.3,0.3)$ and $(0.3,0.9,0.3)$ lies outside it, since its rate $\gamma_3$ would have to be negative (Figure~\ref{fig:ch08:pauli}(b)) \citep{wolf2008assessing,davalos2019divisibility}. Nor do they include every channel. The determinant of $\ee^{\Lind}$ is positive, so that a qubit channel whose matrix $M$ has a negative determinant, such as $\Bloch\mapsto-\tfrac13\Bloch$, the best physical approximation to the impossible inversion of the Bloch ball \citep{buzek1999optimal}, is not of the form $\ee^{\Lind}$; some channels cannot even be divided into two channels that are not unitary \citep{wolf06}. Deciding whether a given channel is Markovian in this sense is NP-hard \citep{cubitt2012complexity}.}
+\ona{Two consequences matter in this course. Controlled GKSL dynamics, $\dot{\vec x}=(\mathbf A+\sum_ku_k\mathbf N_k)\vec x+\vec\beta$, is a bilinear system on a semigroup rather than on a group, so that controllability must be replaced by accessibility and the reachable sets are not symmetric in time (\Chap~\ref{C.StateSpace}). And fitting a GKSL model to data is a constrained problem whose feasible set is not convex, which is one motivation for the polynomial optimisation of \Chap~\ref{C.AlgTomography}.}
+\onp{\begin{itemize}\setlength\itemsep{0.4em}
+    \item $\{\ee^{\Lind}\}$: a Lie semigroup generated by the convex GKSL cone; not convex, as the Pauli semigroups showed \citep{wolf2008assessing,davalos2019divisibility}.
+    \item $\det\ee^{\Lind}>0$: $\Bloch\mapsto-\tfrac13\Bloch$ is not Markovian; deciding Markovianity is NP-hard \citep{cubitt2012complexity}.
+    \item For us: accessibility, not controllability (\Chap~\ref{C.StateSpace}); GKSL fitting is non-convex (\Chap~\ref{C.AlgTomography}).
 \end{itemize}}
 \end{frame}
 
-\begin{frame}\ft{Markovian channels: a Lie semigroup, not a convex set}
-\ona{The channels reachable by autonomous GKSL dynamics, $\{\ee^{\tau\Lind}:\tau\ge0,\ \Lind\text{ GKSL}\}$, and more generally those reachable by CP-divisible evolutions, form a \emph{Lie semigroup}: closed under composition, containing the identity, generated by a convex cone of infinitesimal generators (the GKSL cone $\{-\imath\,\mathrm{ad}_H+\Diss_\gamma:\gamma\succeq0\}$), but \emph{not} closed under convex combinations and \emph{not} containing every channel. \citet{wolf06,cubitt2012complexity} showed that deciding whether a given channel is Markovian in this sense is NP-hard in general, and that the Markovian channels have measure zero among CPTP maps in the sense of being a lower-dimensional semi-algebraic set with non-empty interior only for some $N$; qubit channels with a negative determinant of $M$, e.g.\ the transposition-like ``inversion'' $\Bloch\mapsto-\lambda\Bloch$ for small $\lambda$, are CPTP but not divisible at all. Two consequences for this course: (i) controlled GKSL dynamics, $\dot{\vec x}=(\mathbf A+\sum_ku_k\mathbf N_k)\vec x+\vec\beta$, is a bilinear system on a semigroup rather than on a group, so controllability has to be replaced by accessibility and reachable sets are not symmetric (\Chap~\ref{C.StateSpace}); (ii) fitting a GKSL model to tomography data is a constrained problem, and the constraint set is non-convex, which is one motivation for the polynomial-optimisation approach of \Chap~\ref{C.AlgTomography}.}
-\onp{\begin{itemize}
-    \item $\{\ee^{\tau\Lind}\}$ and CP-divisible channels: a Lie semigroup generated by the convex GKSL cone; not convex, not all of $\Chan$.
-    \item Deciding Markovianity of a channel is NP-hard~\cite{cubitt2012complexity}; some qubit channels (e.g.\ $\Bloch\mapsto-\lambda\Bloch$) are not divisible at all.
-    \item For us: controllability $\to$ accessibility on a semigroup (\Chap~\ref{C.StateSpace}); GKSL fitting is a non-convex constrained problem (\Chap~\ref{C.AlgTomography}).
-\end{itemize}}
-\end{frame}
-
-\begin{frame}\ft{Summary}
-\begin{itemize}\setlength\itemsep{0.5em}
-    \item Channels $=$ CPTP maps: Kraus/Stinespring/Choi; via Choi they form a spectrahedron $\{J\succeq0,\Tr_2J=\Id\}$ with unitaries among the extreme points.
-    \item Quantum Markovianity has no unique definition; we use CP-divisibility, equivalent to a time-local GKSL equation with non-negative rates; semigroups $\ee^{\tau\Lind}$ are the autonomous case.
-    \item Distances: diamond norm (worst case, SDP), process and average gate fidelity (average case, control objective), related up to a factor $N$.
-    \item Unitaries: compact Lie group with bi-invariant metric; Markovian channels: a non-convex Lie semigroup, hard to recognise.
+\begin{frame}\ft{Summary}\mop{\small}
+\begin{itemize}\setlength\itemsep{0.4em}
+    \item The Choi matrix turns a channel into a positive semidefinite matrix; its eigenvectors give the Kraus operators, and the Stinespring dilation makes every channel a unitary evolution with an environment that is discarded.
+    \item Channels form a spectrahedron of dimension $N^4-N^2$. The unital qubit channels form a tetrahedron, the Bell-diagonal tetrahedron in disguise, with the entanglement-breaking channels as its octahedron.
+    \item The diamond norm measures the worst case and needs an ancilla; fidelities measure the average case. For coherent errors the two differ as an infidelity and its square root.
+    \item Divisible families have nested images; CP-divisibility means a time-local master equation with non-negative rates, and semigroups are its autonomous case.
+    \item Unitary channels form a Lie group; Markovian channels a Lie semigroup, which is not convex.
+    \item Next: optimal control on these groups and semigroups.
 \end{itemize}
 \end{frame}
 

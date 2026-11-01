@@ -8,356 +8,615 @@
 \chapter{Geometry of Quantum Optimal Control}\label{C.GeometryControl}
 
 \begin{frame}\ft{Outline}
-\ona{Optimal control asks for the field $u(t)$ that steers a system to a target while minimising a cost: the time, the energy of the pulse, or the infidelity of a gate. The theory has two faces. The first is analytic and goes back to the calculus of variations: an optimal control makes an \emph{action} stationary, and the Pontryagin maximum principle (PMP) turns the infinite-dimensional problem into a Hamiltonian system with boundary conditions at both ends. The second face is geometric: for the bilinear systems of \Chap~\ref{C.Closed}, time- or energy-optimal controls are \emph{geodesics} on the unitary group for a suitable, possibly degenerate, metric. Noise, as we shall see at the end of the \chap{}, singles out such a metric.}
+\ona{The two previous \chaps{} described the spaces on which quantum control acts: the states, and the channels between them. We now ask how to move through these spaces well. An optimal control problem asks for the field $u(t)$ that steers a system to a target while making some cost as small as possible: the time taken, the energy of the pulse, or the infidelity of the resulting gate. The subject has two faces. The first is analytic and descends from the calculus of variations. An optimal control makes an action stationary, and the maximum principle of Pontryagin replaces the search over functions by a Hamiltonian system with conditions at both ends of the time interval. The second is geometric. For the bilinear systems of \Chap~\ref{C.Closed}, the controls that are optimal in time or in energy trace geodesics on the unitary group, for a metric that becomes degenerate when some directions are not available.}
+\ona{\endgraf We develop the first face in the first three sections and apply it to the qubit, where the answers can be found in closed form, and where we shall see that the least time can depend discontinuously on the parameters. We then ask why numerical searches for good controls so often succeed, and when they fail; this is the question of the control landscape, and its answer leads back to the maximum principle. The last two sections take up the geometric face: geodesics on $\SU$, Riemannian and sub-Riemannian, the time-optimal two-qubit gates, and finally the noise of the device, which chooses a metric of its own.}
 \onp{Outline of today's lecture:
-\begin{itemize}\setlength\itemsep{0.6em}
-    \item optimal control problems and the analogy with mechanics;
-    \item the Pontryagin maximum principle, normal/abnormal and regular/singular extremals;
-    \item from the Schr\"odinger equation to the Pontryagin Hamiltonian;
-    \item time-optimal control of a qubit: bang-bang pulses and the quantum speed limit;
-    \item control landscapes and their critical points;
-    \item geodesics on $\SU$: Riemannian and sub-Riemannian;
+\begin{itemize}\setlength\itemsep{0.4em}
+    \item optimal control problems, and their descent from mechanics;
+    \item the Pontryagin maximum principle; normal and abnormal, regular and singular extremals;
+    \item the maximum principle for the Schr\"odinger equation;
+    \item time-optimal control of a qubit: bang-bang pulses and the speed limit;
+    \item control landscapes: where traps come from;
+    \item geodesics on $\SU$: Riemannian, sub-Riemannian, and two qubits;
     \item noise metrics: robust control as a geodesic problem.
 \end{itemize}}
-\ona{\medskip\noindent\textit{Sources.} This \chap{} draws on \citep{ansel2024introduction,lawrence2026geometric}; passages from these papers are reproduced with light editing, whereas material from the tutorial of \citet{ansel2024introduction} is paraphrased.}
-\onp{\vfill{\scriptsize Sources: \citep{ansel2024introduction,lawrence2026geometric}.}}
+\ona{\endgraf\noindent\textit{Sources.} The first sections follow the tutorial of \citet{ansel2024introduction}, whose material is paraphrased, and the introduction of \citet{PRXQuantumsugny}; the last section reproduces passages of \citet{lawrence2026geometric} with light editing. Good general guides are the books of \citet{liberzon-book} on optimal control, of \citet{jurdjevic-book} on geometric control, and of \citet{Agrachev_Barilari_Boscain_2019} on sub-Riemannian geometry.}
+\onp{\vfill{\scriptsize Sources: \citep{ansel2024introduction,PRXQuantumsugny,lawrence2026geometric}. Further reading: \citet{liberzon-book,jurdjevic-book,Agrachev_Barilari_Boscain_2019}.}}
 \end{frame}
 
-\section{Optimal control problems}
+\section{Optimal control problems}\label{sec:ch09:problems}
 
 \begin{frame}\ft{The ingredients of an optimal control problem}
-\ona{An optimal control problem consists of a controlled dynamical system, a set of admissible controls, and a cost. The state $X(t)\in\R^n$ obeys}
+\ona{An optimal control problem has three ingredients: a controlled dynamical system, a set of admissible controls, and a cost. The state $X(t)\in\R^n$ obeys}
 \begin{equation}\label{eq:ch09:dyn}
     \dot X(t) = F\big(X(t),u(t),t\big),\qquad X(0)=X_0,
 \end{equation}
-\ona{where $u(t)\in U\subseteq\R^m$ is the control and $F$ is smooth. The set $U$ encodes hardware limits, e.g.\ $U=[u_{\min},u_{\max}]$ for a single bounded amplitude; $U=\R^m$ means no constraint. Admissible controls are functions $u:[0,t_f]\to U$ regular enough for \eqref{eq:ch09:dyn} to have a unique solution; piecewise continuous or measurable, essentially bounded functions suffice. The cost combines a terminal term and a running term,}
+\ona{where $u(t)\in U\subseteq\R^m$ is the control and $F$ is smooth. The set $U$ records the limits of the hardware: $U=[-u_0,u_0]$ for a single amplitude bounded in both directions, the disc $u_x^2+u_y^2\le u_0^2$ for a field whose strength is limited but whose direction is not, and $U=\R^m$ when there is no limit at all. A control is admissible if it takes its values in $U$ and is regular enough for \eqref{eq:ch09:dyn} to have a unique solution; measurable and essentially bounded functions will do, and the piecewise-constant controls of \Chap~\ref{C.Closed} are the usual approximation to them. The cost combines a terminal term and a running term,}
 \begin{equation}\label{eq:ch09:cost}
     \mathcal{C}[u] = G\big(X(t_f),t_f\big) + \int_0^{t_f} F_0\big(X(t),u(t),t\big)\,\mathrm{d}t .
 \end{equation}
-\ona{Typical choices are $G$ a distance to the target state, $F_0\equiv1$ (total time, with $t_f$ free) or $F_0=\tfrac12\norm{u}^2$ (energy of the pulse). Quantum mechanics is complex-valued; before applying the theory one either splits real and imaginary parts, or works with real expectation values such as the Bloch vector. Both routes are taken below.}
-\onp{\begin{itemize}
-    \item Dynamics $\dot X = F(X,u,t)$, $X\in\R^n$; controls $u(t)\in U\subseteq\R^m$ (hardware limits).
-    \item Cost \eqref{eq:ch09:cost}: terminal $G$ (distance to target) $+$ running $F_0$ ($1$ for time, $\tfrac12 u^2$ for energy).
-    \item Constrained, infinite-dimensional minimisation: the constraint is the ODE at every $t$.
-    \item Quantum systems are complex: split into real/imaginary parts or use the Bloch vector.
+\ona{Typical choices are a distance between $X(t_f)$ and the target for $G$; $F_0\equiv1$, so that the cost is the duration, which is then left free; and $F_0=\tfrac12\norm{u}^2$, the energy of the pulse. The state of a quantum system is complex. One may split it into its real and imaginary parts and apply the real theory, or work with real quantities such as the Bloch vector; we shall do both.}
+\onp{\begin{itemize}\setlength\itemsep{0.4em}
+    \item Dynamics $\dot X = F(X,u,t)$, $X\in\R^n$; controls $u(t)\in U\subseteq\R^m$, the limits of the hardware.
+    \item Cost \eqref{eq:ch09:cost}: terminal $G$ (distance to the target) $+$ running $F_0$ ($1$ for time, $\tfrac12\norm u^2$ for energy).
+    \item A minimisation over functions, constrained by the differential equation at every instant.
+    \item Quantum states are complex: split into real and imaginary parts, or use the Bloch vector.
 \end{itemize}}
 \end{frame}
 
-\begin{frame}\ft{The analogy with classical mechanics}
-\ona{Optimal control descends from the calculus of variations. In mechanics the trajectory of a free particle of mass $m$ extremises the action $S[x]=\int_0^{t_f}\tfrac12 m\dot x^2\,\mathrm{d}t$, which yields the Euler--Lagrange equation and $m\ddot x=0$; adding a force $f(t)$ adds $f x$ to the Lagrangian and gives $m\ddot x=f$. Passing to the Hamiltonian $H=p\dot x-\mathcal{L}=p^2/2m - fx$ gives Hamilton's equations $\dot x=\partial_p H$, $\dot p=-\partial_x H$. Optimal control reverses the logic: the endpoints are prescribed and the force is the unknown, selected by a cost. The constraint \eqref{eq:ch09:dyn} is handled as in finite dimensions, by Lagrange multipliers---except that the multiplier is now a function of time, the \emph{adjoint state} $\Lambda(t)\in\R^n$.}
+\begin{frame}\ft{From the brachistochrone to the maximum principle}
+\ona{Optimal control is a branch of the calculus of variations, whose first problem was a control problem in all but name. In June 1696 Johann Bernoulli asked the readers of the \emph{Acta Eruditorum} for the curve along which a bead slides from one point to another, lower one in the least time; it was found by Bernoulli himself, by his brother Jakob, by Leibniz and by Newton, among others, and it is a cycloid (Figure~\ref{fig:ch09:brachistochrone}). Euler in 1744 and Lagrange in 1755 turned such questions into the Euler--Lagrange equation, and Hamilton in 1834 recast mechanics as the stationarity of an action. What the classical theory handled badly were controls confined by inequalities, such as a rudder that cannot turn beyond its stops. These occupied the seminar of L.~S.~Pontryagin at the Steklov Institute in Moscow in the 1950s, where Boltyanskii, Gamkrelidze and Pontryagin announced the maximum principle in 1956; Boltyanskii's proof appeared in 1958, and the monograph \citep{pontryaginbook} in 1961, translated into English the year after. In the same years Bellman developed dynamic programming in the United States. The ideas reached quantum mechanics in the late 1980s, in the design of pulses for nuclear magnetic resonance and of laser fields for chemistry \citep{peirce1988optimal}, and they are now the common tools of gate design \citep{glaser2015training,kochroadmap}.}
+\ona{\endgraf The connection with mechanics is worth making explicit. A free particle of mass $m$ moves so as to make the action $S[x]=\int_0^{t_f}\tfrac12m\dot x^2\,\mathrm dt$ stationary, which gives $m\ddot x=0$; a force $f(t)$ adds $fx$ to the Lagrangian and gives $m\ddot x=f$. Optimal control turns the question round: the end points are prescribed, and the force is the unknown, chosen by a cost. The constraint \eqref{eq:ch09:dyn} is imposed as constraints are imposed in finite dimensions, by a Lagrange multiplier, except that the multiplier is now a function of time, the \emph{adjoint state} $\lambda(t)\in\R^n$.}
 \begin{defn}[Action of an optimal control problem]\label{def:ch09:action}
 \begin{equation}\label{eq:ch09:action}
-    S = G\big(X(t_f),t_f\big) + \int_0^{t_f}\Big[\underbrace{F_0(X,u,t) + \Lambda\cdot\big(\dot X - F(X,u,t)\big)}_{=:\ \mathcal{L}(X,\dot X,u,\Lambda,t)}\Big]\,\mathrm{d}t .
+    S = G\big(X(t_f),t_f\big) + \int_0^{t_f}\Big[\underbrace{F_0(X,u,t) + \lambda\cdot\big(\dot X - F(X,u,t)\big)}_{=:\ \mathcal{L}(X,\dot X,u,\lambda,t)}\Big]\,\mathrm{d}t .
 \end{equation}
 \end{defn}
 \onp{\begin{itemize}
-    \item Mechanics: extremise $S=\int\mathcal{L}$; Euler--Lagrange; Legendre $\to$ Hamilton's equations.
-    \item Control: endpoints given, force unknown; the ODE constraint enters through a time-dependent Lagrange multiplier $\Lambda(t)$, the \alert{adjoint state}.
-    \item $\partial\mathcal{L}/\partial\dot X=\Lambda$: the adjoint is the momentum conjugate to $X$.
+    \item Bernoulli's brachistochrone (1696), Euler (1744), Lagrange (1755), Hamilton (1834).
+    \item Pontryagin's seminar: the maximum principle (1956), the book \citep{pontryaginbook}. Quantum control from the late 1980s \citep{peirce1988optimal}.
+    \item Mechanics turned round: end points given, force unknown; the constraint enters through a multiplier $\lambda(t)$, the \alert{adjoint state}.
 \end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The brachistochrone, pictured}
+\onp{\begin{center}\resizebox{!}{0.8\textheight}{\input{figures/ch09_brachistochrone.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{0.9\linewidth}{!}{\input{figures/ch09_brachistochrone.tex}}
+\caption{Johann Bernoulli's problem of 1696. Beads slide from rest, without friction, from $A$ to $B=(\pi,-2)$ under the gravity $g=1$, along four curves. The small dots mark their positions every half unit of time, and the rings their positions at $t=\pi$, when the bead on the cycloid, the curve traced by a point of a circle rolling beneath $AB$, arrives at $B$. The cycloid is the quickest, taking the time $\pi$, although it is longer than the straight line, $4$ against $3.72$. An arc of a circle, which Galileo had suspected in 1638 to be the quickest, takes $3.22$; a fall followed by a horizontal run $3.57$; and the straight line $3.72$. Generated by \texttt{code/ch09\_brachistochrone.py}.}\label{fig:ch09:brachistochrone}
+\end{figure}}
 \end{frame}
 
 \begin{frame}\ft{Extremals for unconstrained controls}
-\ona{Take $U=\R^m$ and vary $X$, $\Lambda$ and $u$ independently in \eqref{eq:ch09:action}. Integrating $\Lambda\cdot\delta\dot X$ by parts and collecting terms gives the following.}
+\ona{Take first $U=\R^m$ and a fixed final time, and vary $X$, $\lambda$ and $u$ independently in \eqref{eq:ch09:action}.}
 \begin{thm}[Extremals of the action]\label{thm:ch09:extremals}
-For fixed $t_f$ and $X(0)=X_0$, extremals of \eqref{eq:ch09:action} satisfy
+For fixed $t_f$ and $X(0)=X_0$, the controls at which the action \eqref{eq:ch09:action} is stationary satisfy
 \begin{align}
     \dot X &= F(X,u,t), \label{eq:ch09:el1}\\
-    \dot\Lambda &= \partial_X F_0 - \Lambda\cdot\partial_X F, \qquad \Lambda(t_f) = -\partial_X G\big(X(t_f)\big), \label{eq:ch09:el2}\\
-    \partial_{u} F_0 &= \Lambda\cdot\partial_{u}F . \label{eq:ch09:el3}
+    \dot\lambda &= \partial_X F_0 - \lambda\cdot\partial_X F, \qquad \lambda(t_f) = -\partial_X G\big(X(t_f)\big), \label{eq:ch09:el2}\\
+    \partial_{u} F_0 &= \lambda\cdot\partial_{u}F . \label{eq:ch09:el3}
 \end{align}
 \end{thm}
-\ona{Equation \eqref{eq:ch09:el1} says that extremals are physical trajectories; \eqref{eq:ch09:el2} propagates the adjoint \emph{backwards} from a final condition set by the terminal cost; \eqref{eq:ch09:el3} often lets us solve for $u=u(X,\Lambda)$. The optimal control is then determined by $2n$ boundary data ($X_0$ and $\Lambda(t_f)$), so an infinite-dimensional problem has become finite-dimensional. Only a necessary condition is obtained: extremals are candidates, and several may exist.}
-\onp{State forward, adjoint \alert{backward} from $\Lambda(t_f)=-\partial_XG$; \eqref{eq:ch09:el3} gives $u=u(X,\Lambda)$. Necessary only: extremals are \alert{candidates}.}
-\end{frame}
-
-\section{The Pontryagin maximum principle}
-
-\begin{frame}\ft{The Pontryagin Hamiltonian}
-\ona{Since $\Lambda$ is conjugate to $X$, a Legendre transform of $\mathcal{L}$ yields the \emph{Pontryagin Hamiltonian} $\HP=\Lambda\cdot\dot X-\mathcal{L}=\Lambda\cdot F-F_0$. Along extremals the variation of the action reduces to $\delta S=-\int_0^{t_f}\partial_u\HP\cdot\delta u\,\mathrm{d}t$, so for open $U$ the condition on the control is $\partial_u\HP=0$. Some optimal controls do not depend on $F_0$ at all; to capture them one introduces a constant multiplier $\Lambda_0\le0$ in front of the running cost.}
-\begin{defn}[Pontryagin Hamiltonian]\label{def:ch09:HP}
-\begin{equation}\label{eq:ch09:HP}
-    \HP(X,\Lambda,\Lambda_0,u) = \Lambda\cdot F(X,u) + \Lambda_0\,F_0(X,u),\qquad \Lambda_0\le 0 .
-\end{equation}
-Extremals with $\Lambda_0<0$ (normalised to $-1$) are \emph{normal}; those with $\Lambda_0=0$ are \emph{abnormal}. The pair $(\Lambda,\Lambda_0)$ is defined up to a positive factor and never vanishes identically.
-\end{defn}
-\ona{Abnormal extremals are not a curiosity of infinite dimensions: in finite-dimensional constrained optimisation they appear whenever the constraint gradient vanishes at the optimum, e.g.\ maximising $x+y$ subject to $x^2+y^2=0$, where the Lagrangian must be written as $\lambda_0 F_0+\lambda F$ with $\lambda_0=0$.}
+\ona{\begin{pf}
+The first variation is $\delta S=\partial_XG\cdot\delta X(t_f)+\int_0^{t_f}\big[\partial_XF_0\cdot\delta X+\partial_uF_0\cdot\delta u+\delta\lambda\cdot(\dot X-F)+\lambda\cdot(\delta\dot X-\partial_XF\,\delta X-\partial_uF\,\delta u)\big]\mathrm dt$. Integrating $\lambda\cdot\delta\dot X$ by parts, and using $\delta X(0)=0$,
+\[
+    \delta S=\big[\partial_XG+\lambda(t_f)\big]\cdot\delta X(t_f)+\int_0^{t_f}\Big[\delta\lambda\cdot(\dot X-F)+\big(\partial_XF_0-\lambda\cdot\partial_XF-\dot\lambda\big)\cdot\delta X+\big(\partial_uF_0-\lambda\cdot\partial_uF\big)\cdot\delta u\Big]\mathrm dt .
+\]
+Since $\delta\lambda$, $\delta X$ and $\delta u$ are arbitrary, each bracket must vanish.
+\end{pf}}
+\ona{The first equation says that the extremals are trajectories of the system. The second propagates the adjoint \emph{backwards} in time from a final value fixed by the terminal cost, and the third can often be solved for the control, $u=u(X,\lambda)$. The optimal control is then determined by $2n$ boundary values, $X_0$ at the start and $\lambda(t_f)$ at the end, so that a problem in infinitely many unknowns has become one in finitely many. The conditions are only necessary: extremals are candidates, and there may be several.}
 \onp{\begin{itemize}
-    \item Legendre transform: $\HP=\Lambda\cdot F+\Lambda_0F_0$, a \alert{pseudo}-Hamiltonian (depends on $u$).
-    \item Open $U$: $\partial_u\HP=0$ (weak principle). Closed $U$: replace by a \alert{maximisation}.
-    \item Normal ($\Lambda_0=-1$) vs abnormal ($\Lambda_0=0$: cost-independent) extremals.
+    \item Proof: vary, integrate $\lambda\cdot\delta\dot X$ by parts, collect terms.
+    \item State forwards, adjoint \alert{backwards} from $\lambda(t_f)=-\partial_XG$; \eqref{eq:ch09:el3} gives $u=u(X,\lambda)$.
+    \item $2n$ boundary values instead of a function. Necessary only: extremals are \alert{candidates}.
 \end{itemize}}
 \end{frame}
 
-\begin{frame}\ft{The maximum principle}
+\section{The Pontryagin maximum principle}\label{sec:ch09:pmp}
+
+\begin{frame}\ft{The Pontryagin Hamiltonian}
+\ona{Since $\partial\mathcal L/\partial\dot X=\lambda$, the adjoint is the momentum conjugate to $X$, and a Legendre transform of $\mathcal L$ gives a Hamiltonian, $\lambda\cdot\dot X-\mathcal L=\lambda\cdot F-F_0$. Along the extremals the variation of the action then reduces to $\delta S=-\int_0^{t_f}\partial_u\HP\cdot\delta u\,\mathrm{d}t$, so that for an open set $U$ the condition on the control reads $\partial_u\HP=0$. Some optimal controls, however, do not depend on the running cost at all, and to admit them one places a constant multiplier $\lambda_0\le0$ in front of $F_0$.}
+\begin{defn}[Pontryagin Hamiltonian]\label{def:ch09:HP}
+\begin{equation}\label{eq:ch09:HP}
+    \HP(X,\lambda,\lambda_0,u) = \lambda\cdot F(X,u) + \lambda_0\,F_0(X,u),\qquad \lambda_0\le 0 .
+\end{equation}
+An extremal with $\lambda_0<0$, normalised to $\lambda_0=-1$, is \emph{normal}; one with $\lambda_0=0$ is \emph{abnormal}. The pair $(\lambda,\lambda_0)$ is defined up to a positive factor and never vanishes.
+\end{defn}
+\ona{Abnormal multipliers are familiar from finite dimensions. To maximise $x+y$ subject to $x^2+y^2=0$, whose only feasible point is the origin, one cannot write the Lagrangian as $x+y-\mu(x^2+y^2)$, since its gradient never vanishes there; one must write $\lambda_0(x+y)+\mu(x^2+y^2)$ with $\lambda_0=0$. The constraint alone decides, whatever the objective, and the same happens to a control problem when the target can be reached in only one way.}
+\onp{\begin{itemize}
+    \item Legendre transform: $\HP=\lambda\cdot F+\lambda_0F_0$, a Hamiltonian that depends on $u$.
+    \item Open $U$: $\partial_u\HP=0$. Closed $U$: a \alert{maximisation}, next.
+    \item Normal ($\lambda_0=-1$) and abnormal ($\lambda_0=0$: the constraint alone decides) extremals.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The maximum principle}\mop{\small}
 \begin{thm}[Pontryagin maximum principle]\label{thm:ch09:pmp}
-Let $\dot X=F(X,u)$ with $u:[0,t_f]\to U\subseteq\R^m$, and let the cost be \eqref{eq:ch09:cost} with $t_f$ fixed or free. If $(X,u^\star)$ is optimal, there exists a nonzero continuous pair $(\Lambda,\Lambda_0)$, $\Lambda_0\le0$ constant, such that
+Let $\dot X=F(X,u)$ with $u:[0,t_f]\to U\subseteq\R^m$, and let the cost be \eqref{eq:ch09:cost}, with $t_f$ fixed or free. If $(X,u^\star)$ is optimal, there are a continuous $\lambda$ and a constant $\lambda_0\le0$, not both zero, such that
 \begin{equation}\label{eq:ch09:hamilton}
-    \dot X = \partial_\Lambda \HP,\qquad \dot\Lambda = -\partial_X \HP,
+    \dot X = \partial_\lambda \HP,\qquad \dot\lambda = -\partial_X \HP,
 \end{equation}
 and, for almost every $t$,
 \begin{equation}\label{eq:ch09:max}
-    \HP\big(X,\Lambda,\Lambda_0,u^\star(t)\big) = \max_{v\in U}\HP\big(X,\Lambda,\Lambda_0,v\big),
+    \HP\big(X,\lambda,\lambda_0,u^\star(t)\big) = \max_{v\in U}\HP\big(X,\lambda,\lambda_0,v\big),
 \end{equation}
-with $X(0)=X_0$ and $\Lambda(t_f)=\Lambda_0\,\partial_X G(X(t_f))$ (or $X(t_f)=X_f$ if the target is to be hit exactly).
+with $X(0)=X_0$ and $\lambda(t_f)=\lambda_0\,\partial_X G(X(t_f))$, or $X(t_f)=X_f$ if the target is to be reached exactly. Moreover $\HP$ is constant along the extremal, and zero if $t_f$ is free.
 \end{thm}
-\ona{Moreover $\HP$ is constant along the extremal, and equal to zero if $t_f$ is free.}
-\ona{The maximisation \eqref{eq:ch09:max} is what makes the principle work for closed $U$: a maximum of $\HP$ over $[u_{\min},u_{\max}]$ may sit on the boundary, where no derivative vanishes, exactly as for a function on a closed interval. Classical references are \cite{pontryaginbook,liberzon-book}; a physicist-friendly account with quantum examples is \cite{PRXQuantumsugny}.}
+\ona{The maximisation \eqref{eq:ch09:max} is what makes the principle work for a closed set $U$. The maximum of $\HP$ over $[-u_0,u_0]$ may lie at an end of the interval, where no derivative vanishes, as for any function on a closed interval. Like Theorem~\ref{thm:ch09:extremals}, the principle gives necessary conditions only: it reduces the search to the extremals, of which there may be many, and they must then be compared. The standard references are \citet{pontryaginbook} and \citet{liberzon-book}, and an account with quantum examples is that of \citet{PRXQuantumsugny}.}
+\onp{\begin{itemize}
+    \item Closed $U$: the maximum may sit on the boundary, where no derivative vanishes.
+    \item Necessary conditions: extremals are compared afterwards \citep{pontryaginbook,liberzon-book,PRXQuantumsugny}.
+\end{itemize}}
 \end{frame}
 
 \begin{frame}\ft{Why a maximum: the reachable set}
-\ona{The principle has a transparent geometric meaning in the time-optimal case. Let $\Reach(t,X_0)$ be the set of states reachable at time $t$ by admissible controls. If $X_f$ is reached at the minimal time $t_f$, then $X_f$ must lie on the \emph{boundary} of $\Reach(t_f,X_0)$: an interior point would be reachable slightly earlier. Take the adjoint $\Lambda(t_f)$ to be an outward normal to this boundary at $X_f$. A perturbation $u$ of the optimal control $u^\star$ perturbs the endpoint by $\delta X(t_f)=\int_0^{t_f}V(t_f,s)\,[F(X^\star,u)-F(X^\star,u^\star)]\,\mathrm{d}s$, where $V$ is the propagator of the linearised dynamics, and $\Lambda(t_f)\cdot\delta X(t_f)\le0$ because perturbed endpoints stay inside. Defining $\Lambda(t)^\top=\Lambda(t_f)^\top V(t_f,t)$ one finds $\dot\Lambda=-A^\top\Lambda$, the adjoint equation, and $\int_0^{t_f}[\HP(u)-\HP(u^\star)]\,\mathrm{d}t\le0$; a needle perturbation concentrated near a single time then gives the pointwise maximisation \eqref{eq:ch09:max}. Abnormal extremals correspond to trajectories tangent to the boundary of the reachable set, where $\Lambda(t_f)\cdot\dot X(t_f)=0$.}
-\onp{\begin{itemize}
-    \item Minimal time $\Rightarrow$ $X_f\in\partial\Reach(t_f,X_0)$.
-    \item $\Lambda(t_f)$ $=$ outward normal to $\partial\Reach$; transport it backwards: $\dot\Lambda=-A^\top\Lambda$.
-    \item Perturbations of $u^\star$ push the endpoint inwards $\Rightarrow$ $\int[\HP(u)-\HP(u^\star)]\le0$ $\Rightarrow$ pointwise max.
-    \item Abnormal: $\Lambda(t_f)\perp\dot X(t_f)$, trajectory tangent to $\partial\Reach$.
+\ona{The principle has a transparent geometric meaning in the time-optimal case. Let $\Reach(t)$ be the set of states reachable from $X_0$ at the time $t$ by admissible controls. For the particle of Example~\ref{exm:ch09:particle} below, whose dynamics is linear and whose controls form a convex set, the sets $\Reach(t)$ are convex, the target lies on the boundary of $\Reach(t_f)$ at the least time, and every point $X(t)$ of the optimal trajectory lies on the boundary of $\Reach(t)$ (Figure~\ref{fig:ch09:reach}(a)). In general the argument must be made locally, for the reachable set may arrive at the target by closing round it, as it does for the qubit of Section~\ref{sec:ch09:qubit} (Figure~\ref{fig:ch09:reachqubit}). Consider therefore the end points of the controls near $u^\star$. A change of the control from $u^\star$ to $u$ on a short interval near the time $s$, a \emph{needle variation}, moves the end point by approximately $V(t_f,s)\big[F(X^\star(s),u)-F(X^\star(s),u^\star(s))\big]\,\delta s$, where $V$ is the propagator of the dynamics linearised about the optimal trajectory; stopping a little early moves it by $-F(X_f,u^\star(t_f))\,\delta t$. These displacements generate a convex cone. If the cone were the whole space, the end points of nearby controls would fill a neighbourhood of $X_f$ before the time $t_f$, by a topological argument resting on Brouwer's fixed-point theorem, and $X_f$ could be reached earlier. So the cone lies in a half-space, and we take $\lambda(t_f)$ to be its outward normal. Writing $\lambda(s)^\top=\lambda(t_f)^\top V(t_f,s)$, which is the adjoint equation $\dot\lambda=-(\partial_XF)^\top\lambda$, the condition that every needle displacement points into the half-space reads $\lambda(s)\cdot F(X^\star(s),u)\le\lambda(s)\cdot F(X^\star(s),u^\star(s))$ for every $u\in U$: the optimal control maximises $\HP$ at every instant. The adjoint is the outward normal to the end points of nearby controls, carried along the trajectory; for the particle it is an outward normal to $\Reach(t)$ itself. An abnormal extremal is one whose final velocity lies in the bounding plane, $\lambda(t_f)\cdot\dot X(t_f)=0$.}
+\onp{\begin{itemize}\setlength\itemsep{0.3em}
+    \item Linear dynamics, convex controls: $X(t)$ on the boundary of $\Reach(t)$ (the particle).
+    \item In general locally: needle variations and stopping early span a cone at $X_f$; were it everything, $X_f$ would be reached earlier.
+    \item So the cone lies in a half-space with outward normal $\lambda(t_f)$; carried back by $\dot\lambda=-(\partial_XF)^\top\lambda$ $\Rightarrow$ the \alert{maximum}.
+    \item The qubit of Section~\ref{sec:ch09:qubit} reaches its target by closing a hole. Abnormal: $\lambda(t_f)\cdot\dot X(t_f)=0$.
 \end{itemize}}
 \end{frame}
 
 \begin{frame}\ft{Regular and singular controls; a bang-bang example}
-\ona{To use the principle one first tries to solve \eqref{eq:ch09:max} for $u=v(X,\Lambda)$. If this is possible the control is \emph{regular}; if the maximisation leaves $u$ undetermined on an interval---typically because the coefficient of $u$ in $\HP$ vanishes there---the control is \emph{singular}. Both may occur along one trajectory.}
+\ona{To use the principle one first tries to solve \eqref{eq:ch09:max} for the control, $u=v(X,\lambda)$. Where this is possible the control is \emph{regular}. Where the maximisation leaves $u$ undetermined on an interval, typically because the coefficient of $u$ in $\HP$ vanishes there, it is \emph{singular}. Both may occur along one trajectory.}
 \begin{exm}[Time-optimal control of a particle]\label{exm:ch09:particle}
-Steer $\dot x=p/m$, $\dot p=f$ from $(1,0)$ to $(0,0)$ in minimum time with $\abs{f}\le f_0$. Here $\HP=\Lambda_x p/m+\Lambda_p f-1$, $\dot\Lambda_x=0$, $\dot\Lambda_p=-\Lambda_x/m$. Maximising the only $f$-dependent term gives $f=f_0\,\mathrm{sgn}(\Lambda_p)$, a \emph{bang-bang} control; since $\Lambda_p$ is affine in $t$ it has at most one zero, so there is at most one switch. Trajectories are parabolas in the $(x,p)$ plane; the optimal one uses $f=-f_0$ until it meets the parabola through the origin, then $f=+f_0$.
+Steer $\dot x=p$, $\dot p=f$ from $(1,0)$ to $(0,0)$ in the least time with $\abs{f}\le1$. Here $\HP=\lambda_xp+\lambda_pf-1$, with $\dot\lambda_x=0$ and $\dot\lambda_p=-\lambda_x$. The only term containing $f$ is $\lambda_pf$, which is maximised by $f=\operatorname{sgn}\lambda_p$, a \emph{bang-bang} control. Since $\lambda_p$ is affine in $t$ it changes sign at most once, so that there is at most one switch. The optimal control is $f=-1$ on $[0,1]$ and $f=+1$ on $[1,2]$, with $\lambda(t)=(-1,t-1)$, and $t^\star=2$.
 \end{exm}
-\ona{The vanishing of $\partial_f\HP=\Lambda_p$ on an interval would force $\Lambda_x=0$ and contradict $\HP=0$, so no singular arc is optimal here. In quantum problems singular arcs do occur and can be optimal \cite{PRXQuantumsugny}.}
+\ona{A singular arc would need $\lambda_p\equiv0$ on an interval, hence $\lambda_x=0$, and then $\HP=-1\ne0$; so no arc is singular here. In quantum problems singular arcs do occur, and some are optimal \citep{PRXQuantumsugny}. Figure~\ref{fig:ch09:hamiltonian} shows what the maximisation picks in the three cases. Figure~\ref{fig:ch09:reach} shows the reachable sets of the example, the adjoint as their outward normal, and the optimal control of every initial state, which switches once, on the curve $x=-\tfrac12p\abs p$, and then follows that curve to the origin.}
 \onp{\begin{itemize}
-    \item Regular: $u=v(X,\Lambda)$ from the maximisation. Singular: coefficient of $u$ in $\HP$ vanishes on an interval.
-    \item Bounded control, $\HP$ affine in $u$ $\Rightarrow$ $u=u_{\max}\operatorname{sgn}(\text{switching function})$: \alert{bang-bang}.
-    \item Particle example: at most one switch; parabolic arcs.
+    \item Regular: $u=v(X,\lambda)$ from \eqref{eq:ch09:max}. Singular: the coefficient of $u$ in $\HP$ vanishes on an interval.
+    \item Bounded control, $\HP$ affine in $u$ $\Rightarrow$ $u=u_0\operatorname{sgn}(\text{switching function})$: \alert{bang-bang}.
+    \item The particle: $f=\operatorname{sgn}\lambda_p$, $\lambda_p$ affine, at most one switch; $t^\star=2$.
 \end{itemize}}
 \end{frame}
 
-\section{From the Schr\"odinger equation to the Pontryagin Hamiltonian}
+\begin{frame}\ft{The maximum principle, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch09_reach.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch09_reach.tex}}
+\caption{The maximum principle for the particle of Example~\ref{exm:ch09:particle}, $\dot x=p$, $\dot p=f$, $\abs f\le1$. (a) The reachable sets $\Reach(1)$ (blue) and $\Reach(2)$ from $X_0=(1,0)$. They are convex, and each point of their boundary is reached by a control with at most one switch, which is itself the maximum principle at work: the support function of $\Reach(t)$ in the direction $(a,b)$ is attained by $f(s)=\operatorname{sgn}\big(a(t-s)+b\big)$. The optimal trajectory (red) runs along the boundaries, reaching $X(1)=(\tfrac12,-1)$ and the origin at $t^\star=2$, and the adjoint $\lambda(t)=(-1,t-1)$ (gold) is an outward normal at $X(t)$. All of $\Reach(2)$ lies on one side of the line through the origin orthogonal to $\lambda(2)$ (dashed). (b) The optimal synthesis. Above the switching curve $x=-\tfrac12p\abs p$ the optimal control is $f=-1$, below it $f=+1$; every optimal trajectory switches at most once, on the curve, and then follows it to the origin. (c) The switching function $\lambda_p(t)=t-1$ of the trajectory in (a) and the control $f=\operatorname{sgn}\lambda_p$. Generated by \texttt{code/ch09\_reach.py}.}\label{fig:ch09:reach}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{What the maximisation picks}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch09_hamiltonian.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch09_hamiltonian.tex}}
+\caption{What the maximisation of the Pontryagin Hamiltonian picks over the bound $\abs u\le u_0=1.5$ (shaded), when the control enters through the switching function $b$. (a) For a cost of time $\HP$ is affine in $u$, and its maximum lies at an end, $u=u_0\operatorname{sgn}b$: the control is bang-bang. (b) For a cost of energy, $\tfrac12u^2$, it is concave, with its maximum at $u=b$, or at the bound if $\abs b>u_0$. (c) If $b$ vanishes on an interval, $\HP$ does not depend on $u$ there, every value maximises it, and the arc is singular. (d) The rule of (b) at work: the driven qubit of \Chap~\ref{C.StateSpace} transferred from $\ket0$ to $\ket1$ in the time $T=3.8$ with $\abs u\le1.5$ and the least energy, computed on $120$ constant steps. With the adjoint of the end point carried back along the trajectory, the control equals the switching function $H_x(t)$ clipped at the bound, to within $3\cdot10^{-5}$ on every step. It rests on the bound at the beginning and at the end (shaded) and follows $H_x$ in between. With $T=4$ it would not reach the bound at all, and as $T$ decreases to $t^\star=3.485$ it becomes the bang-bang control of Figure~\ref{fig:ch09:timeoptimal}. Generated by \texttt{code/ch09\_hamiltonian.py}.}\label{fig:ch09:hamiltonian}
+\end{figure}}
+\end{frame}
+
+\section{The maximum principle for the Schr\"odinger equation}\label{sec:ch09:quantum}
 
 \begin{frame}\ft{Complex states and a complex adjoint}
-\ona{Consider a bilinear system $\imath\,\dd{t}\ket\psi=\hat H(t)\ket\psi$ with $\hat H(t)=\Hdrift+\sum_k u_k(t)\Hctrl$ on $\Hil$, cf.\ \Chap~\ref{C.Closed}. One can apply the real theory after splitting real and imaginary parts, but it is neater to introduce an adjoint state $\ket\chi\in\Hil$ (not normalised) and the real Lagrangian}
+\ona{Consider the bilinear system $\imath\,\dd{t}\ket\psi=\hat H(t)\ket\psi$ with $\hat H(t)=\Hdrift+\sum_ku_k(t)\Hctrl$ on $\Hil$, as in \Chap~\ref{C.Closed}. One could apply the real theory to the real and imaginary parts of $\ket\psi$, but it is neater to introduce an adjoint state $\ket\chi\in\Hil$, which need not be normalised, and the real Lagrangian}
 \begin{equation}\label{eq:ch09:qlag}
     \mathcal{L} = F_0(\ket\psi,u,t) + \operatorname{Re}\Big(\braket{\chi|\dot\psi} + \imath\braket{\chi|\hat H(t)|\psi}\Big).
 \end{equation}
-\ona{Varying the real and imaginary parts of $\bra\chi$ returns the Schr\"odinger equation. The Pontryagin Hamiltonian becomes}
+\ona{Varying the real and imaginary parts of $\bra\chi$ returns the Schr\"odinger equation, and the Pontryagin Hamiltonian becomes}
 \begin{equation}\label{eq:ch09:qHP}
     \HP = \operatorname{Im}\braket{\chi|\hat H(t)|\psi} + \chi_0\,F_0(\ket\psi,u,t),\qquad \chi_0\le 0 .
 \end{equation}
-\onp{Adjoint $\ket\chi\in\Hil$ (not normalised); real Lagrangian \eqref{eq:ch09:qlag}; $\chi_0\le0$ the abnormal multiplier.}
+\ona{The pair $(\ket\chi,\chi_0)$ plays the part of $(\lambda,\lambda_0)$, and the distinction between normal ($\chi_0=-1$) and abnormal ($\chi_0=0$) extremals carries over unchanged.}
+\onp{Adjoint $\ket\chi\in\Hil$, not normalised; real Lagrangian \eqref{eq:ch09:qlag}; $\chi_0\le0$ the multiplier of the running cost.}
 \end{frame}
 
-\begin{frame}\ft{Hamilton's equations for state and adjoint}
+\begin{frame}\ft{Hamilton's equations for the state and the adjoint}
 \ona{Hamilton's equations for \eqref{eq:ch09:qHP} read}
 \begin{equation}\label{eq:ch09:qadj}
     \ket{\dot\psi} = -\imath\hat H\ket\psi,\qquad
     \ket{\dot\chi} = -\imath\hat H\ket\chi - 2\chi_0\,\partial_{\bra\psi}F_0 ,\qquad
     \bra{\chi(t_f)} = 2\chi_0\,\partial_{\ket{\psi(t_f)}}G .
 \end{equation}
-\ona{If $F_0$ does not depend on the state, $\ket\chi$ obeys the very same Schr\"odinger equation as $\ket\psi$ and may be normalised. For unconstrained controls the stationarity condition reads}
+\ona{When the running cost does not depend on the state, the adjoint obeys the same Schr\"odinger equation as the state, and is fixed by its value at the final time. For unconstrained controls the condition on the control is}
 \begin{equation}\label{eq:ch09:qmax}
-    \partial_{u_k}\HP = \operatorname{Im}\braket{\chi|\Hctrl|\psi} + \chi_0\,\partial_{u_k}F_0 = 0 .
+    \partial_{u_k}\HP = \operatorname{Im}\braket{\chi|\Hctrl|\psi} + \chi_0\,\partial_{u_k}F_0 = 0 ,
 \end{equation}
+\ona{and the left-hand side is the derivative of the cost with respect to the control at the time $t$. Computing it requires one integration of the state forwards and one of the adjoint backwards, whatever the number of controls, and it is the gradient on which GRAPE is built (\Chap~\ref{C.AlgControl}). Figure~\ref{fig:ch09:adjoint} shows the two integrations, and the gradient they give, for the driven qubit of \Chap~\ref{C.StateSpace}.}
 \onp{\begin{itemize}
-    \item Both $\ket\psi$ and $\ket\chi$ obey Schr\"odinger's equation (state-independent $F_0$); $\ket\chi$ fixed at $t_f$ by the terminal cost.
-    \item \eqref{eq:ch09:qmax} is the gradient used by GRAPE (\Chap~\ref{C.AlgControl}).
+    \item State-independent $F_0$: $\ket\psi$ and $\ket\chi$ obey the same Schr\"odinger equation; $\ket\chi$ is fixed at $t_f$.
+    \item \eqref{eq:ch09:qmax}: one forward and one backward integration give the whole gradient; this is GRAPE (\Chap~\ref{C.AlgControl}).
 \end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The state forwards, the adjoint backwards}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch09_adjoint.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch09_adjoint.tex}}
+\caption{The state forwards and the adjoint backwards, for the driven qubit of \Chap~\ref{C.StateSpace} ($\omega=1$), the final time $T=3$, the terminal cost $1-F$ with $F=\abs{\braket{1|\psi(T)}}^2$, and the control $u(t)=\sin(\pi t/T)$, which is not optimal and brings $F=0.419$. (a) The Bloch vector (blue) runs forwards from $\ket0$. The adjoint starts at the final point as the gradient of $F$, which points down the meridian towards $\ket1$, and is carried backwards along the trajectory by the same rotations; its tangent part is drawn (gold) at $t=0$, $0.75$, $1.5$, $2.25$ and $3$. (b) The control and $\partial_u\HP(t)=\operatorname{Im}\braket{\chi|\sigma_x/2|\psi}$, computed from the state integrated forwards from $t=0$ and the adjoint integrated backwards from $t=T$, with $\ket{\chi(T)}=2\ket1\braket{1|\psi(T)}$. It is the derivative of $F$ with respect to the control at the time $t$, as the script checks against finite differences. (c) $F$ along the direction of the gradient, $u+\epsilon\,\partial_u\HP$. Its slope at $\epsilon=0$ is $\int(\partial_u\HP)^2\,\mathrm dt=0.207$, the first variation (dashed), and it rises to $0.657$ at $\epsilon=2$ before falling again. Generated by \texttt{code/ch09\_adjoint.py}.}\label{fig:ch09:adjoint}
+\end{figure}}
 \end{frame}
 
 \begin{frame}\ft{Costs, and the Bloch-vector route}
-\ona{Standard terminal costs are $G_1=1-\abs{\braket{\psi_f|\psi(t_f)}}^2$ (target up to a global phase) and $G_2=1-\operatorname{Re}\braket{\psi_f|\psi(t_f)}$ (phase fixed, since $\norm{\ket{\psi(t_f)}-\ket{\psi_f}}^2=2G_2$). Running costs penalise the pulse energy, $\tfrac12u^2$, or the population of an unwanted level, $\abs{\braket{\psi_1|\psi}}^2$; the latter adds a source term to the adjoint equation. For a qubit it is often simplest to work with the Bloch vector $(x,y,z)=(\langle\sigma_x\rangle,\langle\sigma_y\rangle,\langle\sigma_z\rangle)$: for $\hat H=\tfrac12(\Delta\sigma_z+u_x\sigma_x+u_y\sigma_y)$,}
+\ona{Two terminal costs are standard: $G_1=1-\abs{\braket{\psi_f|\psi(t_f)}}^2$, which ignores the global phase of the final state, and $G_2=1-\operatorname{Re}\braket{\psi_f|\psi(t_f)}$, which does not, since $\norm{\ket{\psi(t_f)}-\ket{\psi_f}}^2=2G_2$. Running costs penalise the energy of the pulse, $\tfrac12u^2$, or the population of an unwanted level, $\abs{\braket{\psi_1|\psi}}^2$; the latter depends on the state and adds a source term to the equation of the adjoint. For a qubit it is often simplest to work with the Bloch vector $\Bloch=(x,y,z)$. For $\hat H=\tfrac12(\Delta\sigma_z+u_x\sigma_x+u_y\sigma_y)$ the Bloch equations of \Chap~\ref{C.Closed} read}
 \begin{equation}\label{eq:ch09:bloch}
     \dot x = -\Delta y + u_y z,\qquad \dot y = \Delta x - u_x z,\qquad \dot z = u_x y - u_y x,
 \end{equation}
-\ona{a real system to which Theorem~\ref{thm:ch09:pmp} applies directly with $\HP=\Delta(p_yx-p_xy)+u_x(p_zy-p_yz)+u_y(p_xz-p_zx)$. The same route works for the Lindblad dynamics of \Chap~\ref{C.Open}.}
+\ona{that is, $\dot\Bloch=\vec h\times\Bloch$ with $\vec h=(u_x,u_y,\Delta)$, a real system to which Theorem~\ref{thm:ch09:pmp} applies directly. With a real adjoint $\vec p$, the Pontryagin Hamiltonian is $\vec p\cdot(\vec h\times\Bloch)=\vec h\cdot(\Bloch\times\vec p)$, so that the vector $\Bloch\times\vec p$, an angular momentum, collects the coefficients of the controls. In the complex formulation the same part is played by the vector $\vec H=(H_x,H_y,H_z)$ with $H_k=\tfrac12\operatorname{Im}\braket{\chi|\sigma_k|\psi}$, since $\operatorname{Im}\braket{\chi|\hat H|\psi}=\vec h\cdot\vec H$. The same route works for the Lindblad dynamics of \Chap~\ref{C.Open}.}
 \onp{\begin{itemize}
     \item $G_1=1-\abs{\braket{\psi_f|\psi(t_f)}}^2$ (phase free), $G_2=1-\operatorname{Re}\braket{\psi_f|\psi(t_f)}$ (phase fixed).
-    \item Qubit: Bloch equations \eqref{eq:ch09:bloch}, real adjoint $(p_x,p_y,p_z)$; extends to open systems.
+    \item Qubit: $\dot\Bloch=\vec h\times\Bloch$ \eqref{eq:ch09:bloch}; $\HP=\vec h\cdot(\Bloch\times\vec p)$, or $\vec h\cdot\vec H$ with $H_k=\tfrac12\operatorname{Im}\braket{\chi|\sigma_k|\psi}$.
 \end{itemize}}
 \end{frame}
 
-\section{Time-optimal control of a qubit}
+\section{Time-optimal control of a qubit}\label{sec:ch09:qubit}
 
-\begin{frame}\ft{Two controls, no drift: the $\pi$-pulse is a geodesic}
-\ona{Let $\hat H=\tfrac12(u_z\sigma_z+u_x\sigma_x)$ with $\norm{u}\le u_0$ and steer $\ket\uparrow$ to $\ket\downarrow$ (up to phase) in minimal time, $\mathcal{C}=t_f$. With $H_{x,y,z}:=\tfrac12\operatorname{Im}\braket{\chi|\sigma_{x,y,z}|\psi}$ the Pontryagin Hamiltonian is $\HP=u_zH_z+u_xH_x+\chi_0$, and both $\ket\psi$ and $\ket\chi$ evolve under $\hat H$, so $\dot H_x=-u_zH_y$, $\dot H_y=u_zH_x-u_xH_z$, $\dot H_z=u_xH_y$ and $H_x^2+H_y^2+H_z^2$ is conserved. Singular arcs would need $H_x=H_z=0$ on an interval, hence $u=0$, which is not optimal; so the control is regular, $\norm{u}=u_0$, and maximisation gives $u\parallel(H_x,H_z)$ with $H_x^2+H_z^2=u_0^{-2}$ from $\HP=0$. Since $u_z$ only changes relative phases, the fastest transfer uses $u_x=\pm u_0$, $u_z=0$: $\ket{\psi(t)}=\cos(u_0t/2)\ket\uparrow+\imath\sin(u_0t/2)\ket\downarrow$ and}
+\begin{frame}\ft{Two controls without drift: the $\pi$-pulse}
+\ona{Let $\hat H=\tfrac12(u_z\sigma_z+u_x\sigma_x)$ with $u_x^2+u_z^2\le u_0^2$, and let us transfer $\ket0$ to $\ket1$, up to a phase, in the least time. The speed limit of \Chap~\ref{C.GeometryStates} settles the matter at once. The state moves through the space of rays with the speed $\Delta H$, the uncertainty of the energy, and here $\Delta H^2=\tfrac14\big(u_x^2+u_z^2-(u_xx+u_zz)^2\big)\le u_0^2/4$; the Fubini--Study distance from $\ket0$ to $\ket1$ is $\pi/2$; so Theorem~\ref{thm:ch07:mt} gives $t\ge\pi/u_0$. The constant control $u_x=u_0$, $u_z=0$ moves $\ket0$ to $\cos(u_0t/2)\ket0-\imath\sin(u_0t/2)\ket1$, along a meridian of the Bloch sphere at the full speed, and reaches $\ket1$ at}
 \begin{equation}\label{eq:ch09:pipulse}
     t^\star = \pi/u_0 ,
 \end{equation}
-\ona{a $\pi$-pulse: on the Bloch sphere, half a great circle from pole to pole, traversed at maximal speed. This is the first instance of a recurring theme: \emph{time-optimal trajectories are geodesics}.}
-\onp{\begin{itemize}
-    \item $\HP=u_zH_z+u_xH_x+\chi_0$, $H_{x,y,z}=\tfrac12\operatorname{Im}\braket{\chi|\sigma_{x,y,z}|\psi}$; $\sum H_i^2$ conserved.
-    \item No singular arcs; regular: $\norm u=u_0$, $u\parallel(H_x,H_z)$.
-    \item Optimum: $u_x=\pm u_0$, $u_z=0$, $t^\star=\pi/u_0$. \alert{Half a great circle $=$ geodesic.}
+\ona{which is therefore optimal: the $\pi$-pulse, half a great circle traversed as fast as the bound allows. The maximum principle confirms it and says more. With $\HP=u_zH_z+u_xH_x+\chi_0$, a singular arc would need $H_x=H_z=0$ on an interval, which forces $u=0$ there and cannot be optimal; so the control is regular, uses the full strength, and points along $(H_x,H_z)$; and since $u_z$ only changes relative phases, the fastest transfer puts all of the strength into $u_x$ \citep{ansel2024introduction,boscain2002,d2001optimal}. This is the first instance of a theme of the \chap: \emph{time-optimal trajectories are geodesics}, when the dynamics allows the geodesic to be followed.}
+\onp{\begin{itemize}\setlength\itemsep{0.4em}
+    \item Speed limit (Theorem~\ref{thm:ch07:mt}): $\Delta H\le u_0/2$, distance $\pi/2$ $\Rightarrow$ $t\ge\pi/u_0$.
+    \item $u_x=u_0$: a meridian at full speed, $t^\star=\pi/u_0$, the \alert{$\pi$-pulse}.
+    \item \PMP: no singular arcs; regular, full strength, $u\parallel(H_x,H_z)$ \citep{ansel2024introduction,boscain2002}.
+    \item Time-optimal trajectories are geodesics, when the geodesic can be followed.
 \end{itemize}}
 \end{frame}
 
-\begin{frame}\ft{One control with drift: bang-bang}
-\ona{Now let $\hat H=\tfrac12(\Delta\sigma_z+u\sigma_x)$ with $\abs{u}\le u_0$ and a fixed detuning $\Delta$. Then $\HP=\Delta H_z+uH_x$ and maximisation gives $u=u_0\operatorname{sgn}H_x$ whenever $H_x\ne0$: the control is bang-bang and $H_x$ is the \emph{switching function}. Between switches $(H_x,H_y,H_z)$ rotates with the constant matrix of \eqref{eq:ch09:bloch}, so with $\Omega=\sqrt{u_0^2+\Delta^2}$ and $H_x(t_i)=0$,}
-\begin{equation}\label{eq:ch09:Hx}
-    H_x(t) = -\frac{\Delta}{\Omega^2}\Big[\Omega H_y(t_i)\sin\Omega(t-t_i) - uH_z(t_i)\big(1-\cos\Omega(t-t_i)\big)\Big],
+\begin{frame}\ft{One control with a drift: bang-bang}
+\ona{Now take the driven qubit of \Chap~\ref{C.StateSpace}, $\hat H=-\tfrac\omega2\sigma_z+\tfrac u2\sigma_x$ with $\abs u\le u_0$, which is $\hat H=\tfrac12(\Delta\sigma_z+u\sigma_x)$ with the detuning $\Delta=-\omega$. The Pontryagin Hamiltonian is $\HP=\Delta H_z+uH_x+\chi_0$, and its maximisation over $[-u_0,u_0]$ gives $u=u_0\operatorname{sgn}H_x$ wherever $H_x\ne0$: the control is bang-bang, and $H_x$ is its \emph{switching function}. Write $\Omega=\sqrt{u_0^2+\Delta^2}$.}
+\begin{propn}[The structure of the extremals]\label{prop:ch09:bangs}
+Along an extremal on which $u$ does not vanish identically, $u=u_0\operatorname{sgn}H_x$ is piecewise constant. Between switches $\vec H$ turns about $(u,0,\Delta)$ with the angular velocity $\Omega$; all the bangs between the first and the last have one duration $t_b\le2\pi/\Omega$, and the first and the last are no longer than $t_b$.
+\end{propn}
+\ona{\begin{pf}
+Hamilton's equations give $\dot H_x=-\Delta H_y$, $\dot H_y=\Delta H_x-uH_z$ and $\dot H_z=uH_y$, that is, $\dot{\vec H}=(u,0,\Delta)\times\vec H$. If $H_x$ vanished on an interval, so would $\dot H_x=-\Delta H_y$ and $\dot H_y=-uH_z$, and since $\vec H\ne0$ the control would vanish there; this is excluded by hypothesis, and such singular arcs are not optimal here \citep{boscain2006time}. On a bang $\vec H$ moves on a circle about the axis $(u,0,\Delta)$, which lies in the $xz$-plane. The circle is symmetric under the reflection $H_y\mapsto-H_y$, which maps the plane $H_x=0$ to itself, so that a bang beginning at a switch $(0,h_y,h_z)$ ends at its mirror image $(0,-h_y,h_z)$, after turning through some angle $\theta$. The next bang turns about $(-u,0,\Delta)$, the mirror image of the axis under $H_x\mapsto-H_x$; this reflection fixes both points and reverses the sense of rotation, so the next bang also turns through $\theta$, from $(0,-h_y,h_z)$ back to $(0,h_y,h_z)$. Hence every interior bang lasts $t_b=\theta/\Omega$. Run backwards, the first bang would reach the previous zero of $H_x$ only after the same angle, so it lasts at most $t_b$, and so does the last.
+\end{pf}}
+\onp{\begin{itemize}
+    \item $\HP=\Delta H_z+uH_x+\chi_0$ $\Rightarrow$ $u=u_0\operatorname{sgn}H_x$: \alert{switching function} $H_x$.
+    \item $\dot{\vec H}=(u,0,\Delta)\times\vec H$: circles, symmetric under $H_y\mapsto-H_y$ $\Rightarrow$ equal interior bangs.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Two bangs, and more}
+\ona{The optimal control is therefore found by comparing bang-bang controls of increasing length. A single bang $\ee^{-\imath(\Delta\sigma_z+u\sigma_x)t/2}$ turns the Bloch vector about $(u,0,\Delta)$ and brings at most the population $u_0^2/\Omega^2<1$ to $\ket1$. Two bangs of the durations $t_1$ and $t_2$, of opposite signs, give}
+\begin{equation}\label{eq:ch09:twobangpop}
+    \abs{\braket{1|U|0}}^2=\frac{u_0^2}{\Omega^4}\Big[4\Delta^2\sin^2\tfrac{\Omega t_1}{2}\sin^2\tfrac{\Omega t_2}{2}+\Omega^2\sin^2\tfrac{\Omega(t_1-t_2)}{2}\Big],
 \end{equation}
-\ona{which is $2\pi/\Omega$-periodic; all interior bangs have the same duration and the pattern is $t_1$, then $t_b,t_b,\dots$, then $t_2$. A singular arc needs $H_x\equiv0$, hence $H_y\equiv0$ and $u\equiv0$, which cannot transfer population, so the optimum is regular. A single bang gives at most a population $u_0^2/\Omega^2<1$; with two bangs, $\abs{\braket{\downarrow|U_{\text{2-bangs}}|\uparrow}}^2 = \tfrac{u_0^2}{\Omega^4}\big[4\Delta^2\sin^2\tfrac{\Omega t_1}{2}\sin^2\tfrac{\Omega t_2}{2}+\Omega^2\sin^2\tfrac{\Omega(t_1-t_2)}{2}\big]$, and for $\abs\Delta<u_0$ the minimum-time exact transfer is}
+\ona{and for $\abs\Delta<u_0$ the shortest pair reaching $\ket1$ is}
 \begin{equation}\label{eq:ch09:twobangs}
     t_{1,2} = \frac{\pi\mp\arccos(\Delta^2/u_0^2)}{\Omega},\qquad t^\star = t_1+t_2 = \frac{2\pi}{\Omega},
 \end{equation}
-\ona{with the switch on the equator of the Bloch sphere; comparison with more switches confirms global optimality \cite{boscain2006time,PRXQuantumsugny}. For $\abs\Delta>u_0$ more than two bangs are needed.}
+\ona{in either order and with either sign first, four solutions in all, each switching on the equator of the Bloch sphere. Comparison with longer sequences confirms that they are optimal \citep{boscain2006time,ansel2024introduction}. For our qubit, with $\omega=1$ and $u_0=1.5$, the bangs last $1.127$ and $2.359$ and $t^\star=3.485$. A constant pulse of full strength, as in Figure~\ref{fig:ch07:speed}, would keep the state on the small circle of the first bang, which does not reach $\ket1$ (Figure~\ref{fig:ch09:timeoptimal}(a)). The least time behaves curiously as the detuning varies. At $\Delta=0$ one bang of the duration $\pi/u_0$ suffices, but for every small $\Delta\ne0$ the time is close to $2\pi/u_0$, twice as long, so that $t^\star$ jumps at $\Delta=0$: the single circle through both poles breaks, and the two bangs must then go nearly all the way round. For $\abs\Delta>u_0$ more bangs are needed \citep{boscain2006time}. We computed the least time there by searching the extremals of Proposition~\ref{prop:ch09:bangs}, and confirmed it by a gradient search over piecewise-constant controls; it jumps again where a further bang becomes necessary (Figure~\ref{fig:ch09:timeoptimal}(c)). Figure~\ref{fig:ch09:switchsphere} follows the vector $\vec H$ along the optimal path, and on a sphere of its own.}
 \onp{\begin{itemize}
-    \item $\HP=\Delta H_z+uH_x$; $u=u_0\operatorname{sgn}H_x$: \alert{switching function} $H_x$, period $2\pi/\Omega$.
-    \item No optimal singular arcs ($u\equiv0$ transfers nothing).
-    \item Two bangs suffice for $\abs\Delta<u_0$: $t^\star=2\pi/\Omega$, switch on the equator \cite{boscain2006time}.
+    \item One bang: at most $u_0^2/\Omega^2<1$. Two bangs \eqref{eq:ch09:twobangpop}: for $\abs\Delta<u_0$, $t^\star=2\pi/\Omega$ \eqref{eq:ch09:twobangs}, switch on the equator \citep{boscain2006time}.
+    \item Our qubit ($\omega=1$, $u_0=1.5$): $t_1=1.127$, $t_2=2.359$, $t^\star=3.485$.
+    \item $t^\star$ \alert{jumps}: $\pi/u_0$ at $\Delta=0$, about $2\pi/u_0$ for small $\Delta\ne0$; again where a bang is added.
 \end{itemize}}
 \end{frame}
 
-\begin{frame}\ft{The time-optimal trajectory}
-\ona{\begin{figure}[h]\centering
-\resizebox{0.42\linewidth}{!}{\input{figures/ch09_timeoptimal_bloch.tex}}\hfill
-\resizebox{0.55\linewidth}{!}{\input{figures/ch09_timeoptimal_controls.tex}}
-\caption{Left: Bloch-sphere trajectories for $\Delta=0.6$, $u_0=1$. The bang-bang solution \eqref{eq:ch09:twobangs} (blue) switches on the equator; the drift-free $\pi$-pulse (orange) is the pole-to-pole geodesic; a weak resonant drive $u=\tfrac12u_0\cos\Delta t$ (green) spirals slowly towards the target. Right: the bang-bang control and the switching function $H_x(t)$ computed by integrating $\ket\psi$ and $\ket\chi$; $u$ flips sign where $H_x$ vanishes. Generated by \texttt{code/ch09\_timeoptimal.py}.}\label{fig:ch09:timeoptimal}
+\begin{frame}\ft{The time-optimal transfer, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch09_timeoptimal.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch09_timeoptimal.tex}}
+\caption{Time-optimal transfer of the driven qubit of \Chap~\ref{C.StateSpace} from $\ket0$ to $\ket1$, with $\omega=1$ and $\abs u\le u_0=1.5$. (a) One of the four optimal paths (blue): the control $u=-u_0$ for $t_1=1.127$, which turns the Bloch vector about $(-u_0,0,\Delta)/\Omega$ and brings it to the equator (red), then $u=+u_0$ for $t_2=2.359$; in all $t^\star=2\pi/\Omega=3.485$. With the control held at $-u_0$ the state would stay on the green circle, which does not reach $\ket1$. The meridian (gold) is a geodesic of the Fubini--Study metric, along which the speed limit would be met in the time $\pi/\Omega=1.743$, but no admissible control follows it. (b) The control and the switching function $H_x(t)=\tfrac12\operatorname{Im}\braket{\chi|\sigma_x|\psi}$, computed by integrating the state and the adjoint under the same propagators. At the switch $\vec H=(0,0,1/\Delta)$: $\HP=0$ fixes $H_z$, and $\vec H$ is orthogonal to the Bloch vector, which has a non-zero $y$-component there; hence $H_x(t)=(u/\Omega^2)\big(1-\cos\Omega(t-t_1)\big)$ on each bang, and it changes sign at $t_1$ with zero slope. (c) The least time against the detuning. It is $\pi/u_0$ for $\Delta=0$ (the $\pi$-pulse) and $2\pi/\Omega$ for $0<\abs\Delta\le u_0$, so that it jumps at $\Delta=0$. For $\abs\Delta>u_0$ it was computed by searching the extremals of Proposition~\ref{prop:ch09:bangs}, whose end points can be found in closed form as the intersections of two circles on the sphere, and confirmed by a gradient search over $120$ piecewise-constant steps; the numbers mark how many bangs the optimal control has, and the time jumps again where a fourth and a fifth become necessary. The speed limit (dashed) is met only at $\Delta=0$. Generated by \texttt{code/ch09\_timeoptimal.py}.}\label{fig:ch09:timeoptimal}
 \end{figure}}
-\onp{\begin{center}
-\resizebox{!}{0.42\textheight}{\input{figures/ch09_timeoptimal_bloch.tex}}\hspace{1em}
-\resizebox{!}{0.42\textheight}{\input{figures/ch09_timeoptimal_controls.tex}}
-\end{center}
-\small Blue: bang-bang \eqref{eq:ch09:twobangs}; orange: drift-free $\pi$-pulse (geodesic); green: weak resonant drive. Right: $u(t)$ and switching function $H_x(t)$.}
+\end{frame}
+
+\begin{frame}\ft{The adjoint on the sphere}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch09_switchsphere.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{0.95\linewidth}{!}{\input{figures/ch09_switchsphere.tex}}
+\caption{The adjoint of the time-optimal transfer of Figure~\ref{fig:ch09:timeoptimal}. (a) The vector $\vec H$, $H_k=\tfrac12\operatorname{Im}\braket{\chi|\sigma_k|\psi}$, drawn at points of the optimal path. It is orthogonal to the Bloch vector, and therefore tangent to the sphere, and $\vec p=\vec H\times\Bloch$ is the adjoint of the Bloch-vector formulation. Its length $1/\abs\Delta$ is conserved, $\vec h\cdot\vec H=1$ on both bangs, which is to say that $\HP=0$, and the switching function is its $x$-component, negative on the first bang and positive on the second. At the switch (red) $\vec H=(0,0,1/\Delta)$, at right angles to the $x$-axis. (b) $\vec H$ on a sphere of its own. On each bang it turns about the axis $\vec h$ of that bang, as in the proof of Proposition~\ref{prop:ch09:bangs}, and the control switches where it meets the plane $H_x=0$ (red, dashed), at $(0,0,-1)$. There its velocity, $(0,\mp u_0,0)$, lies in the plane, so that $H_x$ changes sign with zero slope. Generated by \texttt{code/ch09\_switchsphere.py}.}\label{fig:ch09:switchsphere}
+\end{figure}}
 \end{frame}
 
 \begin{frame}[fragile]\ft{Computing the switching function}
-\ona{The following excerpt of \texttt{code/ch09\_timeoptimal.py} integrates the state and the adjoint under the same propagators, as \eqref{eq:ch09:qadj} prescribes for a state-independent running cost, and records $H_x(t)=\tfrac12\operatorname{Im}\braket{\chi|\sigma_x|\psi}$. The zero of $H_x$ is where the bang-bang control switches.}
-\lstinputlisting[style=python,firstline=25,lastline=37]{code/ch09_timeoptimal.py}
+\ona{The following excerpt of \texttt{code/ch09\_timeoptimal.py} integrates the state and the adjoint under the same propagators, as \eqref{eq:ch09:qadj} prescribes for a running cost that does not depend on the state, starting from their values at the switch, and records $\vec H$ and $\HP$. The script checks that $\HP$ vanishes and that the length of $\vec H$ is conserved along the whole extremal, and that $H_x$ has the sign of the control.}
+\ona{\lstinputlisting[style=python,title={},firstline=76,lastline=92]{code/ch09_timeoptimal.py}}
+\onp{\lstinputlisting[style=python,title={},basicstyle=\ttfamily\scriptsize,firstline=76,lastline=92]{code/ch09_timeoptimal.py}}
 \end{frame}
 
-\begin{frame}\ft{The quantum speed limit}
-\ona{How fast can a state become orthogonal to itself? Decompose the velocity $\ket{\dot\psi}=-\imath\hat H\ket\psi$ into the part along $\ket\psi$ and the orthogonal part; the latter has squared norm $\langle\hat H^2\rangle-\langle\hat H\rangle^2=\Delta H^2$, the variance of the Hamiltonian. The Mandelstam--Tamm bound \cite{deffner2017quantum} then gives $t\ge t_{\mathrm{QSL}}=\tfrac{\pi}{2}/\max\Delta H$ for reaching an orthogonal state; the Margolus--Levitin bound \cite{MARGOLUS1998188} is analogous with the mean energy. For the two-control qubit, $\Delta H^2=\tfrac{u_0^2}{4}-\tfrac14(u_zz+u_xx)^2\le u_0^2/4$, so $t_{\mathrm{QSL}}=\pi/u_0=t^\star$: the bound is saturated because the geodesic \emph{is} a dynamical trajectory. With one control and drift, $\Delta H^2\le\Omega^2/4$ gives $t_{\mathrm{QSL}}=\pi/\Omega$, while $t^\star=2\pi/\Omega$: the pole-to-pole geodesic is not realisable, and the speed limit is strict. The gap between $t_{\mathrm{QSL}}$ and $t^\star$ is a measure of how far the available directions are from all directions---the theme of sub-Riemannian geometry below.}
-\onp{\begin{itemize}
-    \item Transverse speed $=\Delta H$ (variance of $\hat H$); Mandelstam--Tamm: $t\ge\tfrac{\pi}{2\max\Delta H}$ \cite{deffner2017quantum}.
-    \item Two controls: $t_{\mathrm{QSL}}=\pi/u_0=t^\star$ (geodesic realisable).
-    \item One control $+$ drift: $t_{\mathrm{QSL}}=\pi/\Omega<t^\star=2\pi/\Omega$ (geodesic not realisable).
-    \item The gap measures the \alert{missing directions}: sub-Riemannian geometry.
+\begin{frame}\ft{The reachable sets of the qubit}
+\ona{Figure~\ref{fig:ch09:reachqubit} draws the reachable sets of our qubit, the counterpart of Figure~\ref{fig:ch09:reach}(a) for the particle and of the caps of Figure~\ref{fig:ch02:reach}, which had no drift. For small times $\Reach(t)$ is a thin crescent about $\ket0$, stretched along the direction in which the field moves the state, and since the drift leaves $\ket0$ fixed the sets are nested. The optimal path runs along their fronts until about $t=2.3$, with the adjoint $\vec p$ as an outward normal, as for the particle. Then the picture changes. From about $t=2.5$ the reachable set has wrapped round the sphere and leaves only a hole about $\ket1$, which shrinks and closes at $t^\star=3.485$. The target is reached when the hole closes, so that $\ket1$ is an interior point of $\Reach(t^\star)$, although no earlier time reaches it; the optimal paths ride the corners of the hole. This is why the argument for the maximum principle in Section~\ref{sec:ch09:pmp} was made with the controls near $u^\star$, whose end points do lie on one side of a plane through $\ket1$, and not with the whole reachable set. The largest polar angle that can be reached grows more slowly than the speed limit allows, and reaches $\pi$ only at $t^\star$.}
+\onp{\begin{itemize}\setlength\itemsep{0.4em}
+    \item Small $t$: a crescent about $\ket0$, nested sets; the optimal path on the front until $t\approx2.3$, $\vec p$ an outward normal.
+    \item From $t\approx2.5$: the set wraps round, leaving a \alert{hole} about $\ket1$ that closes at $t^\star=3.485$.
+    \item $\ket1$ is an interior point of $\Reach(t^\star)$: hence the \emph{local} argument of the maximum principle.
 \end{itemize}}
 \end{frame}
 
-\section{Control landscapes}
-
-\begin{frame}\ft{The landscape and its critical points}
-\begin{defn}[Control landscape]\label{def:ch09:landscape}
-The control landscape of a problem with fixed $t_f$ is the map $u\mapsto\costJ[u]$ (e.g.\ the fidelity $\Fid(U_u(t_f),V)=\abs{\Tr(V^\dagger U_u(t_f))}^2/d^2$) from the space of admissible controls to $\R$. Its critical points are the controls with $\delta\costJ/\delta u\equiv0$; by \eqref{eq:ch09:qmax} these are the normal extremals of the PMP with $F_0=0$.
-\end{defn}
-\ona{\citet{rabitz_quantum_2004} observed that for closed systems with unconstrained controls, full controllability and a regular map $u\mapsto U_u(t_f)$, the landscape of the fidelity has no local traps: every critical point is a global maximum, a global minimum, or a saddle. The argument is that the landscape factors through the kinematic map $U\mapsto\abs{\Tr(V^\dagger U)}^2$ on $\SU[d]$, whose critical values are known, and a regular dynamical map does not create new critical points. Traps do appear once controls are bounded, the time is short, or the system is not fully controllable, and saddles can slow gradient methods dramatically; \Chap~\ref{C.AlgControl} returns to this when discussing local versus global optimisation (QCPOP).}
-\onp{\begin{itemize}
-    \item Landscape $u\mapsto\costJ[u]$; critical points $=$ PMP extremals with $F_0=0$.
-    \item Trap-free theorem (\citet{rabitz_quantum_2004}): controllable $+$ unconstrained $+$ regular $\Rightarrow$ only global max/min and saddles.
-    \item Constraints, short $t_f$ or lack of controllability \alert{create traps}; saddles slow gradient methods.
-\end{itemize}}
-\end{frame}
-
-\begin{frame}\ft{A toy landscape}
-\ona{\begin{figure}[h]\centering
-\resizebox{0.6\linewidth}{!}{\input{figures/ch09_landscape.tex}}
-\caption{Transfer fidelity $F(u_1,u_2)=\abs{\braket{\downarrow|U_2U_1|\uparrow}}^2$ for two piecewise-constant pulses of duration $\Delta t=1.6$ on a qubit with detuning $\Delta=0.6$. White dots mark local maxima, red crosses local minima on the grid. The landscape is periodic and, because the two-parameter family is far from covering the whole control space, it has several isolated maxima that are not global. Generated by \texttt{code/ch09\_landscape.py}.}\label{fig:ch09:landscape}
+\begin{frame}\ft{The reachable sets of the qubit, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch09_reachqubit.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch09_reachqubit.tex}}
+\caption{The reachable sets of the driven qubit of \Chap~\ref{C.StateSpace} ($\omega=1$, $\abs u\le1.5$) from $\ket0$, computed by sampling some $4\cdot10^5$ controls for each time, among them the extremals of Proposition~\ref{prop:ch09:bangs}. (a) $\Reach(0.5)$, $\Reach(1)$ and $\Reach(2)$, drawn in the map about $\ket0$ that preserves distances from $\ket0$ and directions at it; the sets are nested, since the drift leaves $\ket0$ fixed. The optimal path of Figure~\ref{fig:ch09:timeoptimal} (red) runs along their fronts until $t\approx2.3$, and its adjoint $\vec p$ (gold) is an outward normal there. (b) The sphere seen from below $\ket1$. From about $t=2.5$ the reachable set has wrapped round the sphere, leaving a hole about $\ket1$, shown at $t=2.75$, $3$, $3.3$ and $3.45$, which shrinks and closes at $t^\star=3.485$; the optimal paths (blue, from $t=3$) ride its corners. So $\ket1$ is not on the boundary of $\Reach(t^\star)$ but an interior point of it, reached at no earlier time: the first contact is the closing of a hole, not the touch of a front. (c) The largest polar angle reachable at the time $t$, against the bound $\Omega t$ and the drift-free $u_0t$. Generated by \texttt{code/ch09\_reachqubit.py}.}\label{fig:ch09:reachqubit}
 \end{figure}}
-\onp{\begin{center}\resizebox{!}{0.62\textheight}{\input{figures/ch09_landscape.tex}}\end{center}
-Two-pulse qubit landscape: white $=$ local maxima, red $=$ local minima. Restricting the control family creates traps.}
 \end{frame}
 
-\section{Geodesics on the unitary group}
-
-\begin{frame}\ft{Riemannian geodesics on $\SU$}
-\ona{Return to $\dot U=-\imath H(t)U$ on $\SU[d]$ with $H(t)$ chosen freely in $\liesu[d]$ (after multiplication by $\imath$). The inner product $\inner{A}{B}=\Tr(A^\dagger B)$ on $\liesu[d]$ extends by right translation to a bi-invariant Riemannian metric on $\SU[d]$; the length of the trajectory generated by $H(\cdot)$ is $\int_0^{t_f}\norm{H(t)}_F\,\mathrm{d}t$. Geodesics of a bi-invariant metric are the one-parameter subgroups $U(t)=\ee^{-\imath Ht}$, i.e.\ trajectories of \emph{time-independent} Hamiltonians, and the distance $\dF(\Id,V)$ is the norm of the smallest logarithm of $V$. Hence with a bound $\norm{H(t)}_F\le E$ on the total strength but no restriction on direction, the minimal time to reach $V$ is $\dF(\Id,V)/E$ and the optimal control is constant. The two-control qubit of \eqref{eq:ch09:pipulse} is an instance: $\dF(\Id,\ee^{-\imath\pi\sigma_x/2})/(u_0/\sqrt2)\cdot\tfrac{1}{\sqrt2}=\pi/u_0$ after fixing normalisations.}
-\onp{\begin{itemize}
-    \item Bi-invariant metric from $\inner{A}{B}=\Tr(A^\dagger B)$; length $=\int\norm{H(t)}_F\,\mathrm{d}t$.
-    \item Geodesics $=\ee^{-\imath Ht}$: \alert{constant Hamiltonians}. $\dF(\Id,V)=\norm{\log V}_F$ (principal branch).
-    \item Bounded strength, free direction $\Rightarrow$ $t^\star=\dF(\Id,V)/E$.
+\begin{frame}\ft{The speed limit, revisited}
+\ona{For the driven qubit the speed limit is not met. The uncertainty of the energy is now $\Delta H^2=\tfrac14\big(\Omega^2-(\Delta z+ux)^2\big)\le\Omega^2/4$, so that Theorem~\ref{thm:ch07:mt} gives only $t\ge\pi/\Omega=1.743$, half of $t^\star$. Equality would require the state to travel along a meridian with $\Delta z+ux=0$ throughout, which no admissible control achieves: the geodesic of the speed limit is not a trajectory of the system \citep{ansel2024introduction,hegerfeldt2013driving}. The gap between the bound and the least time measures how far the directions the controls provide fall short of all directions. When they provide every direction, as for two controls without drift, time-optimal paths are the geodesics of a Riemannian metric; when they do not, the geometry is the sub-Riemannian geometry of Section~\ref{sec:ch09:geodesics}, and the excess of the length travelled over the distance, which \Chap~\ref{C.GeometryStates} drew in Figure~\ref{fig:ch07:speed}, becomes unavoidable. Figure~\ref{fig:ch09:length} draws it for our qubit. On each bang $\vec h\cdot\Bloch$ is constant, $-1$ on the first and $+1$ on the second, so that the speed is $u_0/2$ throughout, as it is for the constant pulse; the optimal control travels the length $2.614$ to cover the distance $\pi/2$, and part of the excess is spent in moving back towards $\ket0$ after the switch.}
+\onp{\begin{itemize}\setlength\itemsep{0.5em}
+    \item Drift: $\Delta H\le\Omega/2$ $\Rightarrow$ $t\ge\pi/\Omega=1.743$, half of $t^\star=3.485$.
+    \item The meridian would need $\Delta z+ux=0$ throughout: not a trajectory \citep{hegerfeldt2013driving}.
+    \item The gap measures the \alert{missing directions}: sub-Riemannian geometry, Section~\ref{sec:ch09:geodesics}.
 \end{itemize}}
 \end{frame}
 
-\begin{frame}\ft{Sub-Riemannian geodesics and the Cartan decomposition}
-\ona{Real hardware does not offer every direction. With $H(t)=\Hdrift+\sum_ku_k\Hctrl$ the velocity is confined, up to the drift, to the subspace $\mathfrak{d}=\operatorname{span}\{\imath\Hctrl\}$ translated around the group---a \emph{distribution} $D\subset T\SU[d]$. If $\mathfrak d$ generates $\liesu[d]$ under commutators (the Lie algebra rank condition of \Chap~\ref{C.StateSpace}) the Chow--Rashevskii theorem says every $V$ is reachable by \emph{horizontal} curves, those with $\dot U\in D$, and the infimum of their lengths is the Carnot--Carath\'eodory distance $d_\infty(\Id,V)$. Time-optimal control with bounded, direction-restricted controls is the computation of $d_\infty$; its minimisers are sub-Riemannian geodesics, which need not be one-parameter subgroups and can even be non-smooth \cite{Agrachev_Barilari_Boscain_2019,Montgomery2002}. When the controlled directions span the part $\mathfrak p$ of a Cartan decomposition $\mathfrak k\oplus\mathfrak p$ (a $K+P$ problem), the equations of the maximum principle are integrable: on $\SU[2]$ \citet{BoscainRossi2008} write down the geodesics and the whole cut locus, and for a three-level system \citet{boscain2002kp} show that the controls of least energy are in resonance with the transitions they drive.}
-\ona{Khaneja, Brockett and Glaser made this concrete for two coupled spins with fast local controls: if local unitaries $K=\SU[2]\otimes\SU[2]$ are free, the relevant geometry is that of the quotient $\SU[4]/K$, and the Cartan decomposition $\SU[4]=K\,A\,K$ with $A=\{\exp(-\imath(c_1\sigma_x\!\otimes\!\sigma_x+c_2\sigma_y\!\otimes\!\sigma_y+c_3\sigma_z\!\otimes\!\sigma_z))\}$ reduces the minimal time for a gate $V$ to a minimisation over its Cartan coordinates $(c_1,c_2,c_3)$ given the coupling Hamiltonian \citep{PhysRevA.63.032308}. The time to reach a CNOT under an Ising coupling $J\sigma_z\otimes\sigma_z$ is $\pi/(2J)$.}
+\begin{frame}\ft{Length and distance along the optimal transfer}
+\onp{\begin{center}\resizebox{!}{0.72\textheight}{\input{figures/ch09_length.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{0.7\linewidth}{!}{\input{figures/ch09_length.tex}}
+\caption{Length and distance along the time-optimal transfer, the companion of Figure~\ref{fig:ch07:speed}. On a bang $\vec h\cdot\Bloch$ is constant, and here it is $-1$ on the first bang and $+1$ on the second. The speed $\Delta H=\tfrac12\sqrt{\Omega^2-(\vec h\cdot\Bloch)^2}$ is therefore $u_0/2=0.75$ throughout, for the optimal control and for the constant pulse alike, and the length travelled is the same line for both (ink). The speed limit would need $\vec h\perp\Bloch$ and the speed $\Omega/2=0.90$ (gold), and would bring the state to $\ket1$ at $\pi/\Omega=1.743$ along the meridian. The optimal control (blue) reaches the distance $\pi/2$ at $t^\star=3.485$ after the length $2.614$, an excess of $1.04$. After the switch on the equator it first carries the state back towards $\ket0$, to the distance $0.588$, before descending to $\ket1$. The constant pulse (green) gets no farther than $0.98$ and is back at $\ket0$ at $t^\star$. Generated by \texttt{code/ch09\_length.py}.}\label{fig:ch09:length}
+\end{figure}}
+\end{frame}
+
+\section{Control landscapes}\label{sec:ch09:landscapes}
+
+\begin{frame}\ft{The landscape and the endpoint map}
+\ona{Numerical optimal control fixes the final time and climbs a fidelity by gradients (\Chap~\ref{C.AlgControl}). Whether such a climb can stall below the top is a question about the shape of the function being climbed.}
+\begin{defn}[Control landscape]\label{def:ch09:landscape}
+For a fixed time $T$, the \emph{endpoint map} $E:u\mapsto U_u(T)$ takes an admissible control to the propagator it produces, and the \emph{control landscape} is $\costJ=\costJ_{\rm kin}\circ E$, where the \emph{kinematic landscape} $\costJ_{\rm kin}$ is a function on the group, such as $\costJ_{\rm kin}(U)=\operatorname{Re}\Tr(V^\dagger U)/N$ for a target gate $V$, or on the states, such as the population $\abs{\braket{1|U|0}}^2$. A \emph{trap} is a local maximum of $\costJ$ that is not a global one.
+\end{defn}
+\begin{propn}\label{prop:ch09:pullback}
+If the differential of $E$ at $u$ is onto, then $u$ is a critical point of $\costJ$ if and only if $E(u)$ is a critical point of $\costJ_{\rm kin}$, and if $u$ is a local maximum of $\costJ$, then $E(u)$ is a local maximum of $\costJ_{\rm kin}$.
+\end{propn}
+\ona{\begin{pf}
+By the chain rule $\mathrm d\costJ_u=\mathrm d(\costJ_{\rm kin})_{E(u)}\circ\mathrm dE_u$, which vanishes if and only if $\mathrm d(\costJ_{\rm kin})_{E(u)}$ does, since $\mathrm dE_u$ is onto. A map whose differential is onto is open near $u$, by the implicit function theorem (or its Banach-space version, the theorem of Lyusternik and Graves), so that the images of the controls near $u$ cover a neighbourhood of $E(u)$, on which $\costJ_{\rm kin}\le\costJ_{\rm kin}(E(u))$ if $u$ is a local maximum.
+\end{pf}}
 \onp{\begin{itemize}
-    \item Available directions $\mathfrak d=\operatorname{span}\{\imath\Hctrl\}$: a distribution $D\subset T\SU[d]$.
-    \item Bracket-generating $\Rightarrow$ Chow--Rashevskii: horizontal curves reach everything; $d_\infty=$ Carnot--Carath\'eodory distance.
-    \item Time-optimal with restricted directions $=$ \alert{sub-Riemannian geodesic}.
-    \item Two spins, fast local controls: $\SU[4]=KAK$ (Cartan); minimal time from Cartan coordinates \citep{PhysRevA.63.032308}.
+    \item $\costJ=\costJ_{\rm kin}\circ E$: the dynamics ($E$) followed by the geometry of the target ($\costJ_{\rm kin}$).
+    \item Where $\mathrm dE_u$ is onto, critical points and local maxima are those of $\costJ_{\rm kin}$.
 \end{itemize}}
 \end{frame}
 
-\section{Noise metrics and robust control}
+\begin{frame}\ft{The kinematic landscape has no traps}
+\begin{thm}\label{thm:ch09:kinematic}
+On $\Un[N]$ the critical points of $\costJ_{\rm kin}(U)=\operatorname{Re}\Tr(V^\dagger U)$ are the $U$ for which $V^\dagger U$ is Hermitian, with eigenvalues $\pm1$. The only local maximum is $U=V$ and the only local minimum $U=-V$; all other critical points are saddles.
+\end{thm}
+\ona{\begin{pf}
+Write $W=V^\dagger U$ and perturb $U$ to $U\ee^{\imath\epsilon K}$ with $K$ Hermitian. The first derivative at $\epsilon=0$ is $\operatorname{Re}\Tr(\imath WK)=\tfrac12\Tr\big(\imath(W-W^\dagger)K\big)$, which vanishes for every Hermitian $K$ if and only if $W=W^\dagger$; a Hermitian unitary has eigenvalues $\pm1$. In an eigenbasis of $W$ the second derivative is $-\operatorname{Re}\Tr(WK^2)$, and for $K=\ket j\bra j$ it is $-W_{jj}$. It is therefore negative in a direction with $W_{jj}=+1$ and positive in one with $W_{jj}=-1$, so that a critical point with both eigenvalues is a saddle, and only $W=\Id$ is a maximum.
+\end{pf}}
+\ona{The same holds for the phase-insensitive fidelity $\abs{\Tr(V^\dagger U)}^2$ and for state transfer, where the kinematic landscape on the Bloch sphere, $\tfrac12(1-z)$, has only its maximum $\ket1$ and its minimum $\ket0$ as critical points. \citet{rabitz_quantum_2004} put the two results together. For a controllable closed system with unconstrained controls the endpoint map is onto, and if its differential were onto at every control, Proposition~\ref{prop:ch09:pullback} would make the landscape free of traps; the many successful optimisations reported in the laboratory suggested that this is the common case \citep{rabitz2006,chakrabarti2007quantum}. Figure~\ref{fig:ch09:kinematic} draws the kinematic landscape of $\Un[2]$ on the torus of the eigenphases of $V^\dagger U$, on which it depends alone.}
+\onp{\begin{itemize}
+    \item Critical points: $V^\dagger U$ Hermitian, eigenvalues $\pm1$; second derivative $-W_{jj}$ in the direction $\ket j\bra j$.
+    \item Only $U=V$ is a local maximum: \alert{no kinematic traps}. The same for $\abs{\Tr(V^\dagger U)}^2$ and for states.
+    \item With $\mathrm dE$ onto everywhere the landscape would have no traps \citep{rabitz_quantum_2004,chakrabarti2007quantum}.
+\end{itemize}}
+\end{frame}
 
-\begin{frame}\ft{The random Schr\"odinger equation}
-\ona{We now let noise choose the metric. Following \Chap~\ref{C.Open}, model a noisy closed system by the random ordinary differential equation (RODE)}
-\begin{equation}\label{eq:ch09:rse}
-    \dd{t}U_S(t,\omega) = -\imath\big(H_{0,S}(t)+H_{1,S}(t,\omega)\big)U_S(t,\omega),\qquad U_S(0,\cdot)=\Id,
+\begin{frame}\ft{The kinematic landscape, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch09_kinematic.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch09_kinematic.tex}}
+\caption{The kinematic landscape of $\Un[2]$, drawn on the torus of the eigenphases $(\alpha,\beta)$ of $W=V^\dagger U$. (a) $\operatorname{Re}\Tr(V^\dagger U)/2=\tfrac12(\cos\alpha+\cos\beta)$, with its only maximum at $W=\Id$ (gold), its minimum at $W=-\Id$ (black) and two saddles (diamonds), where $W$ has the eigenvalues $1$ and $-1$, as Theorem~\ref{thm:ch09:kinematic} asserts. The streamlines are those of steepest ascent. (b) Steepest ascent $U\mapsto U\ee^{\imath\epsilon G}$ on the whole group from $40$ random starts. The gradient commutes with $W$, so that the eigenvectors stay where they are, and every run ends at $W=\Id$. (c) The fidelity $\abs{\Tr(V^\dagger U)}^2/4=\cos^2\tfrac{\alpha-\beta}2$, which ignores the global phase. Its maxima fill the diagonal $W=\ee^{\imath\varphi}\Id$ and its minima the dashed lines, and the same $40$ starts all end on the diagonal. Generated by \texttt{code/ch09\_kinematic.py}.}\label{fig:ch09:kinematic}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{Where traps come from}
+\ona{The differential of the endpoint map is not onto everywhere, and the controls where it fails are familiar. If $\mathrm dE_u$ is not onto, there is a non-zero covector $\lambda_T$ at $E(u)$ that annihilates its image. Carried backwards along the trajectory, as the adjoint was in Section~\ref{sec:ch09:pmp}, it gives an adjoint for which $\partial_u\HP=0$ at every instant with $\lambda_0=0$: the \emph{singular controls} of the endpoint map are the abnormal extremals of the maximum principle. A trap of the landscape that lies in the interior of the admissible set can therefore occur only at such a control. Three things make them common in practice. First, a bound on the amplitude puts maxima on the boundary of the admissible set, where the derivative need not vanish. Second, a family of controls with few parameters, such as a few piecewise-constant steps or a few Fourier modes, maps a low-dimensional space onto the group, and its endpoint map has a large singular set; with fewer parameters than the dimension of the target manifold every control is singular. Third, a short final time keeps the reachable set small and folded. Figure~\ref{fig:ch09:landscape} shows all of this for the driven qubit with two piecewise-constant steps: every critical point other than the global extrema, traps and saddles alike, lies on the curves where $\det\mathrm dE=0$. Figure~\ref{fig:ch09:traps} shows the traps disappearing as the number of steps grows.}
+\ona{\endgraf Whether traps occur with unconstrained controls in infinitely many parameters has been argued at length. \citet{pechen_are_2011} exhibited traps in a three-level system, one of which \Chap~\ref{C.AlgControl} uses as an example; \citet{defouquieres2013closer} examined the role of the singular controls; and \citet{russell2017control} argued that traps are nevertheless exceptional. For generic systems with at least three controls and no drift, singular trajectories that minimise do not occur at all \citep{chitour2006genericity}, but the systems of quantum control, built from a few Pauli matrices, are far from generic.}
+\onp{\begin{itemize}\setlength\itemsep{0.3em}
+    \item $\mathrm dE_u$ not onto $\Leftrightarrow$ $\exists\lambda_T\ne0$ annihilating its image $\Leftrightarrow$ an \alert{abnormal extremal}.
+    \item Interior traps sit at singular controls. Bounds put maxima on the boundary. Few parameters: a large singular set.
+    \item Unconstrained, infinite-dimensional: traps exist but are rare \citep{pechen_are_2011,defouquieres2013closer,russell2017control}.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{A landscape with traps}
+\onp{\begin{center}\resizebox{0.92\linewidth}{!}{\input{figures/ch09_landscape.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{0.95\linewidth}{!}{\input{figures/ch09_landscape.tex}}
+\caption{Where the traps of a control landscape come from. The driven qubit of \Chap~\ref{C.StateSpace} ($\omega=1$) with two constant steps $u_1$, $u_2$, each of duration $1.6$, and the landscape $F(u_1,u_2)=\abs{\braket{1|U|0}}^2$. (a) Contours of $F$, from $0.1$ (pale) to $0.9$ (dark). Its four global maxima (gold) reach $\ket1$. Its two traps (red crosses), with $F=0.885$, are the best constant pulses, $u_1=u_2=\pm2.788$; they and all the saddles (diamonds) lie on the curves where the endpoint map $E:(u_1,u_2)\mapsto\Bloch(3.2)$ is singular (red), as Proposition~\ref{prop:ch09:pullback} requires, while the global maxima and the minima do not. Inside the bound $\abs{u_i}\le1.5$ (dashed) no control reaches $\ket1$, and the largest values, $F=0.847$, lie on its edge (open circles). (b) The fold behind the trap. The images of the lines $u_1=\mathrm{const}$ (blue) and $u_2=\mathrm{const}$ (green) through a square of side $1.4$ about the trap, drawn in longitude and height on the Bloch sphere about the trap's end point, fill a region whose lower edge (red) is the image of the singular curve through the trap. There the endpoint map folds the square over, and the region touches the latitude of the trap from above, so that no control nearby brings the state further south, towards $\ket1$. Generated by \texttt{code/ch09\_landscape.py}.}\label{fig:ch09:landscape}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{More steps, fewer traps}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch09_traps.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch09_traps.tex}}
+\caption{Traps disappear as the family of controls grows. The driven qubit of \Chap~\ref{C.StateSpace}, taken from $\ket0$ to $\ket1$ by a piecewise-constant control of $N$ steps over the time $T$, with unbounded amplitudes; gradient ascent (L-BFGS) is started from $100$ controls with amplitudes drawn uniformly from $[-3,3]$. (a) Where the runs end for $T=3.2$, the time of Figure~\ref{fig:ch09:landscape}. A constant pulse never brings the state exactly to $\ket1$, and its runs end at the local maxima $0.313$, $0.885$ and $0.979$. With two steps $85$ runs succeed and $13$ end at $0.885$, the best constant pulse, which is the trap of Figure~\ref{fig:ch09:landscape}; with three steps $99$ succeed, and with four or more all of them. (b) The fraction of runs reaching $F>0.999$ against $N$, for $T=2$, $3.2$, $6$, $12$ and $20$. It is nought for one step, and from six steps on every run succeeds for every $T$. For two steps it falls from $98\%$ at $T=2$ to $32\%$ at $T=20$, so that longer times need more steps. Generated by \texttt{code/ch09\_traps.py}.}\label{fig:ch09:traps}
+\end{figure}}
+\end{frame}
+
+\section{Geodesics on the unitary group}\label{sec:ch09:geodesics}
+
+\begin{frame}\ft{Every direction available: Riemannian geodesics}
+\ona{Return to $\dot U=-\imath H(t)U$ on $\SU[N]$ and suppose first that every direction is available: $H(t)$ may be any traceless Hermitian matrix with $\norm{H(t)}_F\le E$. The inner product $\inner{A}{B}=\Tr(A^\dagger B)$ on $\liesu[N]$ extends to the bi-invariant Riemannian metric of \Chap~\ref{C.GeometryChannels} (Section~\ref{sec:ch08:lie}), in which the trajectory generated by $H(\cdot)$ has the length $\int_0^{t_f}\norm{H(t)}_F\,\mathrm{d}t$. The geodesics of a bi-invariant metric through $\Id$ are the one-parameter subgroups $\ee^{-\imath Ht}$, the trajectories of Hamiltonians that do not change in time, and the distance $\dF(\Id,V)$ is the least norm $\norm{H}_F$ of a traceless $H$ with $\ee^{-\imath H}=V$; for $V=\ee^{-\imath\theta\,\vec n\cdot\vec\sigma/2}$ in $\SU[2]$, with $0\le\theta\le2\pi$, it is $\theta/\sqrt2$. A trajectory of length $L$ takes at least the time $L/E$, so that}
+\begin{equation}\label{eq:ch09:riemannian}
+    t^\star(V)=\dF(\Id,V)/E,
 \end{equation}
-\ona{with $H_{0,S}$ the deterministic control Hamiltonian and $H_{1,S}$ an essentially bounded Hermitian noise process. Just as there is a notion of control theory for ODEs, there is a natural notion of \emph{robust control} theory for RODEs: given a target, find control functions and a stopping time minimising a cost $c(x(T,\cdot),a,T,y)$ that depends on the random final state. The noise process may depend on the control functions; we refer to this dependency as a \emph{control-noise coupling}. We restrict attention to controls that generate the target exactly in the absence of noise.}
-\onp{\begin{itemize}
-    \item RODE \eqref{eq:ch09:rse}: deterministic control $H_{0,S}$, bounded Hermitian noise $H_{1,S}(t,\omega)$; unitary sample paths, mixed states after averaging.
-    \item \alert{Robust control}: minimise a cost of the random final state, e.g.\ $\esssup_\omega\norm{U_S(T,\omega)-V}$.
-    \item Control-noise coupling: $H_{1,S}=H_{1,S}(H_{0,S},t,\omega)$.
+\ona{attained by a constant Hamiltonian. The two controls of \eqref{eq:ch09:pipulse} give $\norm{H}_F=\norm{u}/\sqrt2\le u_0/\sqrt2$, and the gate $\ee^{-\imath\pi\sigma_x/2}$ has $\dF=\pi/\sqrt2$, which gives $t^\star=\pi/u_0$ again.}
+\onp{\begin{itemize}\setlength\itemsep{0.4em}
+    \item Bi-invariant metric $\Tr(A^\dagger B)$ (\Chap~\ref{C.GeometryChannels}); length $=\int\norm{H(t)}_F\,\mathrm{d}t$.
+    \item Geodesics through $\Id$: $\ee^{-\imath Ht}$, \alert{constant Hamiltonians}. $\dF(\Id,V)=$ least $\norm H_F$ with $\ee^{-\imath H}=V$.
+    \item $\norm{H}_F\le E$, every direction $\Rightarrow$ $t^\star=\dF(\Id,V)/E$; e.g.\ $\pi/u_0$ for the $\pi$-pulse.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Fewer directions: sub-Riemannian geometry}
+\ona{Real hardware does not provide every direction. Without a drift, and with $H(t)=\sum_ku_k(t)\Hctrl$ and $\sum_ku_k^2\le1$, the velocity $\dot U$ is confined to the subspace $D_U=\operatorname{span}\{-\imath\Hctrl U\}$ of the tangent space at $U$, and these subspaces form a \emph{distribution} $D$ on the group. Curves with $\dot U\in D_U$ are called \emph{horizontal}. We measure their lengths in the metric on $D$ for which the vectors $-\imath\Hctrl U$ are orthonormal, so that a control with $\sum_ku_k^2=1$ moves at unit speed, and the infimum of the lengths of the horizontal curves from $\Id$ to $V$ is the \emph{Carnot--Carath\'eodory} distance $d_{CC}(\Id,V)$. If the control Hamiltonians generate $\liesu[N]$ under commutators, which is the Lie algebra rank condition of Theorem~\ref{thm:ch04:js}, the theorem of Chow and Rashevskii, proved independently by Rashevskii in 1938 and by \citet{chow1940systeme}, says that any two points are joined by a horizontal curve, so that $d_{CC}$ is finite. Since a horizontal curve of length $L$ can be traversed at unit speed in the time $L$, the least time to make $V$ is}
+\begin{equation}\label{eq:ch09:cc}
+    t^\star(V)=d_{CC}(\Id,V),
+\end{equation}
+\ona{and time-optimal controls trace length-minimising horizontal curves, the \emph{sub-Riemannian geodesics}. These are of two kinds. The \emph{normal} geodesics solve Hamilton's equations of the maximum principle with $\lambda_0=-1$, and are smooth. The \emph{abnormal} ones are the singular curves of the endpoint map of Section~\ref{sec:ch09:landscapes}; \citet{montgomery1994abnormal} showed that some of them minimise length without being normal, which has no counterpart in Riemannian geometry \citep{Montgomery2002,Agrachev_Barilari_Boscain_2019}. The reachable sets of Figure~\ref{fig:ch02:reach}, which \Chap~\ref{C.Closed} drew as caps of states, are the shadows of the balls of this geometry.}
+\onp{\begin{itemize}\setlength\itemsep{0.3em}
+    \item Available directions $D_U=\operatorname{span}\{-\imath\Hctrl U\}$: a \alert{distribution}; horizontal curves $\dot U\in D_U$.
+    \item Bracket-generating (Theorem~\ref{thm:ch04:js}) $\Rightarrow$ Chow--Rashevskii \citep{chow1940systeme}: $d_{CC}$ finite.
+    \item $t^\star=d_{CC}(\Id,V)$: time-optimal $=$ \alert{sub-Riemannian geodesic}; normal and abnormal \citep{montgomery1994abnormal}.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The $K+P$ problem}\mop{\small}
+\ona{The geodesics can be written down when the available directions are half of a Cartan decomposition. Suppose $\liesu[N]=\mathfrak k\oplus\mathfrak p$ with $[\mathfrak k,\mathfrak k]\subseteq\mathfrak k$, $[\mathfrak k,\mathfrak p]\subseteq\mathfrak p$ and $[\mathfrak p,\mathfrak p]\subseteq\mathfrak k$, and that the controls span $\mathfrak p$. This is the \emph{$K+P$ problem}.}
+\begin{thm}[\citealp{jurdjevic-book,boscain2002kp}]\label{thm:ch09:kp}
+The normal sub-Riemannian geodesics from $\Id$ of the $K+P$ problem, parametrised by arc length, are
+\begin{equation}\label{eq:ch09:kp}
+    U(t)=\ee^{-A_{\mathfrak k}t}\,\ee^{(A_{\mathfrak k}+A_{\mathfrak p})t},\qquad A_{\mathfrak k}\in\mathfrak k,\quad A_{\mathfrak p}\in\mathfrak p,\quad\norm{A_{\mathfrak p}}=1 .
+\end{equation}
+\end{thm}
+\ona{That these curves are horizontal with unit speed is a short computation: $\dot UU^{-1}=\ee^{-A_{\mathfrak k}t}A_{\mathfrak p}\ee^{A_{\mathfrak k}t}$, which lies in $\mathfrak p$ because $[\mathfrak k,\mathfrak p]\subseteq\mathfrak p$, and has the norm of $A_{\mathfrak p}$. The control is therefore a fixed element of $\mathfrak p$ turned steadily by the group of $\mathfrak k$. For the qubit with a field in the $xy$-plane, $H=\tfrac12(u_x\sigma_x+u_y\sigma_y)$ with $u_x^2+u_y^2\le1$, we have $\mathfrak p=\operatorname{span}\{\imath\sigma_x,\imath\sigma_y\}$ and $\mathfrak k=\operatorname{span}\{\imath\sigma_z\}$: the optimal field has constant strength and turns in the plane at a constant rate $c$, an off-resonant drive. The gate $V=\ee^{-\imath\varphi\sigma_z/2}$, a rotation about the axis about which no control turns, is reached when the second factor of \eqref{eq:ch09:kp} has returned to $-\Id$, and this gives}
+\begin{equation}\label{eq:ch09:sr2}
+    t^\star\big(\ee^{-\imath\varphi\sigma_z/2}\big)=\sqrt{\varphi(4\pi-\varphi)},\qquad 0\le\varphi\le2\pi,
+\end{equation}
+\ona{against $t^\star=\varphi$ if $\sigma_z$ were available with the same strength \citep{BoscainRossi2008}. For small angles $t^\star\approx2\sqrt{\pi\varphi}$, much larger than $\varphi$: a small step in a missing direction costs a time proportional to the square root of its size, which is the general behaviour of sub-Riemannian distances, and which we met in \Chap~\ref{C.Closed} as the loop of Figure~\ref{fig:ch02:lie}, whose displacement was of the order of the square of its length. A whole circle of geodesics, obtained from one by rotations about the $z$-axis, arrives at $V$ (Figure~\ref{fig:ch09:subriemann}). For three levels, \citet{boscain2002kp} show in the same way that the controls of least energy are in resonance with the transitions they drive.}
+\onp{\begin{itemize}\setlength\itemsep{0.3em}
+    \item Horizontal: $\dot UU^{-1}=\ee^{-A_{\mathfrak k}t}A_{\mathfrak p}\ee^{A_{\mathfrak k}t}\in\mathfrak p$: a field turned steadily, an \alert{off-resonant drive}.
+    \item Qubit, $\mathfrak p=\{\sigma_x,\sigma_y\}$: $t^\star=\sqrt{\varphi(4\pi-\varphi)}$ \eqref{eq:ch09:sr2} against $\varphi$ with $\sigma_z$ \citep{BoscainRossi2008}.
+    \item Small angles: $t^\star\approx2\sqrt{\pi\varphi}$, the \alert{square root} of the loop of \Chap~\ref{C.Closed}.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Sub-Riemannian geodesics of $\SU[2]$, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch09_subriemann.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch09_subriemann.tex}}
+\caption{Sub-Riemannian geodesics of $\SU[2]$ for a qubit without drift and with a field $\tfrac12(u_x\sigma_x+u_y\sigma_y)$ of strength at most $1$, to make the gate $V=\ee^{-\imath\pi\sigma_z/4}$. (a) The geodesics from $\Id$ to $V$, drawn by their rotation vectors $\theta\vec n$, where $U=\ee^{-\imath\theta\vec n\cdot\vec\sigma/2}$. The one-parameter group $\ee^{-\imath t\sigma_z/2}$, the Riemannian geodesic, runs straight up the $z$-axis (gold), but its direction is not available. The sub-Riemannian geodesics \eqref{eq:ch09:kp} leave $\Id$ in the plane of the available directions (shaded), and every rotation of one about the $z$-axis is another (blue), so that a whole circle of geodesics arrives at $V$. The small patches are the planes of available directions at points of one geodesic, to which it is tangent. (b) The least time \eqref{eq:ch09:sr2} against the angle $\varphi$, with the field in the $xy$-plane only (blue) and with $\sigma_z$ also available (gold); the red dot marks $V$, at $t^\star=4.156$. For small angles $t^\star\approx2\sqrt{\pi\varphi}$. A gradient search over fields of unit strength confirmed the least times at $\varphi=0.4$, $\pi/2$ and $\pi$. (c) The field of the bold geodesic in (a): it keeps unit strength and turns through $2\pi-\varphi$ at the steady rate $c=1.134$. Generated by \texttt{code/ch09\_subriemann.py}.}\label{fig:ch09:subriemann}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{The balls of the two geometries}
+\ona{The difference between the two geometries is plainest in their balls, the sets of gates that can be made by a given time (Figure~\ref{fig:ch09:balls}). With a field in any direction, of strength at most $1$, the gates made by the time $t$ fill the round ball $\theta\le t$ of rotation vectors. With the field confined to the $xy$-plane they fill a flattened region, swept out by the geodesics \eqref{eq:ch09:kp}, each followed until it meets the $z$-axis at its cut time $2\pi/\sqrt{1+c^2}$, where a whole circle of geodesics arrives. The region reaches the distance $t$ in the horizontal directions, but only about $t^2/2\pi$ vertically, and its section has inward cusps on the $z$-axis at the heights $\pm\varphi$ given by \eqref{eq:ch09:sr2}. That the extent in the missing direction grows with the square of the extent in the available ones is the content of the ball-box theorem of sub-Riemannian geometry \citep{Montgomery2002,Agrachev_Barilari_Boscain_2019}; and the small sub-Riemannian balls, flattened discs, are very far from the round ones.}
+\onp{\begin{itemize}\setlength\itemsep{0.5em}
+    \item All directions: the round ball $\theta\le t$. Field in the $xy$-plane: a flattened ``apple'', cusps on the $z$-axis.
+    \item Horizontal reach $t$, vertical reach $\approx t^2/2\pi$: the \alert{ball-box theorem} \citep{Montgomery2002}.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The balls of the two geometries, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch09_balls.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch09_balls.tex}}
+\caption{Riemannian and sub-Riemannian balls of $\SU[2]$ for a qubit without drift and a field of strength at most $1$, in the rotation-vector coordinates $\theta\vec n$ of $U=\ee^{-\imath\theta\vec n\cdot\vec\sigma/2}$. (a) Their sections by a plane through the $z$-axis, for $t=1,\dots,6$; the whole group is the ball $\theta\le2\pi$. With a field in any direction the gates reached by the time $t$ fill the disc $\theta\le t$ (dashed). With the field confined to the $xy$-plane they fill a flattened, apple-shaped region swept out by the geodesics \eqref{eq:ch09:kp}, each followed until it meets the $z$-axis at its cut time $2\pi/\sqrt{1+c^2}$. The region has an inward cusp on the axis at the heights $\pm\varphi$ with $\sqrt{\varphi(4\pi-\varphi)}=t$ (red), and is highest away from the axis. (b) Width and height of the balls against $t$, on logarithmic scales. Both reach the distance $t$ along the $x$-axis, and the Riemannian ball also the height $t$; the sub-Riemannian ball reaches only the height $\approx t^2/2\pi$, and $\varphi\approx t^2/4\pi$ on the axis. The slopes $1$ and $2$ are those of the ball-box theorem. Generated by \texttt{code/ch09\_balls.py}.}\label{fig:ch09:balls}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{Two qubits with fast local control}
+\ona{The Cartan decomposition $\SU[4]=KAK$ of \Chap~\ref{C.GeometryStates}, with $K=\SU[2]\otimes\SU[2]$, answers the question that \Chap~\ref{C.Closed} raised about two coupled qubits: how long does a gate take? Suppose that the qubits are coupled by $\Hdrift=\tfrac J2\sigma_z\otimes\sigma_z$ and that local controls are so strong that local gates take no time, which is the idealisation of \citet{PhysRevA.63.032308}. A gate is then determined, up to local gates that cost nothing, by its point $\vec c$ in the Weyl chamber of Figure~\ref{fig:ch07:weyl}, in the coordinates \eqref{eq:ch07:kak}. The drift alone gives $\vec c=(Jt,0,0)$, along the edge $OL$. Conjugating the drift by local gates turns $\sigma_z\otimes\sigma_z$ into $\pm\sigma_x\otimes\sigma_x$, $\pm\sigma_y\otimes\sigma_y$ or $\pm\sigma_z\otimes\sigma_z$, and alternating these with local gates moves $\vec c$ in the directions of the coordinate axes. By a convexity theorem of \citet{kostant1973convexity}, the classes reachable in the time $t$ are those with a representative in the octahedron $\abs{c_1}+\abs{c_2}+\abs{c_3}\le Jt$, the convex hull of the six points $\pm Jt\,\vec e_i$; and since each $c_i$ matters only modulo $\pi$,}
+\begin{equation}\label{eq:ch09:kbg}
+    Jt^\star(\vec c)=\sum_{i=1}^3\operatorname{dist}(c_i,\pi\mathbb Z)=\min(c_1,\pi-c_1)+c_2+c_3\quad\text{in the chamber.}
+\end{equation}
+\ona{CNOT, at $L=[\tfrac\pi2,0,0]$, therefore needs the time $\pi/(2J)$, as does $\sqrt{\mathrm{iSWAP}}$; the square roots of SWAP need $3\pi/(4J)$, iSWAP $\pi/J$, and SWAP $3\pi/(2J)$, the longest of all, three times as long as CNOT (Figure~\ref{fig:ch09:kbg}). The geometry of the chamber in this problem is that of the $\ell_1$ norm, not the Euclidean one, and the time-optimal paths are not unique. For a general coupling the answer is a majorisation condition between the coordinates of the gate and those of the coupling \citep{vidal2002interaction}, the same order relation that limited the populations reachable by unitary control in \Chap~\ref{C.GeometryStates} (Theorem~\ref{thm:ch07:schurhorn}). \citet{khaneja2001cartan} extend the construction to many spins.}
+\onp{\begin{itemize}\setlength\itemsep{0.3em}
+    \item Ising coupling $\tfrac J2\sigma_z\otimes\sigma_z$, free local gates: a gate is a point $\vec c$ of the Weyl chamber (\Chap~\ref{C.GeometryStates}) \citep{PhysRevA.63.032308}.
+    \item Reachable in time $t$: the octahedron $\sum\abs{c_i}\le Jt$ \citep{kostant1973convexity}; $Jt^\star=\sum_i\operatorname{dist}(c_i,\pi\mathbb Z)$.
+    \item CNOT $\tfrac{\pi}{2J}$, $\sqrt{\mathrm{SWAP}}$ $\tfrac{3\pi}{4J}$, iSWAP $\tfrac\pi J$, SWAP $\tfrac{3\pi}{2J}$. General couplings: majorisation \citep{vidal2002interaction}.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Time-optimal two-qubit gates, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch09_kbg.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch09_kbg.tex}}
+\caption{Time-optimal two-qubit gates for the Ising coupling $\tfrac J2\sigma_z\otimes\sigma_z$ with local gates that take no time \citep{PhysRevA.63.032308}, in the Weyl chamber of Figure~\ref{fig:ch07:weyl}. (a) The fronts reached at $Jt=\tfrac\pi4$, $\tfrac\pi2$, $\pi$ and $\tfrac{5\pi}4$, the level sets of \eqref{eq:ch09:kbg}. They start at the two local corners $O$ and $A_1$, meet at CNOT at $Jt=\tfrac\pi2$, and close in on SWAP last, at $Jt=\tfrac{3\pi}2$. The red path $O\to L\to A_2\to A_3$ is one fastest route to SWAP: the coupling for $\tfrac{\pi}{2J}$, then the coupling turned by local gates into $\sigma_y\otimes\sigma_y$ for as long, then into $\sigma_x\otimes\sigma_x$. (b) A check by sampling. $1500$ products of random local gates and stretches $\ee^{-\imath\Hdrift\tau}$ of random durations, with $J\sum\tau=\tfrac\pi2$, located in the chamber from the spectrum of $m(U)$ and checked against Makhlin's invariants; they fill the two tetrahedra $Jt^\star\le\tfrac\pi2$ at $O$ and $A_1$, which meet at CNOT, and none lies beyond. Generated by \texttt{code/ch09\_kbg.py}.}\label{fig:ch09:kbg}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{Other couplings}
+\ona{The construction applies to any coupling. The classes reachable by the time $t$ are those with a representative in $Jt$ times the convex hull of the orbit, under the Weyl group, of the point that the coupling alone reaches in unit time. For the Ising coupling this hull is the octahedron above; for the XY coupling $\tfrac J2(\sigma_x\otimes\sigma_x+\sigma_y\otimes\sigma_y)$ it is a cuboctahedron, and for the Heisenberg coupling $\tfrac J2(\sigma_x\otimes\sigma_x+\sigma_y\otimes\sigma_y+\sigma_z\otimes\sigma_z)$ a tetrahedron. Each coupling has its own natural gates (Figure~\ref{fig:ch09:couplings}). The XY coupling makes iSWAP in $\pi/(2J)$, half the Ising time, and the Heisenberg coupling makes SWAP in $\pi/(2J)$, a third of the Ising time, since $\sigma_x\otimes\sigma_x+\sigma_y\otimes\sigma_y+\sigma_z\otimes\sigma_z=2\,\mathrm{SWAP}-\Id$; but it needs as long as the Ising coupling for CNOT. The Heisenberg coupling also tells apart the two square roots of SWAP, which the others cannot: with this sign of $J$ it makes the root at $N$, the matrix with the entries $(1\pm\imath)/2$ found in most textbooks, in $\pi/(4J)$, and the root at $P$, which \Chap~\ref{C.GeometryStates} called $\sqrt{\mathrm{SWAP}}$, only in $3\pi/(4J)$. These are the majorisation conditions of \citet{vidal2002interaction} made concrete.}
+\onp{\begin{itemize}\setlength\itemsep{0.4em}
+    \item Reachable by $t$: $Jt$ times the hull of the Weyl orbit of the coupling's own point.
+    \item Ising: octahedron. XY: cuboctahedron, iSWAP in $\tfrac{\pi}{2J}$. Heisenberg: tetrahedron, SWAP in $\tfrac{\pi}{2J}$.
+    \item Heisenberg tells the two roots of SWAP apart: $\tfrac{\pi}{4J}$ at $N$, $\tfrac{3\pi}{4J}$ at $P$ \citep{vidal2002interaction}.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Other couplings, pictured}
+\onp{\begin{center}\resizebox{!}{0.8\textheight}{\input{figures/ch09_couplings.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{0.9\linewidth}{!}{\input{figures/ch09_couplings.tex}}
+\caption{The least times of two-qubit gates for three couplings of strength $J$, with local gates that take no time: Ising, $\tfrac J2\sigma_z\otimes\sigma_z$; XY, $\tfrac J2(\sigma_x\otimes\sigma_x+\sigma_y\otimes\sigma_y)$; and Heisenberg, $\tfrac J2(\sigma_x\otimes\sigma_x+\sigma_y\otimes\sigma_y+\sigma_z\otimes\sigma_z)$. The classes reached by the time $t$ are those with a representative in $Jt$ times the convex hull of the Weyl orbit of the coupling's direction: an octahedron, a cuboctahedron and a tetrahedron respectively. (a)--(c) The Weyl chamber for each coupling, with the classes reached by $Jt=\tfrac\pi2$ shaded and the six gates of (d) marked, red if reached. For the Ising coupling the region is two tetrahedra meeting at CNOT; for XY it contains iSWAP; for Heisenberg it reaches SWAP. (d) The least times. The two square roots of SWAP are named as in Figure~\ref{fig:ch07:weyl}: $\sqrt{\mathrm{SWAP}}$ at $P$ and its inverse at $N$, the latter being the usual matrix with the entries $(1\pm\imath)/2$; they take the same time except for the Heisenberg coupling, which with this sign of $J$ makes the root at $N$ directly. Random products of local gates and stretches of each coupling, of total duration $\pi/(2J)$, never lie beyond the shaded regions. Generated by \texttt{code/ch09\_couplings.py}.}\label{fig:ch09:couplings}
+\end{figure}}
+\end{frame}
+
+\section{Noise metrics and robust control}\label{sec:ch09:noise}
+
+\begin{frame}\ft{The random Schr\"odinger equation and robust control}
+\ona{We now let the noise choose the metric. Following \Chap~\ref{C.Open}, model a noisy closed system by the random Schr\"odinger equation \eqref{eq:ch03:rse}, which we write as}
+\begin{equation}\label{eq:ch09:rse}
+    \dd{t}U_S(t,\xi) = -\imath\big(H_{0,S}(t)+H_{1,S}(t,\xi)\big)U_S(t,\xi),\qquad U_S(0,\cdot)=\Id,
+\end{equation}
+\ona{with $H_{0,S}$ the deterministic Hamiltonian, drift and controls together, and $H_{1,S}$ an essentially bounded Hermitian noise process; the subscript $S$ marks the Schr\"odinger picture, and $\xi$ the sample, as in \Chap~\ref{C.Open}. Just as there is a notion of control theory for ordinary differential equations, there is a natural notion of \emph{robust control} theory for random ones: given a target, find control functions and a stopping time that minimise a cost $c(x(T,\cdot),a,T,y)$ depending on the random final state. The noise process may depend on the control functions; we refer to this dependency as a \emph{control-noise coupling}. We restrict our attention to controls that produce the target exactly in the absence of noise.}
+\onp{\begin{itemize}\setlength\itemsep{0.4em}
+    \item \eqref{eq:ch09:rse}: deterministic $H_{0,S}$, bounded Hermitian noise $H_{1,S}(t,\xi)$ (\Chap~\ref{C.Open}); unitary sample paths.
+    \item \alert{Robust control}: minimise a cost of the random final state, e.g.\ $\esssup_\xi\norm{U_S(T,\xi)-V}$.
+    \item Control-noise coupling: $H_{1,S}=H_{1,S}(H_{0,S},t,\xi)$.
 \end{itemize}}
 \end{frame}
 
 \begin{frame}\ft{Basic and geometric error estimates}
 \begin{thm}[Basic error estimate]\label{thm:ch09:basicerror}
-If $\esssup_{t,\omega}\norm{H_{1,S}(t,\omega)}\le K$, then $\esssup_\omega\norm{U_S(t,\omega)-U_{0,S}(t)}\le Kt$ with probability $1$, where $U_{0,S}$ is the noiseless propagator.
+If $\esssup_{t,\xi}\norm{H_{1,S}(t,\xi)}\le K$, then $\esssup_\xi\norm{U_S(t,\xi)-U_{0,S}(t)}\le Kt$, where $U_{0,S}$ is the propagator without noise.
 \end{thm}
 \ona{\begin{pf}
-Pass to the interaction picture: $U_I(t)=U_{0,S}(t)^\dagger U_S(t)$ satisfies $\dd{t}U_I=-\imath H_{1,I}U_I$ with $H_{1,I}=U_{0,S}^\dagger H_{1,S}U_{0,S}$, and $\norm{U_S-U_{0,S}}=\norm{U_I-\Id}$ by unitary invariance. Integrating, $\norm{U_I(t,\omega)-\Id}=\norm{\int_0^tH_{1,I}(s,\omega)U_I(s,\omega)\,\mathrm{d}s}\le\int_0^t\norm{H_{1,S}(s,\omega)}\,\mathrm{d}s\le Kt$ for almost all $\omega$.
+Pass to the interaction picture: $U_I(t)=U_{0,S}(t)^\dagger U_S(t)$ satisfies $\dd{t}U_I=-\imath H_{1,I}U_I$ with $H_{1,I}=U_{0,S}^\dagger H_{1,S}U_{0,S}$, and $\norm{U_S-U_{0,S}}=\norm{U_I-\Id}$ by unitary invariance. Integrating, $\norm{U_I(t,\xi)-\Id}=\norm{\int_0^tH_{1,I}(s,\xi)U_I(s,\xi)\,\mathrm{d}s}\le\int_0^t\norm{H_{1,S}(s,\xi)}\,\mathrm{d}s\le Kt$ for almost all $\xi$.
 \end{pf}
-This is much better than Gronwall's inequality would give, because the dynamics are constrained to the compact group $\SU$. The bound is not tight, since the left-hand side measures a distance in the space of matrices while the right-hand side is the length of a path on $\SU$. Working intrinsically on $\SU$ with the Frobenius norm---whose inner product pulls back to the unique bi-invariant metric making the inclusion $\SU\hookrightarrow M_n(\C)$ an isometric embedding---and writing $\dF$ for the induced (Killing) distance, one obtains:}
+This is much better than Gronwall's inequality would give, because the dynamics is confined to the compact group $\SU$. The bound is not tight, since the left-hand side measures a distance in the space of matrices while the right-hand side is the length of a path on $\SU$. To work intrinsically on $\SU$ we use the Frobenius norm, whose inner product pulls back to the unique bi-invariant metric that makes the inclusion $\SU\hookrightarrow M_n(\C)$ an isometric embedding, and write $\dF$ for the distance it induces.}
 \begin{thm}[Geometric error estimate]\label{thm:ch09:geometricerror}
-With $\Lambda(t):=\esssup_\omega\norm{H_{1,S}(t,\omega)}_F$,
+With $\Lambda(t)\coloneqq\esssup_\xi\norm{H_{1,S}(t,\xi)}_F$,
 \begin{equation}\label{eq:ch09:bestbound}
-    \norm{U_I(t,\omega)-\Id}_F\le \dF\big(U_I(t,\omega),\Id\big)\le\int_0^t\Lambda(s)\,\mathrm{d}s .
+    \norm{U_I(t,\xi)-\Id}_F\le \dF\big(U_S(t,\xi),U_{0,S}(t)\big)=\dF\big(U_I(t,\xi),\Id\big)\le\int_0^t\Lambda(s)\,\mathrm{d}s .
 \end{equation}
 \end{thm}
-\onp{Proof: interaction picture, $\norm{U_S-U_{0,S}}=\norm{U_I-\Id}\le\int_0^t\norm{H_{1,S}}$. The intrinsic bound is the \alert{length} of the noise path on $\SU$.}
+\ona{The first inequality says that a chord is no longer than an arc, the middle equality is the bi-invariance of $\dF$, and the last inequality says that the distance is no longer than the length of the path $U_I(\cdot,\xi)$, whose speed is $\norm{H_{1,I}}_F=\norm{H_{1,S}}_F$.}
+\onp{Interaction picture: $\norm{U_S-U_{0,S}}=\norm{U_I-\Id}\le\int_0^t\norm{H_{1,S}}$. Intrinsically, the error is a distance on $\SU$, bounded by the \alert{length} of the path $U_I$.}
 \end{frame}
 
-\begin{frame}\ft{When is the bound tight? The worst-case noise condition}
-\begin{defn}[Worst-case noise condition, WCNC]\label{def:ch09:wcnc}
-$H_{1,I}(t,\cdot)$ satisfies the WCNC with respect to $H_{0,S}$ if $\Prob(H_{1,I}(t,\cdot)=0)=0$ for all $t$, so that $H_{1,I}(t,\omega)=\lambda(t,\omega)\hat H_{1,I}(t,\omega)$ with $\norm{\hat H_{1,I}}_F=1$, and for all $\epsilon>0$, $t\ge0$,
+\begin{frame}\ft{When is the bound tight?}\mop{\small}
+\begin{defn}[Worst-case noise condition]\label{def:ch09:wcnc}
+$H_{1,I}(t,\cdot)$ satisfies the WCNC with respect to $H_{0,S}$ if $\Prob(H_{1,I}(t,\cdot)=0)=0$ for all $t$, so that $H_{1,I}(t,\xi)=\nu(t,\xi)\hat H_{1,I}(t,\xi)$ with $\norm{\hat H_{1,I}}_F=1$, and if for all $\epsilon>0$ and $t\ge0$
 \[
-    \Prob\big[\abs{\lambda(t,\omega)-\Lambda(t)}<\epsilon\ \text{and}\ \norm{\hat H_{1,I}(t,\omega)-\hat H_{1,I}(0,\omega)}_F<\epsilon\big]>0 .
+    \Prob\big[\abs{\nu(t,\xi)-\Lambda(t)}<\epsilon\ \text{and}\ \norm{\hat H_{1,I}(t,\xi)-\hat H_{1,I}(0,\xi)}_F<\epsilon\big]>0 .
 \]
 \end{defn}
 \begin{thm}[Tightness]\label{thm:ch09:tightness}
-For noise processes satisfying the WCNC, $\Prob\big[\int_0^t\Lambda(s)\,\mathrm{d}s-\dF(U_I(t,\omega),\Id)<\epsilon\big]>0$ for every $\epsilon>0$.
+For noise processes satisfying the WCNC, $\Prob\big[\int_0^t\Lambda(s)\,\mathrm{d}s-\dF(U_I(t,\xi),\Id)<\epsilon\big]>0$ for every $\epsilon>0$.
 \end{thm}
-\ona{In general the noise self-cancels; the WCNC says that with positive probability it is aligned along one fixed direction at maximal intensity, in which case $U_I$ stays $\bigO{\epsilon}$-close (in $\dF$, via a second interaction-picture transformation) to the geodesic $\tilde U_I(t)=\exp(-\imath\int_0^t\Lambda(s)\hat H_{1,I}(0)\,\mathrm{d}s)$, which attains the bound. A sufficient condition on the Schr\"odinger-picture noise: if $H_{1,S}$ has almost surely continuous paths in the Frobenius ball $\mathcal H_E$, is strong Markov, and its path measure is positive on cylindrical sets, then it satisfies the WCNC with respect to every bounded $H_{0,S}$. Bounded continuous images of Wiener or Ornstein--Uhlenbeck processes qualify, e.g.\ $\tfrac{2E}{\pi}\arctan W(t)$.}
-\onp{\small Markov $+$ continuous paths $+$ positivity on cylinder sets $\Rightarrow$ WCNC (e.g.\ $\tfrac{2E}{\pi}\arctan W_t$).}
+\ona{In general the noise cancels itself to some degree. The WCNC says that, with positive probability, it points along one fixed direction of the interaction picture at nearly its largest strength; then $U_I$ stays within $\bigO{\epsilon}$, in $\dF$, of the geodesic $\tilde U_I(t)=\exp(-\imath\int_0^t\Lambda(s)\hat H_{1,I}(0)\,\mathrm{d}s)$, which attains the bound, as one sees by a second transformation to an interaction picture. The condition is easier to check on the noise in the Schr\"odinger picture: if $H_{1,S}$ has almost surely continuous paths in the ball $\mathcal H_E$ of Hermitian matrices with $\norm{\cdot}_F<E$, has the strong Markov property, and its path measure is positive on cylindrical sets, then it satisfies the WCNC with respect to every $H_{0,S}$ \citep{lawrence2026geometric}. Bounded continuous images of the Wiener or Ornstein--Uhlenbeck processes qualify, such as $\tfrac{2E}{\pi}\arctan W(t)$. The probability of coming near the bound may, however, be small (Figure~\ref{fig:ch09:noise}).}
+\onp{Noise aligned at full strength with positive probability; e.g.\ $\tfrac{2E}{\pi}\arctan W_t$ (Markov, continuous paths).}
+\end{frame}
+
+\begin{frame}\ft{The error bound, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch09_noise.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch09_noise.tex}}
+\caption{The geometric error bound of Theorem~\ref{thm:ch09:geometricerror} along the time-optimal control of Figure~\ref{fig:ch09:timeoptimal}. The noise has the strength $\Lambda(t)=\eta\sqrt{\gLam(H_{0,S},H_{0,S})}$ of a noise metric \eqref{eq:ch09:noisemetric}, with $\eta=0.1$ and $\gLam=\operatorname{diag}(1,1,0.01)$ in the frame $\sigma_j/\sqrt2$, so that the field is much noisier than the drift; and it is $H_{1,S}=\Lambda(t)\,f(W_t)\cdot\vec\sigma/\sqrt2$ with $W$ a Wiener process in $\R^3$ (variance $9t$) and $f(w)=\tfrac2\pi\arctan(\abs w)\,w/\abs w$, which satisfies the worst-case noise condition. (a) The interaction-picture paths $U_I(t)$ of five samples, drawn by their rotation vectors $\theta\vec n$ with $U_I=\ee^{-\imath\theta\vec n\cdot\vec\sigma/2}$, inside the ball $\dF\le\int_0^T\Lambda$, which none of them leaves. The worst-case noise, of full strength and fixed direction in the interaction picture, $H_{1,S}(t)=\Lambda(t)\,U_{0,S}(t)\,\hat H\,U_{0,S}(t)^\dagger$, turns with the control and drives $U_I$ along a radius (red), a geodesic that reaches the surface at $T$. (b) $\dF(U_I(t),\Id)$ for $40$ samples (grey), the mean over $2000$ (blue), and the bound (ink), which the worst case meets (red, dashed). (c) The final errors of $2000$ samples, as fractions of the bound $\int_0^T\Lambda=0.37$: the mean is $0.43$ and the largest $0.86$. Generated by \texttt{code/ch09\_noise.py}.}\label{fig:ch09:noise}
+\end{figure}}
 \end{frame}
 
 \begin{frame}\ft{Noise metrics}
-\ona{We are interested in situations where moving in certain unfavourable Hamiltonian directions induces more noise than moving in more favourable directions: in the multi-qubit setting we generally expect that applying a many-body Hamiltonian induces more noise than one- and two-qubit interactions, as in Nielsen's complexity geometry \cite{nielsen2006geometric,dowling2006}; even for a single spin a field may be easy to apply in the $x$--$y$ plane but hard along $z$ \cite{PhysRevD.100.046020}. Fix an orthonormal frame $\{H_j\}$ of $\liesu$ and write $H_{0,S}=\sum_jh_j(t)H_j$. Consider couplings such that}
+\ona{We are interested in situations where moving in certain unfavourable Hamiltonian directions induces more noise than moving in favourable ones. In the multi-qubit setting we generally expect a many-body Hamiltonian to induce more noise than one- and two-qubit interactions, as in the complexity geometry of \citet{nielsen2006geometric} and \citet{dowling2006}; and even for a single spin a field may be easy to apply in the $xy$-plane but hard along $z$ \citep{PhysRevD.100.046020}. Fix an orthonormal frame $\{H_j\}$ of $\liesu$ and write $H_{0,S}=\sum_jh_j(t)H_j$. Consider couplings such that}
 \begin{equation}\label{eq:ch09:noisemetric}
-    \esssup_\omega\norm{H_{1,S}(t,\omega)}_F = \Lambda\big(H_{0,S}(t)\big) = \Big(\sum_j l_j\,h_j(t)^2\Big)^{1/2} = \sqrt{\gLam(H_{0,S},H_{0,S})},
+    \esssup_\xi\norm{H_{1,S}(t,\xi)}_F = \Lambda\big(H_{0,S}(t)\big) = \Big(\sum_j l_j\,h_j(t)^2\Big)^{1/2} = \sqrt{\gLam(H_{0,S},H_{0,S})},
 \end{equation}
-\ona{where $\gLam=\operatorname{diag}(l_1,\dots,l_m)$ in the frame $\{H_j\}$ is a right-invariant Riemannian metric on $\SU$, a \emph{noise metric}: if moving along $H_j$ induces $a$ times as much noise as along $H_k$, set $l_j=a^2l_k$. The coefficients can be calculated or inferred experimentally. Combining \eqref{eq:ch09:noisemetric} with Theorem~\ref{thm:ch09:geometricerror},}
+\ona{where $\gLam=\operatorname{diag}(l_1,\dots,l_m)$ in the frame $\{H_j\}$ defines a right-invariant Riemannian metric on $\SU$, a \emph{noise metric}. If moving along $H_j$ induces $a$ times as much noise as moving along $H_k$, we set $l_j=a^2l_k$. Couplings of this kind make the amplitude of the noise proportional to the intensity of the control, while allowing a dependence on direction, and their coefficients can be calculated or inferred from experiments. Combining \eqref{eq:ch09:noisemetric} with Theorem~\ref{thm:ch09:geometricerror},}
 \begin{equation}\label{eq:ch09:robust}
-    \norm{U_S(t,\omega)-V}_F\le\int_0^t\sqrt{\gLam\big(H_{0,S}(s),H_{0,S}(s)\big)}\,\mathrm{d}s = l_{\gLam}(\gamma),
+    \norm{U_S(t,\xi)-V}_F\le\int_0^t\sqrt{\gLam\big(H_{0,S}(s),H_{0,S}(s)\big)}\,\mathrm{d}s = l_{\gLam}(\gamma),
 \end{equation}
-\ona{the $\gLam$-length of the path $\gamma$ traced in $\SU$ by the control.}
-\onp{$\gLam=\operatorname{diag}(l_j)$ in a Pauli frame: a right-invariant \alert{noise metric} (cf.\ Nielsen's penalty metrics). Worst-case error $\le$ $\gLam$-length of the control path.}
+\ona{for a control that produces $V=U_{0,S}(t)$; the right-hand side is the $\gLam$-length of the path $\gamma$ traced in $\SU$ by the control.}
+\onp{\begin{itemize}\setlength\itemsep{0.4em}
+    \item Many-body directions noisier than local ones \citep{nielsen2006geometric,dowling2006}; even a single spin \citep{PhysRevD.100.046020}.
+    \item $\gLam=\operatorname{diag}(l_j)$ in an orthonormal frame: a right-invariant \alert{noise metric}.
+    \item Worst-case error $\le$ the $\gLam$-length of the control path \eqref{eq:ch09:robust}.
+\end{itemize}}
 \end{frame}
 
-\begin{frame}\ft{Robust control is a geodesic problem}
+\begin{frame}\ft{The fastest control is not the most robust}
+\ona{A noise metric changes which control is best. For the driven qubit with the metric of Figure~\ref{fig:ch09:noise}, $\gLam=\operatorname{diag}(1,1,0.01)$, the drift is nearly free of noise and the field carries almost all of it: the noise rate $\sqrt{\gLam(H,H)}$ of the Hamiltonians between which the time-optimal control alternates is $1.06$, and that of the drift alone $0.07$ (Figure~\ref{fig:ch09:noisemetric}(a)). Raising the bound $u_0$ on the field makes the time-optimal control faster but every instant of it noisier, and the bound \eqref{eq:ch09:robust} on its error is the product of the two. It is least at $u_0=\omega$, where it is $0.32$ for $\eta=0.1$, against $0.37$ for our bound $u_0=1.5$ and $0.44$ as $u_0$ grows without limit; below $u_0=\omega$ more bangs are needed and it jumps with $t^\star$. A field bounded by $1$ is also bounded by $1.5$, so that the time-optimal control of our qubit is not the most robust admissible control: a weaker and slower pulse does better, and the errors of sampled noise follow the bound (Figure~\ref{fig:ch09:noisemetric}(b)).}
+\onp{\begin{itemize}\setlength\itemsep{0.4em}
+    \item $\gLam=\operatorname{diag}(1,1,0.01)$: the field is noisy ($1.06$), the drift nearly free ($0.07$).
+    \item Bound on the error of the time-optimal control $=$ time $\times$ noise rate: least at $u_0=\omega$.
+    \item $0.32$ at $u_0=\omega$ against $0.37$ at $u_0=1.5$: the \alert{fastest is not the most robust}.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The fastest control is not the most robust, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch09_noisemetric.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch09_noisemetric.tex}}
+\caption{A noise metric, and why the fastest control is not the most robust. The metric is $\gLam=\operatorname{diag}(1,1,0.01)$ of Figure~\ref{fig:ch09:noise}, for the driven qubit with $\omega=1$, whose Hamiltonians $\tfrac12(\Delta\sigma_z+u\sigma_x)$ have the coordinates $(u,0,\Delta)/\sqrt2$ in the frame $\sigma_j/\sqrt2$. (a) The plane $h_y=0$ of $\liesu[2]$. The unit ball of the bi-invariant metric is a disc (dashed), and that of $\gLam$ an ellipsoid with the semi-axes $1$, $1$ and $10$ (shaded), so that motion along $\sigma_z$ is cheap. The admissible Hamiltonians, $\abs u\le1.5$, form the segment from $H_-$ to $H_+$, between which the time-optimal control alternates. Their noise rate $\sqrt{\gLam(H,H)}$ is $1.06$, against $0.07$ for the drift alone: the field, not the drift, makes the noise. (b) The bound $\eta\,l_{\gLam}$ of \eqref{eq:ch09:robust} for the time-optimal control with the bound $u_0$ on the field, $\eta=0.1$. It is least at $u_0=\omega$, $0.32$ with $t^\star=4.44$, against $0.37$ with $t^\star=3.49$ for $u_0=1.5$, and it tends to $0.44$ as $u_0$ grows; below $u_0=\omega$ more bangs are needed and it jumps with $t^\star$. The dots are the mean (filled) and the largest (open) errors of $800$ noise samples, which follow the bound. Generated by \texttt{code/ch09\_noisemetric.py}.}\label{fig:ch09:noisemetric}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{Robust control is a geodesic problem}\mop{\small}
 \begin{defn}[Control-dependent WCNC]\label{def:ch09:wcnc3}
-$H_{1,S}(H_{0,S}(t),t,\omega)$ satisfies the control-dependent WCNC if, for each admissible control trajectory generated by $H_{0,S}(t)$, it satisfies the WCNC of Definition~\ref{def:ch09:wcnc} with respect to $H_{0,S}$.
+$H_{1,S}(H_{0,S}(t),t,\xi)$ satisfies the control-dependent WCNC if, for each admissible control trajectory generated by $H_{0,S}(t)$, it satisfies the WCNC of Definition~\ref{def:ch09:wcnc} with respect to $H_{0,S}$.
 \end{defn}
 \begin{thm}[Robust control as geodesics]\label{thm:ch09:geodesic}
-Suppose $H_{1,S}$ satisfies the control-dependent WCNC with respect to all $H_{0,S}(t)\in\mathcal H_E$ and $\Lambda(t)=\sqrt{\gLam(H_{0,S}(t),H_{0,S}(t))}$. Then solving the robust optimal control problem of synthesising $V$ with respect to the cost $c=\esssup_\omega\norm{U_S(T,\omega)-V}$ is equivalent to finding a length-minimising $\gLam$-geodesic on $\SU$ from $\Id$ to $V$.
+Suppose $H_{1,S}$ satisfies the control-dependent WCNC with respect to all $H_{0,S}(t)\in\mathcal H_E$ and $\Lambda(t)=\sqrt{\gLam(H_{0,S}(t),H_{0,S}(t))}$. Then synthesising $V$ with respect to the cost $c=\esssup_\xi\norm{U_S(T,\xi)-V}$ is equivalent to finding a length-minimising $\gLam$-geodesic on $\SU$ from $\Id$ to $V$.
 \end{thm}
 \ona{\begin{pf}
-By \eqref{eq:ch09:robust} the cost of a control is bounded by the $\gLam$-length of its path; by Theorem~\ref{thm:ch09:tightness}, applied to the Schr\"odinger RODE for each $H_{0,S}$, the bound is approached with positive probability, so minimising the length minimises the cost.
-\end{pf}
-Computing $\gLam$-geodesics is straightforward in principle---Christoffel symbols of a right-invariant metric in exponential coordinates, then a two-point boundary value problem---but the dimension $4^n-1$ of $\SU[2^n]$ makes it impractical beyond a few qubits; Nielsen and Dowling's lifted Hamilton--Jacobi--Bellman approach deforms Killing geodesics (constant Hamiltonians) into $\gLam$-geodesics. Moreover, the resulting optimal Hamiltonians contain high-weight Pauli terms that no hardware can apply. Restricting to the bracket-generating subbundle $B$ of available (low-weight) directions and penalising the rest infinitely yields the Carnot--Carath\'eodory metric of the previous section: the \emph{sub-Riemannian limit}. That the limit is well defined, and that penalised geodesics converge to sub-Riemannian ones, is the subject of \Chap~\ref{C.Complexity}. A cheaper alternative, without geodesics, adds the length \eqref{eq:ch09:robust} as a soft term to a standard GRAPE cost; see \Chap~\ref{C.AlgControl}.}
-\onp{\small Geodesic equation feasible for 1--3 qubits only. Unavailable directions penalised infinitely $\Rightarrow$ sub-Riemannian limit (\Chap~\ref{C.Complexity}); soft-cost alternative in \Chap~\ref{C.AlgControl}.}
+By \eqref{eq:ch09:robust} the cost of a control is bounded by the $\gLam$-length of its path; by Theorem~\ref{thm:ch09:tightness}, applied to the random Schr\"odinger equation for each $H_{0,S}$, the bound is approached with positive probability, so that minimising the length minimises the cost.
+\end{pf}}
+\ona{Computing $\gLam$-geodesics is straightforward in principle: one computes the Christoffel symbols of a right-invariant metric in exponential coordinates and solves a two-point boundary value problem. But the dimension $4^n-1$ of $\SU[2^n]$ makes this impractical beyond a few qubits; the lifted Hamilton--Jacobi--Bellman approach of Nielsen and Dowling instead deforms the geodesics of the bi-invariant metric, the constant Hamiltonians, into $\gLam$-geodesics. Moreover, the optimal Hamiltonians generally contain high-weight Pauli terms that no hardware can apply. If we restrict to a bracket-generating subbundle of available, low-weight directions and penalise the rest infinitely, we obtain the Carnot--Carath\'eodory metric of Section~\ref{sec:ch09:geodesics}: the \emph{sub-Riemannian limit}. One may also penalise without forbidding, with the \emph{penalty metrics} $\gq$ that charge the cost $1$ on the available directions and $q$ on the others; they distinguish good, bad and impossible directions, and their geodesics converge to sub-Riemannian ones as $q\to\infty$, which is the subject of \Chap~\ref{C.Complexity}. A cheaper alternative, without geodesics, adds the length \eqref{eq:ch09:robust} as a soft penalty to the cost of a numerical method (\Chap~\ref{C.AlgControl}).}
+\onp{\begin{itemize}
+    \item Forbid unavailable directions: the \alert{sub-Riemannian limit}; penalise them: $\gq$, $q\to\infty$ (\Chap~\ref{C.Complexity}).
+    \item Without geodesics: a soft penalty in a numerical method (\Chap~\ref{C.AlgControl}).
+\end{itemize}}
 \end{frame}
 
-\begin{frame}\ft{Summary}
+\begin{frame}\ft{Summary}\mop{\footnotesize}
 \begin{itemize}\setlength\itemsep{0.4em}
-    \item Optimal control $=$ mechanics with the force as unknown: action, adjoint state, Pontryagin Hamiltonian $\HP=\Lambda\cdot F+\Lambda_0F_0$.
-    \item PMP: Hamilton's equations plus pointwise maximisation of $\HP$; bang-bang for bounded affine controls; normal/abnormal, regular/singular.
-    \item Quantum version: $\HP=\operatorname{Im}\braket{\chi|\hat H|\psi}+\chi_0F_0$, adjoint obeys Schr\"odinger's equation backwards.
-    \item Qubit: $\pi$-pulse ($t^\star=\pi/u_0$, saturates the QSL); with drift, two bangs, $t^\star=2\pi/\Omega>t_{\mathrm{QSL}}$.
-    \item Landscapes: trap-free under controllability and no constraints; traps otherwise.
-    \item Bi-invariant metric: geodesics $=$ constant Hamiltonians. Restricted directions: sub-Riemannian geodesics, Cartan $KAK$.
-    \item Noise metrics: robust control $=$ $\gLam$-geodesic; infinitely penalised directions $\to$ \Chap~\ref{C.Complexity}.
+    \item Optimal control is mechanics with the force as the unknown: an action, an adjoint state, and the Pontryagin Hamiltonian $\HP=\lambda\cdot F+\lambda_0F_0$.
+    \item The maximum principle: Hamilton's equations and the maximisation of $\HP$ at every instant. The adjoint is the outward normal to the reachable set; bounded controls entering affinely give bang-bang extremals.
+    \item For the Schr\"odinger equation the adjoint obeys the same equation backwards, and $\partial_u\HP$ is the gradient of GRAPE.
+    \item A qubit without drift: the $\pi$-pulse, a geodesic at the speed limit. With a drift: two bangs, $t^\star=2\pi/\Omega$, twice the speed limit; the least time can jump as the parameters vary, and the reachable set may reach the target by closing a hole.
+    \item The kinematic landscape has no traps; traps sit where the endpoint map is singular, at abnormal extremals, or on the bounds.
+    \item All directions: Riemannian geodesics, constant Hamiltonians. Restricted directions: sub-Riemannian geodesics, off-resonant drives, $t^\star\sim\sqrt\varphi$; two qubits: the $\ell_1$ geometry of the Weyl chamber.
+    \item Noise metrics: the worst-case error is the $\gLam$-length; robust control is a geodesic problem, and the fastest control need not be the most robust.
 \end{itemize}
 \end{frame}
 
