@@ -230,9 +230,9 @@ Pechen--Tannor three-level problem: $\lambda=0$ is a \alert{trap}; a gradient me
 \begin{frame}\ft{Robust control without computing geodesics}
 \ona{\Chap~\ref{C.GeometryControl} showed that, under a control-noise coupling described by a noise metric $\gLam$, the worst-case error of the random Schr\"odinger equation is minimised by a $\gLam$-geodesic. Geodesics are hard to compute in higher dimension and in the sub-Riemannian limit, and the argument does not include a drift. Both problems disappear if one minimises an \emph{upper bound} on the worst-case error instead. Given $\{H_j\}\subset\liesu$ and a target $V\in\SU$, we seek controls $u_j:[0,T]\to\R$ for $\dot U=-\imath(H_d+\sum_ju_jH_j)U$; the triangle inequality and the geometric error estimate give}
 \begin{equation}\label{eq:ch12:robust-bound}
-    \ess\sup_\omega\norm{U_S(T,\omega)-V}\ \le\ \norm{U_{0,S}(T)-V}+\int_0^T\sqrt{\gLam\big(H_{0,S}(t),H_{0,S}(t)\big)}\,\mathrm{d}t ,
+    \ess\sup_\xi\norm{U_S(T,\xi)-V}\ \le\ \norm{U_{0,S}(T)-V}+\int_0^T\sqrt{\gLam\big(H_{0,S}(t),H_{0,S}(t)\big)}\,\mathrm{d}t ,
 \end{equation}
-\ona{where $U_{0,S}$ is the noiseless propagator and $H_{0,S}$ the deterministic Hamiltonian. The first term is the error of the deterministic control problem, the second the error induced by the noise, i.e., the $\gLam$-length of the control path. The right-hand side no longer depends on $\omega$: the stochastic problem has been replaced by a deterministic \emph{robust counterpart}. Minimising the sum of squares}
+\ona{where $U_{0,S}$ is the noiseless propagator and $H_{0,S}$ the deterministic Hamiltonian. The first term is the error of the deterministic control problem, the second the error induced by the noise, i.e., the $\gLam$-length of the control path. The right-hand side no longer depends on $\xi$: the stochastic problem has been replaced by a deterministic \emph{robust counterpart}. Minimising the sum of squares}
 \begin{equation}\label{eq:ch12:c2}
     c_2\big(H_{0,S}(\cdot)\big)=\norm{U_{0,S}(T)-V}^2+\Big[\int_0^T\sqrt{\gLam(H_{0,S},H_{0,S})}\,\mathrm{d}t\Big]^2
 \end{equation}
@@ -240,7 +240,7 @@ Pechen--Tannor three-level problem: $\lambda=0$ is a \alert{trap}; a gradient me
 \onp{\begin{itemize}
     \item Geodesics of $\gLam$ are hard; drift not included. Minimise an \alert{upper bound} instead.
     \item Worst-case error $\le$ deterministic error $+$ $\gLam$-length of the control path \eqref{eq:ch12:robust-bound}.
-    \item Robust counterpart: minimise $c_2$ in \eqref{eq:ch12:c2} by GRAPE/BFGS; no $\omega$ left.
+    \item Robust counterpart: minimise $c_2$ in \eqref{eq:ch12:c2} by GRAPE/BFGS; no $\xi$ left.
     \item One-qubit example (Lecture~\ref{C.Revisited}): $\approx2.6$-fold reduction of the operator-norm error.
 \end{itemize}}
 \end{frame}

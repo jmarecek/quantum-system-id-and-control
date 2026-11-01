@@ -492,12 +492,12 @@ For a \emph{single qubit} with Hamiltonian $H(t)=\tfrac{u_z(t)}{2}\sigma_z+\tfra
 \ona{Real control fields are noisy, and real qubits feel fluctuating stray fields. A model that sits between the noiseless Schr\"odinger equation and the full machinery of open systems is the \emph{random Schr\"odinger equation} of \citet{lawrence2026geometric}: the Hamiltonian acquires a random, time-varying, Hermitian term,}
 \onp{Between unitary and open dynamics: a random Hermitian noise term \citep{lawrence2026geometric}}
 \begin{equation}\label{eq:ch01:rse}
-    \dd{t}U_S(t,\omega) = -\imath\big(H_{0,S}(t) + H_{1,S}(t,\omega)\big)U_S(t,\omega),\qquad U_S(0,\omega)=\Id,
+    \dd{t}U_S(t,\xi) = -\imath\big(H_{0,S}(t) + H_{1,S}(t,\xi)\big)U_S(t,\xi),\qquad U_S(0,\xi)=\Id,
 \end{equation}
-\ona{where $H_{0,S}(t)$ is the deterministic (controlled) Hamiltonian and $H_{1,S}(t,\omega)$ a Hermitian-matrix-valued stochastic process; $\omega$ labels the random outcome. Each realisation is a perfectly good unitary evolution; averaging over $\omega$ produces mixed states and, in suitable limits, the master equations of \Chap~\ref{C.Open}. The first result of the paper is a worst-case bound: if $\norm{H_{1,S}(t,\omega)}\le K$ then $\norm{U_S(t,\omega)-U_{0,S}(t)}\le Kt$, and a sharper, \emph{geometric} version bounds the error by $\int_0^t\Lambda(s)\,\mathrm{d}s$ where $\Lambda(t)$ is the largest Frobenius norm of the noise at time $t$. Under a \emph{worst-case noise condition}, this bound is tight with positive probability.}
+\ona{where $H_{0,S}(t)$ is the deterministic (controlled) Hamiltonian and $H_{1,S}(t,\xi)$ a Hermitian-matrix-valued stochastic process; $\xi$ labels the random outcome. Each realisation is a perfectly good unitary evolution; averaging over $\xi$ produces mixed states and, in suitable limits, the master equations of \Chap~\ref{C.Open}. The first result of the paper is a worst-case bound: if $\norm{H_{1,S}(t,\xi)}\le K$ then $\norm{U_S(t,\xi)-U_{0,S}(t)}\le Kt$, and a sharper, \emph{geometric} version bounds the error by $\int_0^t\Lambda(s)\,\mathrm{d}s$ where $\Lambda(t)$ is the largest Frobenius norm of the noise at time $t$. Under a \emph{worst-case noise condition}, this bound is tight with positive probability.}
 \onp{\begin{itemize}
-    \item Each realisation $\omega$: a unitary evolution; the average: a mixed state (\Chap~\ref{C.Open}).
-    \item Bound: $\norm{H_{1,S}}\le K\ \Rightarrow\ \norm{U_S(t,\omega)-U_{0,S}(t)}\le Kt$; geometric refinement $\le\int_0^t\Lambda(s)\,\mathrm{d}s$.
+    \item Each realisation $\xi$: a unitary evolution; the average: a mixed state (\Chap~\ref{C.Open}).
+    \item Bound: $\norm{H_{1,S}}\le K\ \Rightarrow\ \norm{U_S(t,\xi)-U_{0,S}(t)}\le Kt$; geometric refinement $\le\int_0^t\Lambda(s)\,\mathrm{d}s$.
     \item Tight for Markovian noise (worst-case noise condition).
 \end{itemize}}
 \end{frame}
@@ -508,7 +508,7 @@ For a \emph{single qubit} with Hamiltonian $H(t)=\tfrac{u_z(t)}{2}\sigma_z+\tfra
 \end{frame}
 
 \begin{frame}\ft{Question D: control that knows about the noise}
-\ona{Suppose the noise strength depends on which control we apply: a \emph{noise metric} $g_\Lambda$ on the Lie algebra assigns to a Hamiltonian $H_{0,S}(t)$ the noise level $\Lambda(t)=\sqrt{g_\Lambda(H_{0,S}(t),H_{0,S}(t))}$. For a single qubit with $H=\tfrac12\sigma_y+\sum_{j=1}^3u_j\sigma_j+H_n(t,\omega)$ and $g_\Lambda=\operatorname{diag}(1,\tfrac1{100},\tfrac1{100})$, applying $\sigma_x$ induces ten times as much noise as applying $\sigma_y$ or $\sigma_z$. Compare two designs of polynomial pulses $u_j(t)=\sum_{k\le5}c_{jk}t^k$:}
+\ona{Suppose the noise strength depends on which control we apply: a \emph{noise metric} $g_\Lambda$ on the Lie algebra assigns to a Hamiltonian $H_{0,S}(t)$ the noise level $\Lambda(t)=\sqrt{g_\Lambda(H_{0,S}(t),H_{0,S}(t))}$. For a single qubit with $H=\tfrac12\sigma_y+\sum_{j=1}^3u_j\sigma_j+H_n(t,\xi)$ and $g_\Lambda=\operatorname{diag}(1,\tfrac1{100},\tfrac1{100})$, applying $\sigma_x$ induces ten times as much noise as applying $\sigma_y$ or $\sigma_z$. Compare two designs of polynomial pulses $u_j(t)=\sum_{k\le5}c_{jk}t^k$:}
 \onp{Noise metric $g_\Lambda$: noise level $\Lambda(t)=\sqrt{g_\Lambda(H_{0,S},H_{0,S})}$. Qubit with $g_\Lambda=\operatorname{diag}(1,\tfrac1{100},\tfrac1{100})$: $\sigma_x$ is ten times noisier. Two designs:}
 \begin{align}
     \text{noise-blind:}\quad & \norm{U_{0,S}(T)-V}^2, \label{eq:ch01:nonoisecost}\\
