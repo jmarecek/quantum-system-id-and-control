@@ -7,16 +7,18 @@
 \lecture{Algorithmic Quantum State Tomography and Quantum Channel Tomography}{Lect11}
 \chapter{Algorithmic Quantum State Tomography and Quantum Channel Tomography}\label{C.AlgTomography}
 
-\begin{frame}\ft{Outline}
-\ona{\Chaps~\ref{C.StateSpace}--\ref{C.SampleComplexity} asked \emph{whether} a quantum system can be identified from measurement data, and \emph{how much} data is needed. This \chap{} is about \emph{how}: the algorithms that turn measurement records into a density operator (state tomography), into a channel (process tomography), and finally into the parameters of a master equation (system identification proper). We move from the static problem---one unknown state, many copies---to the dynamical one, where the unknown is the generator of the evolution and the data are time series of expectation values. The pipeline is: prepare, evolve, measure; estimate states or expectation values; fit a linear dynamical system; reconstruct the Hamiltonian and Kossakowski matrix from the fitted system matrix.}
+\begin{frame}\ft{Outline}\mop{\small}
+\ona{\Chaps~\ref{C.StateSpace}--\ref{C.SampleComplexity} asked \emph{whether} a quantum system can be identified from measurement data, and \emph{how much} data is needed. This \chap{} is about \emph{how}: the algorithms that turn measurement records into a density operator (state tomography), into a channel (process tomography), and finally into the parameters of a master equation (system identification proper). We move from the static problem---one unknown state, many copies---to the dynamical one, where the unknown is the generator of the evolution and the data are time series of expectation values. The pipeline is: prepare, evolve, measure; estimate states or expectation values; fit a linear dynamical system; reconstruct the Hamiltonian and Kossakowski matrix from the fitted system matrix. Along the way we keep complete positivity as a polynomial matrix inequality, and use the sparse relaxations of such inequalities to certify that a model is physical, how much the data determine, and when no model of the chosen form can be right.}
 \onp{Outline of today's lecture:
-\begin{itemize}\setlength\itemsep{0.6em}
+\begin{itemize}\setlength\itemsep{0.25em}
     \item the pipeline: tomography $\to$ system identification $\to$ parameter reconstruction;
     \item state tomography: linear inversion, maximum likelihood, projected least squares, compressed sensing, classical shadows;
     \item process tomography: standard, ancilla-assisted, noisy circuits, gate set tomography;
     \item open-system identification from time series: ERA, Koopman, learning-based, polynomial optimization;
+    \item certificates of physical models: confidence regions, prediction bands, worst cases;
     \item recovery of master-equation parameters from the system matrix (Algorithms~\ref{alg:ch11:general}--\ref{alg:ch11:symmetric});
-    \item Hamiltonian identification as polynomial optimization.
+    \item what the data determine, and when the model is wrong;
+    \item Hamiltonian identification as polynomial optimization, and sparsity.
 \end{itemize}}
 \ona{\medskip\noindent\textit{Sources.} This \chap{} draws on \citep{parvaiz2026survey,parvaiz2025identifiability,bondar2025globally}; passages from these papers are reproduced with light editing.}
 \onp{\vfill{\scriptsize Sources: \citep{parvaiz2026survey,parvaiz2025identifiability,bondar2025globally}.}}
@@ -170,12 +172,127 @@ Moment--SOS / POP \citep{popovych2024quantumopenidentificationglobal} & $H$ and 
     \text{s.t.} \quad \Gamma \succeq 0, \quad H = H^{\dagger}, \quad \Tr H = 0,
 \end{aligned}
 \end{equation}
-\ona{where $\Gamma$ is the Kossakowski matrix and $\mathcal K$ the GKSL super-operator. The positive-semidefinite requirement on $\Gamma$ is a polynomial matrix inequality, which can be reformulated as polynomial inequalities on the principal minors of $\Gamma$. For a single qubit, with $\Gamma=\begin{pmatrix}\kappa_1&-\imath a_3&\imath a_2\\ \imath a_3&\kappa_2&-\imath a_1\\ -\imath a_2&\imath a_1&\kappa_3\end{pmatrix}$, these read $\kappa_1+\kappa_2+\kappa_3\ge0$, $\kappa_1\kappa_2+\kappa_3\kappa_1+\kappa_2\kappa_3\ge a_1^2+a_2^2+a_3^2$, $\kappa_1\kappa_2\kappa_3\ge\kappa_1a_1^2+\kappa_2a_2^2+\kappa_3a_3^2$, giving a POP in 9 real parameters. Global optimality is certified by the moment--SOS hierarchy \citep{lasserre2001global} using the TSSOS library \citep{TSSOS}. On a spin coupled to an Ohmic bath, POP found the optimum for all but one damping value, while the gradient-based SLSQP converged for only three of eight, and the ERA/DMD fits were one to two orders of magnitude worse in infidelity in the weak-damping regime. The approach is limited to few levels: the number of principal minors grows exponentially with the dimension of $\Gamma$.}
+\ona{where $\Gamma$ is the Kossakowski matrix and $\mathcal K$ the GKSL super-operator. The positive-semidefinite requirement on $\Gamma$ is a polynomial matrix inequality, which can be reformulated as polynomial inequalities on the principal minors of $\Gamma$. For a single qubit, with $\Gamma=\begin{pmatrix}\kappa_1&-\imath a_3&\imath a_2\\ \imath a_3&\kappa_2&-\imath a_1\\ -\imath a_2&\imath a_1&\kappa_3\end{pmatrix}$, these read $\kappa_1+\kappa_2+\kappa_3\ge0$, $\kappa_1\kappa_2+\kappa_3\kappa_1+\kappa_2\kappa_3\ge a_1^2+a_2^2+a_3^2$, $\kappa_1\kappa_2\kappa_3\ge\kappa_1a_1^2+\kappa_2a_2^2+\kappa_3a_3^2$, giving a POP in 9 real parameters. Global optimality is certified by the moment--SOS hierarchy \citep{lasserre2001global} using the TSSOS library \citep{TSSOS}. On a spin coupled to an Ohmic bath, POP found the optimum for all but one damping value, while the gradient-based SLSQP converged for only three of eight, and the ERA/DMD fits were one to two orders of magnitude worse in infidelity in the weak-damping regime. The approach is limited to few levels: the number of principal minors grows exponentially with the dimension of $\Gamma$. Section~\ref{sec:ch11:certificates} removes this limitation by keeping $\Gamma\succeq0$ as a matrix inequality.}
 \onp{\begin{itemize}\setlength\itemsep{0.4em}
     \item Constraints $\Gamma\succeq0$, $H=H^\dagger$ enter naturally; $\Gamma\succeq0$ $\Leftrightarrow$ principal minors $\ge0$ (polynomial inequalities).
     \item Global optimum via moment--SOS \citep{lasserre2001global}, TSSOS \citep{TSSOS}: optimum in 7 of 8 damping regimes vs.\ 3 of 8 for SLSQP; beats ERA/DMD by $10$--$100\times$ in infidelity \citep{popovych2024quantumopenidentificationglobal}.
     \item Limitation: minors of $\Gamma$ grow exponentially with the number of levels.
 \end{itemize}}
+\end{frame}
+
+\section{Certificates of physical models}\label{sec:ch11:certificates}
+
+\begin{frame}\ft{Physicality as a matrix inequality}
+\ona{The positivity of the Kossakowski matrix need not be broken into principal minors. It can be kept as it stands, a \emph{polynomial matrix inequality}: a symmetric matrix whose entries are polynomials in the unknowns, required to be positive semidefinite. \citet{scherer2006matrix} extended the moment--SOS hierarchy of \Chap~\ref{C.Motivation} to such constraints, multiplying the matrix itself by sums of squares of polynomial matrices in place of the minors. The semidefinite programmes grow as $m\binom{n+d}{d}$ for an $m\times m$ inequality in $n$ variables at the order $d$, and several kinds of structure reduce them: the chordal sparsity of the matrix \citep{Zheng2023}, the correlative sparsity of the variables \citep{waki2006sums}, term sparsity \citep{miller2024sparse,TSSOS}, and, when the polynomial is computed through a chain of low-dimensional maps, the lifting of the intermediate states to new variables \citep{balada2025global,balada2026composition}. The package \texttt{pysparsepmi} \citep{pysparsepmi} implements all of these in Python, with a modelling layer close to that of CVXPY, and returns with every bound the pseudo-moments from which minimisers can be recovered and certified. We use it for the rest of this \chap{}.}
+\ona{\endgraf For a qubit the coherence vector obeys $\dot{\vec x}=\mathbf A\vec x+\vec\beta$, and $(\mathbf A,\vec\beta)$ determines the Hamiltonian and the Hermitian Kossakowski matrix $\gamma=R+\imath S$ uniquely (\Chap~\ref{C.StateSpace}), twelve numbers for twelve unknowns. A generator is physical when $\gamma\succeq0$, that is, when the real matrix $\left(\begin{smallmatrix}R&-S\\S&R\end{smallmatrix}\right)\succeq0$. For an estimate $(\hat{\mathbf A},\hat{\vec\beta})$, the least value of $\norm{\mathbf A-\hat{\mathbf A}}_F^2+\norm{\vec\beta-\hat{\vec\beta}}^2$ over physical generators is therefore a problem with one matrix inequality. Here it is convex, and the relaxation of order one is exact; its value is a certificate either way. If it is positive, no Markovian (GKSL) model of the qubit reproduces the estimate; if it vanishes, the minimiser is the nearest physical model. In the plane of the rates $1/T_1$ and $1/T_2$ of a qubit relaxing towards $\ket0$, the physical generators fill the wedge $T_2\le2T_1$: the familiar inequality is a slice of the spectrahedron of GKSL generators. Estimates from finite data of a qubit limited by relaxation fall outside it a quarter of the time, and are then certified non-physical and moved to the edge of the wedge. For the qubit with the hidden defect of \Chap~\ref{C.StateSpace}, the time-local generator of \Chap~\ref{C.GeometryChannels} is certified non-Markovian, instant by instant, wherever its rate is negative (Figure~\ref{fig:ch11:physical}).}
+\onp{\begin{itemize}\setlength\itemsep{0.3em}
+    \item Keep $\Gamma\succeq0$ as a \alert{polynomial matrix inequality} \citep{scherer2006matrix}: no exponential list of minors.
+    \item Structure: chordal \citep{Zheng2023}, correlative \citep{waki2006sums}, term sparsity \citep{miller2024sparse}, state lifting \citep{balada2026composition}; all in \texttt{pysparsepmi} \citep{pysparsepmi}.
+    \item Qubit: distance to the GKSL generators, a certificate either way. $T_2\le2T_1$ is a slice. The hidden defect: non-Markovian where its rate is negative.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Certified physicality, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch11_physical.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch11_physical.tex}}
+\caption{Certified physicality of an estimated qubit generator. The coherence vector obeys $\dot{\vec x}=\mathbf A\vec x+\vec\beta$, and $(\mathbf A,\vec\beta)$ determines a unique Hamiltonian and Kossakowski matrix $\gamma$, which is physical when $\gamma\succeq0$. The squared distance, in the Frobenius norm, from an estimate to the nearest physical generator is bounded from below by a sum-of-squares certificate for the polynomial matrix inequality $\gamma\succeq0$, computed with \texttt{pysparsepmi}; here the problem is convex, the bound is exact, and a direct solution agrees with it. (a) The generators of a qubit relaxing towards $\ket0$ at the rate $1/T_1$ and losing coherence at the rate $1/T_2$: the physical ones fill the wedge $T_2\le2T_1$ (blue), and the certificate is positive below it. Marked are a qubit with the pure dephasing rate $g_\phi=0.4$, far inside, and a relaxation-limited qubit with $g_\phi=0.005$, near the edge (gold). (b) Sixty estimates of $(1/T_1,1/T_2)$ for the latter, each fitted to simulated relaxation and dephasing experiments with $8$ times and $300$ shots per time. Fifteen of them, a quarter, have $T_2>2T_1$ and are certified non-physical (red); the arrows join four of them to their nearest physical generators, which lie on the edge of the wedge. (c) The qubit with the hidden defect of \Chap~\ref{C.StateSpace}, whose time-local generator is amplitude damping at the rate $\gamma(t)$ (gold). The certified distance (red; the dots are individual certificates) vanishes while $\gamma\ge0$, and equals $\sqrt{5/2}\,\abs\gamma$ while $\gamma<0$, between $t=1.81$ and $3.21$, where the nearest GKSL generator is zero: a certificate, instant by instant, that no Markovian model of the qubit alone produces its dynamics there. Generated by \texttt{code/ch11\_physical.py}.}\label{fig:ch11:physical}
+\end{figure}}
+\end{frame}
+
+
+\begin{frame}[fragile]\ft{The certificate in code}
+\ona{The following excerpt of \texttt{code/ch11\_physical.py} builds the squared residual as a polynomial in the twelve unknowns, writes $\gamma\succeq0$ as the real $6\times6$ matrix inequality, and asks \texttt{pysparsepmi} for the certified bound and the minimiser recovered from the pseudo-moments.}
+\ona{\lstinputlisting[style=python,title={},firstline=129,lastline=152]{code/ch11_physical.py}}
+\onp{\lstinputlisting[style=python,title={},basicstyle=\ttfamily\scriptsize,firstline=141,lastline=152]{code/ch11_physical.py}}
+\end{frame}
+
+\begin{frame}\ft{Confidence regions that respect physics}
+\ona{An estimate is of little use without an error bar, and the error bar usually given is an ellipse: the estimate, with a multiple of its covariance about it. The ellipse knows nothing of physics. For the relaxation-limited qubit of Figure~\ref{fig:ch11:physical} it reaches across the edge $T_2=2T_1$ of the wedge, and when the estimate itself lies outside the wedge, most of the ellipse does. A more honest region keeps only the physical generators that fit the data nearly as well as the best of them, that is, the generators with $\gamma\succeq0$ whose misfit exceeds the certified least misfit by no more than the allowance of the ellipse. This is a spectrahedron cut by an ellipsoid, a convex set, and so is its shadow on the plane of the two rates. A convex set in the plane is the intersection of its supporting half-planes, and the support function in any one direction is again a problem with one matrix inequality, certified as before; in Figure~\ref{fig:ch11:region} seventy-two directions suffice. When the estimate lies outside the wedge, the region keeps $0.38$ of the area of the ellipse. More instructive is an estimate inside the wedge, whose region is cut on the left as well. Every physical generator has $\abs{\beta_3}\le-A_{33}$, since a qubit cannot relax to a point outside the Bloch ball; a qubit that relaxes to $\ket0$ lies on this face, and the measured $\hat\beta_3$ then bounds $1/T_1$ from below. The plane of the two rates does not show the face; the twelve-dimensional spectrahedron does. Nor is the region bought at the price of coverage: over $300$ simulated data sets it contains the truth slightly more often than the ellipse. Confidence regions confined to the physical states were proposed for state tomography by \citet{christandl2012reliable} and \citet{faist2016practical}; here the same idea is applied to generators, with the certificate supplying the support function.}
+\onp{\begin{itemize}\setlength\itemsep{0.3em}
+    \item The usual error bar, an ellipse, ignores physics and crosses $T_2=2T_1$.
+    \item Keep the physical generators that fit nearly as well as the best: a convex region, drawn from certified support functions in $72$ directions.
+    \item A hidden face, $\abs{\beta_3}\le-A_{33}$ (no relaxation outside the Bloch ball), cuts it as well.
+    \item Coverage is kept. For states: \citet{christandl2012reliable,faist2016practical}.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Confidence regions, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch11_region.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch11_region.tex}}
+\caption{A confidence region that respects physics. The relaxation-limited qubit of Figure~\ref{fig:ch11:physical}, with all twelve entries of $(\mathbf A,\vec\beta)$ estimated with independent errors of standard deviation $0.006$. Dashed: the naive $95\%$ ellipse for $(1/T_1,1/T_2)$, which ignores physics. Blue: the shadow on the plane of the generators of GKSL form that fit the data as well as the best of them, up to the same allowance. Its boundary is the intersection of $72$ supporting half-planes, each certified by \texttt{pysparsepmi}, and of the half-plane $T_2\le2T_1$. Gold: the truth; red: the least-squares estimate; blue dot: the nearest generator of GKSL form. (a) An estimate outside the wedge: $62\%$ of the ellipse is unphysical, and the region has $0.38$ of its area. (b) An estimate inside the wedge: only $13\%$ of the ellipse is unphysical, yet the region has $0.65$ of its area, for it is cut on the left as well. Every generator of GKSL form has $\abs{\beta_3}\le-A_{33}$: the qubit cannot relax to a point outside the Bloch ball. This qubit relaxes to $\ket0$ and so lies on that face, and the measured $\hat\beta_3$ bounds $1/T_1$ from below; the plane alone does not show this. Over $300$ data sets the ellipse contains the truth in $95.0\%$ of cases and the physical region in $96.7\%$. Generated by \texttt{code/ch11\_region.py}.}\label{fig:ch11:region}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{Is the model physical at every bias?}
+\ona{A noise model is often identified as a function of a bias, such as a flux or a detuning, by fitting polynomials to measurements made at a few biases. That the fitted model is physical at those biases does not make it physical in between. Consider correlated dephasing on a chain of qubits, with the Lindblad operators $Z_1,\dots,Z_n$ and a tridiagonal Kossakowski matrix $\Gamma(x)$, local rates on the diagonal and correlations between neighbours beside it, all polynomials in the bias $x\in[-1,1]$. Checking pairs of neighbours is not enough either: the matrix with ones on the diagonal and $\tfrac34$ beside it has the least eigenvalue $1-\tfrac34\sqrt2<0$ although each of its $2\times2$ blocks is positive definite. The right test is the matrix inequality $\Gamma(x)\succeq0$ for all $x$ with $1-x^2\ge0$, certified by the hierarchy of \citet{scherer2006matrix}. Its pattern is a path, which is chordal, and a matrix with a chordal pattern is positive semidefinite if and only if it is a sum of positive semidefinite blocks on the maximal cliques, here the pairs $\{i,i+1\}$ \citep{grone1984positive,AGLER1988101}; \citet{Zheng2023} carry this over to polynomial matrices, so that the certificate needs $n-1$ small blocks instead of one large one. In Figure~\ref{fig:ch11:sweep} a model of five qubits is positive definite at each of seven measured biases but has the least eigenvalue $-0.061$ between the first two; the certificate of order four finds this value exactly, and the pseudo-moments return the bias where it occurs.}
+\onp{\begin{itemize}\setlength\itemsep{0.3em}
+    \item A model fitted in a bias $x$: physical at the measured biases does not mean physical in between.
+    \item Pairs are not enough: ones and $\tfrac34$ beside them give $\lambda_{\min}=1-\tfrac34\sqrt2<0$.
+    \item Certify $\Gamma(x)\succeq0$ on $1-x^2\ge0$ \citep{scherer2006matrix}; a path is chordal, so blocks on the pairs suffice \citep{grone1984positive,AGLER1988101,Zheng2023}.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Physical at every bias, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch11_sweep.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch11_sweep.tex}}
+\caption{Is an identified noise model physical at every bias? Correlated dephasing on a chain of qubits, with a tridiagonal Kossakowski matrix $\Gamma(x)$ whose entries are polynomials in a bias $x\in[-1,1]$, as a fit to measurements might give: the local rates $1-0.1x$ on the diagonal, and correlations $c(x)$ between neighbours. (a) For five qubits the least eigenvalue of $\Gamma(x)$ is positive at each of the seven biases at which the model was checked (dots), but it falls to $-0.061$ between the first two, where $c$ rises to $0.66$ (shaded). Every $2\times2$ principal block of $\Gamma(x)$ is positive definite at every bias, so that a check of pairs of qubits would pass. The sparse sum-of-squares relaxation of \texttt{pysparsepmi}, of order $4$, certifies the lower bound $-0.0607$ on the whole interval (dashed), equal to the true minimum, and the pseudo-moments return the minimiser $x=-0.896$ (ring). (b) The pattern of $\Gamma$ is a path, whose maximal cliques are the pairs $\{i,i+1\}$. A matrix with this pattern is positive semidefinite if and only if it is a sum of positive semidefinite $2\times2$ blocks on the cliques, which share the diagonal between them \citep{grone1984positive,AGLER1988101}, and the chordal decomposition of \citet{Zheng2023} applies this to polynomial matrices. Pairs alone do not decide: both $2\times2$ blocks of the matrix shown are positive definite, yet its least eigenvalue is $-0.061$. (c) The largest positive semidefinite block of the certificate, and the time the solver SCS takes, against the number of qubits. The dense relaxation needs one block of order $5n$, the chordal one $n-1$ blocks of order $10$, and the two give the same bound wherever both are computed. Generated by \texttt{code/ch11\_sweep.py}.}\label{fig:ch11:sweep}
+\end{figure}}
+\end{frame}
+
+
+\begin{frame}\ft{Long records: lifting the states}
+\ona{The third structure arises when an identified model is run forward over a long record. Suppose that the populations of a qubit, observed after each step, form a two-state chain whose probabilities of staying and of returning depend on a parameter known only to lie in $[-1,1]$ at each step. The population after $n$ steps is then a polynomial of degree $2n$ in $n$ variables, and the dense moment relaxation of the largest and smallest values it can take needs a Gram matrix of order $\binom{2n}{n}$, some $1.4\cdot10^{11}$ for $n=20$. But the polynomial is computed by a chain, $s_k=F(s_{k-1},x_k)$, through states of dimension two. Lifting the states to new variables, tied to the parameters by these equalities, makes the problem chain-sparse: every clique $\{s_{k-1},x_k,s_k\}$ has five variables, whatever $n$. \citet{balada2025global,balada2026composition} proposed two hierarchies on the lifted problem, one using its correlative sparsity (SL-chord) and one using push-forward potentials, a function of the state at each stage (SL-push). In Figure~\ref{fig:ch11:lifting} the first certifies the exact band $0.75^n\le p_n\le\tfrac12+\tfrac12\,0.9^n$ with blocks of order $21$ up to $n=20$, and the parameters recovered from the pseudo-moments certify the bound as the global maximum. The figure also contains a warning. At $n=8$ the solver returned, with the status \emph{optimal, inaccurate}, a value below the true maximum, which is no bound at all; a certificate is only as good as the accuracy with which its semidefinite programme was solved.}
+\onp{\begin{itemize}\setlength\itemsep{0.3em}
+    \item Population after $n$ steps with a parameter uncertain at each step: degree $2n$ in $n$ variables; dense block $\binom{2n}{n}$.
+    \item Lift the states $s_k=F(s_{k-1},x_k)$: cliques of five variables, blocks of order $21$ whatever $n$ \citep{balada2026composition}.
+    \item Exact band $0.75^n\le p_n\le\tfrac12+\tfrac12\,0.9^n$; an \emph{inaccurate} solve is \alert{no certificate}.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Long records, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch11_lifting.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch11_lifting.tex}}
+\caption{A certified prediction band for an identified model, by state lifting. The populations of a qubit, observed after each step, form a two-state chain whose probabilities of staying, $a(x)=0.95-0.2x^2$, and of returning, $b(x)=0.05-0.05x^2$, depend on a parameter $x_k$ known only to lie in $[-1,1]$ at each step; the population $p_n$ of the initial state after $n$ steps is a polynomial of degree $2n$ in $n$ variables, and it lies in the band $0.75^n\le p_n\le\tfrac12+\tfrac12\,0.9^n$. (a) The chain, with the states $s_k=(p_k,1-p_k)$ lifted to new variables tied to the parameters by $s_k=F(s_{k-1},x_k)$; each wash is one clique $\{s_{k-1},x_k,s_k\}$ of five variables, and the relaxation needs one block of order $21$ per clique, whatever $n$. (b) The certified bounds against $n$. SL-chord at order $2$ and SL-push at order $3$ give the upper edge exactly, and the parameters recovered from the pseudo-moments, $x=0$, certify it as the global maximum; SL-push at order $2$ is valid but loose, and exceeds $1$ for large $n$; at $n=8$ the solver SCS returns an inaccurate value below the true maximum, which is no bound at all. SL-push at order $3$ also gives the lower edge for $n\le12$. (c) The order of the largest positive semidefinite block: $\binom{2n}{n}$ for the dense relaxation, $1.4\cdot10^{11}$ at $n=20$, against the constant $21$, $20$ and $10$ of the lifted ones. (d) The solve times with SCS: $5.7$ seconds for the dense relaxation at $n=4$, and $51$ seconds for SL-chord at $n=20$. Generated by \texttt{code/ch11\_lifting.py}.}\label{fig:ch11:lifting}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{A prediction band for an identified qubit}
+\ona{In Figure~\ref{fig:ch11:lifting} the parameter was free to change from step to step. After an identification it is more usual for the parameter to be fixed but uncertain. Take the qubit of \Chap~\ref{C.Frequency}, identified by Ho and Kalman's algorithm from a short record of $\langle\sigma_x\rangle$, with two hundred shots at each time, and the ellipse $E$ of poles that a parametric bootstrap makes plausible. For the pole $\lambda$ the prediction at the time $k\tau$ is $a\,\mathrm{Re}\,\lambda^k$, a polynomial of degree $k$ in the two coordinates of $\lambda$, and its largest and smallest values over $E$ are certified at the order $\lceil k/2\rceil$, the lowest possible. Since $\mathrm{Re}\,\lambda^k$ is harmonic, its extremes lie on the boundary of $E$, and a search along the boundary confirms that the bounds are exact. The band (Figure~\ref{fig:ch11:band}) contains the true prediction at every time, and it widens with $t$, as the uncertainty in the frequency turns into an uncertainty in phase. It is between $1.2$ and $1.9$ times as wide as the pointwise band of the bootstrap predictions, and the two answer different questions: the bootstrap band describes the scatter of the estimate one time at a time, the certified band the worst model in $E$ at each time. The narrower is not even inside the wider; where the prediction turns, the bootstrap band pokes out of the certified one, through bootstrap poles that lie outside $E$. Every step shares the one pole, so that there is no chain to exploit, and each time costs a problem of its own, with blocks of order up to $66$ at $t=5$.}
+\onp{\begin{itemize}\setlength\itemsep{0.3em}
+    \item Qubit of \Chap~\ref{C.Frequency}, identified by Ho--Kalman; a bootstrap ellipse $E$ of poles.
+    \item Prediction $a\,\mathrm{Re}\,\lambda^k$: degree $k$ in $\lambda$; its extremes over $E$ certified at the order $\lceil k/2\rceil$, and exact.
+    \item The band contains the truth and widens as the error in frequency becomes one of phase; $1.2$--$1.9$ times the bootstrap band, which answers a different question.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{A prediction band, pictured}
+\onp{\begin{center}\resizebox{!}{0.8\textheight}{\input{figures/ch11_band.tex}}\end{center}}
+\ona{\begin{figure}[htbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch11_band.tex}}
+\caption{A certified prediction band for the identified qubit of \Chap~\ref{C.Frequency}. (a) A record of $\langle\sigma_x\rangle$ at $t=k\tau\le2$, with $200$ shots at each time, is identified by Ho--Kalman. A parametric bootstrap gives $400$ further poles (grey), and their covariance gives the $95\%$ ellipse $E$, which contains the true pole. (b) For every model in $E$ the prediction at $k\tau$ is a polynomial of degree $k$ in $\lambda$. Its largest and smallest values over $E$, certified at the order $\lceil k/2\rceil$, give the band (pale, with the bounds marked), which contains the true prediction (dashed) at every time. The darker bars are the pointwise $95\%$ bands of the bootstrap predictions. (c) The same with the decay divided out: the band widens as the uncertainty in $\omega$ becomes one of phase. (d) The certified band is $1.2$ to $1.9$ times as wide as the bootstrap band. The two answer different questions: at $k=4$ and $8$ the bootstrap band leaves the certified one, by up to $2\%$ of the envelope, through bootstrap poles that lie outside $E$. Generated by \texttt{code/ch11\_band.py}.}\label{fig:ch11:band}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{Coherent and stochastic errors}
+\ona{A pulse that turns the qubit through a slightly wrong angle, by the same amount every time, commits a coherent error; one that errs by a random amount commits, on average, a stochastic one. Per pulse the two may have the same infidelity, yet they accumulate differently: coherent errors add in amplitude, stochastic ones in probability. Consider a train of $n$ pulses, each meant to turn a qubit through $\pi$ but turning it through $\pi+\varepsilon_k$, with $\abs{\varepsilon_k}\le\delta$ unknown. The largest infidelity over all such errors is a polynomial problem in $n$ variables, and lifting the Bloch vector after each pulse, as in Figure~\ref{fig:ch11:lifting}, keeps the blocks of SL-chord at the order $28$ or $36$, whatever $n$. In Figure~\ref{fig:ch11:coherent} the certified worst infidelity grows as $n^2$, and that of random errors as $n$. The infidelity of one pulse, $\sin^2\frac\delta2$, is the square of its diamond distance from the ideal pulse, $\sin\frac\delta2$ (\Chap~\ref{C.GeometryChannels}), and it is diamond distances that add along a train; so the worst case may reach $n^2\sin^2\frac\delta2$, and a train of turns about one axis nearly does. Alternating the axes, $x,y,x,y,\dots$, cancels equal errors almost exactly, but it only halves the worst case. The blocks stay small, but the time the solver takes does not, and the certificates end at ten pulses.}
+\onp{\begin{itemize}\setlength\itemsep{0.3em}
+    \item $n$ pulses through $\pi+\varepsilon_k$, $\abs{\varepsilon_k}\le\delta$: coherent errors add in amplitude, stochastic ones in probability.
+    \item Worst case certified by lifting the Bloch vectors: blocks of order $28$ or $36$ whatever $n$.
+    \item Worst infidelity $\propto n^2$, random $\propto n$; per pulse $\sin^2\frac\delta2$, but diamond distances $\sin\frac\delta2$ add (\Chap~\ref{C.GeometryChannels}).
+    \item The $XY$ train cancels equal errors, but only halves the worst case.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Coherent and stochastic errors, pictured}
+\onp{\begin{center}\resizebox{!}{0.8\textheight}{\input{figures/ch11_coherent.tex}}\end{center}}
+\ona{\begin{figure}[htbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch11_coherent.tex}}
+\caption{Coherent against stochastic errors, certified. A qubit in $\ket0$ receives $n$ pulses, each meant to turn it through $\pi$ about $x$ (the X train) or about $x,y,x,y$ in turn (the XY train), but the $k$-th turns it through $\pi+\varepsilon_k$, with $\abs{\varepsilon_k}\le\delta=0.1$. (a) The two trains, and the Bloch vector of the X train after every second pulse. Equal errors carry it steadily away from $\ket0$, by $1.6$\,rad after $16$ pulses; random ones partly cancel, to $0.23$\,rad in the root mean square. (b) The angle between the actual and the ideal final Bloch vectors, in units of $\delta$. The worst case grows as $n\delta$ for the X train. For the XY train it grows as $n\delta/\sqrt2$: that train cancels equal errors almost exactly, but not adversarial ones. Independent random errors grow only as $\sqrt{n/3}\,\delta$. (c) The same as infidelities, on logarithmic scales: the worst cases grow as $n^2$, random errors as $n$. Per pulse the infidelity is $\sin^2\frac\delta2=2.5\cdot10^{-3}$, but the diamond distance of \Chap~\ref{C.GeometryChannels} is $\sin\frac\delta2=0.05$, and it is diamond distances that add along a train. The worst case can therefore reach $n^2\sin^2\frac\delta2$ (dashed); the X train nearly does, and the XY train stays at about half of it. (d) The worst cases are certified by state lifting, the Bloch vector after each pulse becoming a new variable. The largest positive semidefinite block has the order $28$ (X) or $36$ (XY) whatever $n$, but the solver takes longer as $n$ grows. Every certified value agrees to $10^{-6}$ with the closed form $\sin^2(n\delta/2)$ or with an enumeration of the $2^n$ vertices. Generated by \texttt{code/ch11\_coherent.py}.}\label{fig:ch11:coherent}
+\end{figure}}
 \end{frame}
 
 \section{Recovery of master-equation parameters}
@@ -223,7 +340,7 @@ Construct the index map $\mathcal F$ and compute $\bT_1,\bT_2$ as in \eqref{eq:c
 \end{frame}
 
 \begin{frame}\ft{Algorithm: symmetric Kossakowski matrix, and conditioning}
-\ona{\begin{algorithm2e}[H]
+\ona{\medskip\begin{algorithm2e}[H]
 \caption{Parameter reconstruction, symmetric Kossakowski matrix}\label{alg:ch11:symmetric}
 \KwIn{$\bA,\ \{F_j\}_{j=1}^n$}
 Compute the symmetric dissipation tensor $\tilde D^{(j,k)}_{lm}$; obtain $\bA^{(l)},\bA^{(d)}$ from the (anti)symmetric parts of $\bA$; compute $\bT_1,\bT_3$\;
@@ -279,6 +396,95 @@ Compute the symmetric dissipation tensor $\tilde D^{(j,k)}_{lm}$; obtain $\bA^{(
 $\omega=2$, $\gamma_1=0.3$, $\gamma_\phi=0.2$; $4$ initial states $\times$ $80$ steps, $S=10^4$ shots per value. First column $=\vec\beta$ (relaxation), $XY$ block $=$ damped rotation.}
 \end{frame}
 
+\section{What the data determine}\label{sec:ch11:determine}
+
+\begin{frame}\ft{How much do the data determine?}
+\ona{The rank conditions of the last section say whether noiseless data determine a generator. With noise the question becomes one of size: how large is the set of generators consistent with the data? Let each experiment prepare one of $\ket0,\ket1,\ket+,\ket{+\imath}$ and measure the initial rate of change of one Pauli expectation, a linear function of the twelve parameters of the qubit, known to within $\varepsilon$. After $n$ experiments the consistent generators, inside a box of prior bounds, form a polytope $C_n$, or, if complete positivity is imposed, a polytope cut by the spectrahedron $\gamma\succeq0$. For each parameter the least and the greatest value over $C_n$ are certified by a relaxation of order one, which is exact here, and the widths bound the diameter of $C_n$ from above; the extremisers recovered from the pseudo-moments are points of $C_n$, and the largest distance between two of them bounds the diameter from below. For the qubit of \Chap~\ref{C.Frequency}, with twelve experiments added one at a time, each raising the rank of the data map by one, Figure~\ref{fig:ch11:diameter} shows a step. With the data alone the diameter is limited only by the prior box until the twelfth experiment, when the rank is full, and then falls by more than an order of magnitude, to the level of the noise. With complete positivity imposed it falls at the eighth, as soon as the Hamiltonian is seen. The qubit does not heat, so that its Kossakowski matrix is singular and the true generator lies on the boundary of the cone, and the cone then pins the remaining rates. The pinning is weaker than the data would be: the width it leaves shrinks like $\sqrt\varepsilon$, where the width left by the data shrinks like $\varepsilon$.}
+\onp{\begin{itemize}\setlength\itemsep{0.3em}
+    \item Generators consistent with $n$ noisy experiments: a polytope $C_n$, cut by $\gamma\succeq0$ if it is imposed.
+    \item Certified widths of the parameters bound $\operatorname{diam}C_n$ from above; the recovered extremisers bound it from below.
+    \item Data alone: a step at full rank, $n=12$. With $\gamma\succeq0$: at $n=8$, for this qubit sits on the boundary of the cone; but the width left is $\propto\sqrt\varepsilon$, not $\varepsilon$.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{How much the data determine, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch11_diameter.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch11_diameter.tex}}
+\caption{How the set of generators consistent with the data shrinks as experiments are added, for the qubit of \Chap~\ref{C.Frequency}. Each experiment prepares one of $\ket0,\ket1,\ket+,\ket{+\imath}$ and measures the initial rate of change of one Pauli expectation; each raises the rank of the data map by one, and each is known to within $\varepsilon=0.03$. For every parameter, the least and the greatest value over the consistent generators are certified by a relaxation of order one, which is exact here. (a) The diameter of the consistent set lies between the two lines of each colour. With the data alone (blue) it stays at the size of the box until the twelfth experiment, when the rank is full, and then falls by more than an order of magnitude to the level of the noise. With complete positivity imposed (red) it falls at the eighth, as soon as the Hamiltonian is seen: the qubit does not heat, so its Kossakowski matrix is singular, and the cone pins the remaining rates, to within a width that shrinks like $\sqrt\varepsilon$ rather than like $\varepsilon$. (b), (c) The certified width of each parameter, darker for wider. Generated by \texttt{code/ch11\_diameter.py}.}\label{fig:ch11:diameter}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{Aliases as global minimisers}
+\ona{Sampling at the interval $\tau$ determines the eigenvalue $\lambda$ of a mode only through $\ee^{\lambda\tau}$, and so its frequency only up to multiples of $2\pi/\tau$ (\Chap~\ref{C.Frequency}). In the language of optimisation the misfit then has several global minimisers, one for each alias, and the moment relaxation finds them all. For the damped qubit of \Chap~\ref{C.Frequency}, write $z=\ee^{\lambda h}$ for a step $h=0.4$; samples at the interval $\tau_1=4h$ say that $z^4=\Lambda_1$, and samples at $\tau_2=5h$ that $z^5=\Lambda_2$. When the misfit is minimised over the disc $\abs z\le1$, which says only that the mode decays, the relaxation returns the bound zero and a flat moment matrix, whose rank counts the global minimisers and from which they are read off as atoms \citep{Henrion2020}. There are four for $\tau_1$, five for $\tau_2$, and one when the two rates are used together (Figure~\ref{fig:ch11:aliases}). This is the multirate condition of \Chap~\ref{C.StateSpace}, now with a certificate that no alias has been overlooked: the two combs of aliases, of spacings $2\pi/\tau_1$ and $2\pi/\tau_2$, meet again only after $2\pi/h$. The rate of decay, meanwhile, is never in doubt.}
+\onp{\begin{itemize}\setlength\itemsep{0.3em}
+    \item Sampling at $\tau$ fixes only $\ee^{\lambda\tau}$: one global minimiser per alias.
+    \item The moment relaxation finds them all, as the atoms of a flat moment matrix \citep{Henrion2020}.
+    \item $\tau_1=1.6$: four atoms; $\tau_2=2.0$: five; both: one. A certified multirate condition.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Aliases as global minimisers, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch11_aliases.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch11_aliases.tex}}
+\caption{Aliasing seen as a problem with several global minima. The damped qubit of \Chap~\ref{C.Frequency} ($\omega=3$, $\Gamma=0.5$) is sampled at the interval $\tau_1=1.6$, at $\tau_2=2.0$, or at both. With $h=0.4$ and the unknown $z=\ee^{\lambda h}$, the samples say $z^4=\Lambda_1$ and $z^5=\Lambda_2$, and the misfit $\abs{z^4-\Lambda_1}^2$, $\abs{z^5-\Lambda_2}^2$, or their sum, is minimised over the disc $\abs z\le1$ by the moment relaxation of order four, five and five. Every bound vanishes, and the global minimisers are read off the pseudo-moments as atoms. (a) The four atoms of $\tau_1$ (circles) and the five of $\tau_2$ (squares) lie on the circle $\abs z=\ee^{-\Gamma h}$; the two rates together leave one (red). (b) The same atoms as $(\omega,\Gamma)$: the frequency is determined only up to multiples of $2\pi/\tau$, the rate of decay exactly. (c) The singular values of the three moment matrices fall by about ten orders of magnitude after the fourth, the fifth and the first: the matrices are flat, and their ranks count the atoms. Generated by \texttt{code/ch11\_aliases.py}.}\label{fig:ch11:aliases}
+\end{figure}}
+\end{frame}
+
+\section{When the model is wrong}\label{sec:ch11:wrong}
+
+\begin{frame}\ft{The order of a model}
+\ona{Every model so far has been of the right form, with unknown numbers in it. In practice one fits a model of a chosen form, and the first question is whether any model of that form will do. A certified least misfit answers it: if the bound exceeds what the noise can explain, no model of the form fits, whatever the optimiser. Take the qubit with the hidden defect of \Chap~\ref{C.StateSpace}, observed through $\langle\sigma_x\rangle$ after preparing $\ket+$ and through the population of $\ket1$ after preparing $\ket1$, and fit two models, each with two parameters, by their one-step prediction error. The first is the qubit alone, a Markovian channel, which is completely positive if and only if a $2\times2$ matrix in its parameters is positive semidefinite: the wedge $T_2\le2T_1$ in discrete time. The second has one hidden mode, whose amplitude may only decay; its misfit is a polynomial of degree six, not convex, and it is certified at the order three. Figure~\ref{fig:ch11:order} shows the outcome. With few shots the two models do equally well. Beyond about three hundred shots at each time the best Markovian qubit stays at the residual of the noiseless data, while the model with the defect follows the noise down: below that number the defect is invisible in these data, and above it no Markovian model of the qubit will do. The best Markovian qubit sits exactly on the edge of the wedge; without the matrix inequality, least squares would have put it outside. The landscape of the second model, as it happens, has a single minimum, which a local method would also have found; it is the certificate that tells us so.}
+\onp{\begin{itemize}\setlength\itemsep{0.3em}
+    \item Is any model of the chosen form adequate? A certified least misfit above the noise says no.
+    \item Hidden defect: the qubit alone (a $2\times2$ PMI) against one hidden mode (degree six, order three).
+    \item They part at about $300$ shots: below, the defect is invisible; above, no Markovian qubit will do.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{The order of a model, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch11_order.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch11_order.tex}}
+\caption{The order of a model, decided by certified residuals. The qubit with the hidden defect of \Chap~\ref{C.StateSpace} is observed through $\langle\sigma_x\rangle$ after preparing $\ket+$, and through the population of $\ket1$ after preparing $\ket1$, at $21$ times with $S$ shots each. Two models, each with two parameters, are fitted by their one-step prediction error. The first is the qubit alone, a Markovian channel that is completely positive if and only if $\left[\begin{smallmatrix}1&\lambda\\\lambda&\mu\end{smallmatrix}\right]\succeq0$ (red). The second is the qubit with one hidden mode, whose amplitude may only decay (blue). The first is a convex problem with a PMI. The second, of degree six, is bracketed by the bound of order three and a local solution, which agree to $10^{-8}$. (a) The data for $S=10^4$, with the free run of each fitted model. The Markovian qubit, pinned to the edge $T_2=2T_1$, can only decay, while the model with the defect follows the change of sign and the revival; its slight shortfall is the bias of the one-step criterion. (b) The residual of the second model over the triangle of decaying amplitudes, in contours half a decade apart, with its certified minimiser (blue) next to the truth (gold). (c) The least residuals against $S$, medians of $8$ data sets with their range. The Markovian qubit levels off at $0.32$, the residual of noiseless data, while the model with the defect follows the noise level (dashed), the expected residual of the true model. They part where the noise level crosses $0.32$, at about $300$ shots: below that the defect is not visible in these data, and above it no Markovian qubit will do. Generated by \texttt{code/ch11\_order.py}.}\label{fig:ch11:order}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{Distances to the classes of families}
+\ona{\Chap~\ref{C.GeometryChannels} arranged families of channels in nested classes, the semigroups inside the CP-divisible families inside the P-divisible ones. Membership of a class is a matrix inequality on the generator at each instant, and the distance of a recorded family from a class is therefore a problem of the kind certified throughout this \chap{}. For a family recorded as maps $\Phi_k=\Phi(k\,\Delta t)$, compare its motion $(\Phi_{k+1}-\Phi_k)/\Delta t$ with $G_k\Phi_k$, where $G_k=G$ is one GKSL generator for all the steps (a semigroup), or $G_k$ is a GKSL generator at each step (a CP-divisible family), or a generator at each step whose flow keeps the Bloch ball (a P-divisible family), which the S-lemma turns into a $4\times4$ matrix inequality. The least mean-square residuals, as fractions of the motion, are the distances. For the four families of that \chap{} they reproduce the staircase of the nested classes (Figure~\ref{fig:ch11:hierarchy}): the zeros are attained, and the positive entries are certified lower bounds. The computation also says where in time a family leaves its class. Hall's dynamics leaves the CP-divisible families from its first step; the qubit with the hidden defect leaves both divisible classes exactly while the excitation comes back to it.}
+\onp{\begin{itemize}\setlength\itemsep{0.3em}
+    \item Distance of a recorded family to the semigroups, CP-divisible and P-divisible families: matrix inequalities of order $6$, $6$ and $4$ (the last by the S-lemma).
+    \item The staircase of \Chap~\ref{C.GeometryChannels}, now in certified numbers.
+    \item The defect leaves both divisible classes exactly while $\abs{c(t)}$ grows.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Distances to the classes, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch11_hierarchy.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch11_hierarchy.tex}}
+\caption{The hierarchy of families of channels of \Chap~\ref{C.GeometryChannels}, certified, for its four examples: the qubit of \Chap~\ref{C.Frequency}, dephasing by Ornstein--Uhlenbeck noise, the Pauli dynamics of \citet{Hall2014}, and the qubit with the hidden defect. (a) For each family, the least residual with which a semigroup, a CP-divisible family or a P-divisible family reproduces the motion of its maps over $[0,4]$, as a fraction of that motion. The positive entries are certified lower bounds from polynomial matrix inequalities of size $6$, $6$ and $4$; the zeros are attained. The zeros form the staircase of the nested classes. (b) The cumulative share of the distances to the CP- and the P-divisible families, in time. Hall's dynamics leaves CP-divisibility from the first step. The defect leaves both classes only while $\abs{c(t)}$ grows (shaded). Generated by \texttt{code/ch11\_hierarchy.py}.}\label{fig:ch11:hierarchy}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{Noise in the control}
+\ona{Noise need not come from an environment. If the amplitude of the drive carries a relative error $\xi$, the same in every shot of a run but varying from run to run, the average over the shots is no longer a semigroup. For the driven qubit of \Chap~\ref{C.StateSpace} each value of $\xi$ shifts the Rabi frequency by $\Omega'\xi$, and averaging over a Gaussian $\xi$ of spread $\sigma$ damps the oscillation with the Gaussian envelope $\ee^{-at^2/2}$, $a=\sigma^2\Omega'^2$, where every Markovian model damps exponentially. The best Markovian model, fitted under the constraint $\gamma\succeq0$, therefore errs both ways, too steep at first and too shallow later, and its certified misfit grows as $\sigma^4$; with $10^4$ shots at each setting and time it is detected for $\sigma$ above $0.024$ to $0.063$, according to the length of the record (Figure~\ref{fig:ch11:multiplicative}). Worse, the damping rate it reports depends on the length of the record, which no property of the qubit should. If instead the error drifts, with a correlation time $\tau$, the picture changes on long records: the average becomes a semigroup with the rate $a\tau$, the motional narrowing of \citet{anderson1954mathematical} and \citet{kubo1954note}, and the fitted rate settles there. A rate that changes with the length of the record is thus a symptom worth looking for.}
+\onp{\begin{itemize}\setlength\itemsep{0.3em}
+    \item Drive amplitude $(1+\xi)u$, $\xi$ Gaussian: the average decays as $\ee^{-at^2/2}$, not exponentially.
+    \item Certified misfit of the best Markovian model $\propto\sigma^4$; detected from $\sigma\approx0.024$ in ten Rabi periods.
+    \item The fitted rate depends on the length of the record; for a drifting error it settles at $a\tau$ (motional narrowing \citep{anderson1954mathematical,kubo1954note}).
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Noise in the control, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch11_multiplicative.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch11_multiplicative.tex}}
+\caption{Multiplicative noise in the control, seen by a Markovian fit. The driven qubit of \Chap~\ref{C.StateSpace} ($\omega=1$, $u=1.5$), whose drive amplitude is $(1+\xi)u$ with $\xi$ Gaussian of spread $\sigma$. (a) Averaged over a static $\xi$, the Rabi signal decays with a Gaussian envelope $\ee^{-at^2/2}$, $a=\sigma^2\Omega'^2$, not an exponential one; the best Markovian model, a GKSL generator fitted under the constraint $\gamma\succeq0$, must make do with $\ee^{-0.037t}$, too steep at first and too shallow later. (b) The certified misfit of the best Markovian model grows as $\sigma^4$; with $10^4$ shots per setting and time it is detected above the dashed lines, that is for $\sigma$ above $0.063$, $0.037$ and $0.024$ in records of $2$, $5$ and $10$ Rabi periods (circles). (c) The damping rate of the fitted model depends on the length of the record. For a static error it is about $aT/2$, the time-local rate at the middle of the record, until the oscillation has died away; for an error that drifts with correlation time $\tau$ it settles, on records long compared with $\tau$, at the long-time rate of motional narrowing (dashed), which is $a\tau$ when $\sigma\Omega'\tau$ is small. Generated by \texttt{code/ch11\_multiplicative.py}.}\label{fig:ch11:multiplicative}
+\end{figure}}
+\end{frame}
+
 \section{Hamiltonian identification as polynomial optimization}
 
 \begin{frame}\ft{Hamiltonian identification via QCPOP}
@@ -296,12 +502,48 @@ $\omega=2$, $\gamma_1=0.3$, $\gamma_\phi=0.2$; $4$ initial states $\times$ $80$ 
 \end{itemize}}
 \end{frame}
 
-\begin{frame}\ft{Summary}
-\begin{itemize}\setlength\itemsep{0.5em}
+\begin{frame}\ft{A chain of qubits}
+\ona{The same machinery scales when the Hamiltonian is local, and a local Hamiltonian can be learnt from local measurements \citep{Bairey2019}. Consider a chain of $n$ qubits with $H=\sum_ih_iX_i+\sum_iJ_iZ_iZ_{i+1}$, the $2n-1$ fields and couplings unknown, prepared in a product state, with the first two time derivatives of $\langle X_i\rangle$, $\langle Y_i\rangle$ and $\langle Z_i\rangle$ estimated at every site. By the Heisenberg equation the first derivative is linear and the second quadratic in the parameters, and in a product state the derivatives at the site $i$ involve only its light cone $\{h_{i-1},J_{i-1},h_i,J_i,h_{i+1}\}$. The least-squares fit is a polynomial problem of degree four whose correlative-sparsity graph has exactly these light cones as its maximal cliques, and its clique tree is a chain, with three parameters shared across each bond, much as in a matrix product state (\Chap~\ref{C.GeometryStates}). The sparse relaxation of \citet{waki2006sums} then needs $n-2$ blocks of order $21$, where the dense one needs a single block of order $n(2n+1)$. In Figure~\ref{fig:ch11:chains} it identifies a chain of twenty-four qubits in under half a minute. The estimate read off the pseudo-moments attains the bound, and is therefore the global least-squares estimate.}
+\onp{\begin{itemize}\setlength\itemsep{0.3em}
+    \item $H=\sum_ih_iX_i+\sum_iJ_iZ_iZ_{i+1}$ from the first two derivatives of local Pauli expectations \citep{Bairey2019}.
+    \item In a product state, the data at site $i$ see only its light cone: these are the cliques, and the clique tree is a chain.
+    \item Sparse relaxation \citep{waki2006sums}: $n-2$ blocks of order $21$ against one of order $n(2n+1)$; $24$ qubits in $26$\,s.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{A chain of qubits, pictured}
+\onp{\begin{center}\resizebox{!}{0.8\textheight}{\input{figures/ch11_chains.tex}}\end{center}}
+\ona{\begin{figure}[htbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch11_chains.tex}}
+\caption{Identifying a chain of qubits. The fields $h_i$ and couplings $J_i$ of $H=\sum_ih_iX_i+\sum_iJ_iZ_iZ_{i+1}$ are fitted by least squares to the first two time derivatives of $\langle X_i\rangle,\langle Y_i\rangle,\langle Z_i\rangle$ in two product states, each derivative estimated with an error of standard deviation $0.02$. (a) In a product state the derivatives at the site $i$ involve only its light cone $C_i=\{h_{i-1},J_{i-1},h_i,J_i,h_{i+1}\}$. These are the maximal cliques of the correlative-sparsity graph, and the clique tree is a chain, with three parameters shared across each bond, much as in a matrix product state (\Chap~\ref{C.GeometryStates}). (b) At order two the dense relaxation needs one positive semidefinite block of order $n(2n+1)$; the sparse one needs $n-2$ blocks of order $21$. (c) The solve times with SCS: $57$\,s against $1.1$\,s at $n=8$, and $26$\,s for the sparse relaxation at $n=24$. (d) For $n=24$, the estimate read off the first pseudo-moments lies within $0.009$ of the true parameters. At every $n$ the dense and sparse bounds agree to $10^{-7}$, and the estimate attains the bound to within $2\cdot10^{-8}$; it is therefore the global least-squares estimate, and a local search started from the truth finds the same point. Generated by \texttt{code/ch11\_chains.py}.}\label{fig:ch11:chains}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{Term sparsity}
+\ona{A third kind of sparsity looks not at which variables meet, but at which monomials occur. Term sparsity \citep{TSSOS,ChordalTSSOS} keeps in the Gram matrix only those pairs of basis monomials whose product is a term of the objective, or is reached from the terms in a few steps, and splits the matrix into the blocks of the resulting graph. One might hope that it would speed up the problem \eqref{eq:ch11:Vunknown}. It does not. Take a constant control, for which the Magnus series stops at its first term, and truncate the exponentials after the fourth order. The objective then contains every monomial of degree at most eight in $(z_1,z_2)$, so that every product of two basis monomials is a term; the graph is complete, and every step of term sparsity returns the dense relaxation, a single block of order $15$ (Figure~\ref{fig:ch11:termsparsity}). Its bound is attained, and the couplings it returns differ from the truth by the noise of the tomography. Term sparsity pays where there are many unknowns and few interactions, as in the chain of Figure~\ref{fig:ch11:chains}: for six qubits the chordal closure keeps blocks of order $15$, against $78$ for the dense relaxation, and already its first step gives the dense bound.}
+\onp{\begin{itemize}\setlength\itemsep{0.3em}
+    \item Term sparsity \citep{TSSOS,ChordalTSSOS}: keep only the products of monomials that occur in the objective.
+    \item On \eqref{eq:ch11:Vunknown} every monomial occurs: the graph is complete, nothing is gained.
+    \item On the chain: blocks of $15$ against $78$, and the dense bound at the first step.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Term sparsity, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch11_termsparsity.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch11_termsparsity.tex}}
+\caption{Term sparsity in Hamiltonian identification. (a) The three-level problem of \eqref{eq:ch11:Vunknown}: a constant control for $T=0.5$, so that the Magnus series stops at its first term; the exponentials truncated at $p=4$; a tomographic estimate of $U^\star$ with errors of $0.01$. The objective contains every monomial of degree at most $8$ in $(z_1,z_2)$, so every product of two basis monomials is a term, and the term-sparsity relaxation is the dense one, a block of $15$, at every step. The bound $1.70197\cdot10^{-3}$ is attained at $z=(0.7151,0.9929)$, against the true $(0.7071,1)$; the difference is the noise of the tomography. (b) Term sparsity pays when there are many unknowns and few interactions. For the chain of Figure~\ref{fig:ch11:chains} with $n=6$, the chordal closure keeps blocks of order $15$ at every step, while the block closure reaches the dense block of $78$ at the second step. (c) Every step of either closure gives the dense bound to within the SCS tolerance of $2\cdot10^{-8}$. Generated by \texttt{code/ch11\_termsparsity.py}.}\label{fig:ch11:termsparsity}
+\end{figure}}
+\end{frame}
+
+\begin{frame}\ft{Summary}\mop{\footnotesize}
+\begin{itemize}\setlength\itemsep{0.25em}
     \item State tomography: linear inversion is unbiased but unphysical; MLE and projected least squares enforce $\hat\rho\succeq0$; compressed sensing and classical shadows exploit low rank and locality to beat $\bigTheta{d^2}$ copies.
     \item Process tomography: standard or ancilla-assisted, CPTP enforced by a conic projection; noisy circuits become \emph{easier} to learn; gate set tomography is self-consistent up to a gauge.
     \item Open-system identification: ERA and Koopman methods realise the LDS from Hankel matrices; polynomial optimization imposes $\Gamma\succeq0$ and certifies global optimality.
+    \item Certificates: $\gamma\succeq0$ kept as a PMI; sparse relaxations certify physicality, confidence regions, prediction bands and worst cases.
     \item Reconstruction: $(\vec\theta,\vec\gamma)$ follow from $(\bA,\vec\beta)$ when $\bM$ (or $\bT_1,\bT_3$ on the physical support) has full column rank; errors are amplified by $\kappa(\bM)$.
+    \item Certified diameters show what the data determine, and certified misfits when the model is wrong.
     \item Next: the same polynomial machinery, with the roles of $H$ and $u$ exchanged, for control (\Chap~\ref{C.AlgControl}).
 \end{itemize}
 \end{frame}

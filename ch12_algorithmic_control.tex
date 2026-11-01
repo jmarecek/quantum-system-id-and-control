@@ -8,7 +8,7 @@
 \chapter{Algorithmic Quantum Optimal Control}\label{C.AlgControl}
 
 \begin{frame}\ft{Outline}
-\ona{\Chap~\ref{C.GeometryControl} characterised optimal controls through the Pontryagin maximum principle and through geodesics. Apart from a handful of low-dimensional problems, neither characterisation can be worked out by hand, and this \chap{} is about computing controls numerically. We proceed from the general to the specific: black-box optimisers on a finite parametrisation of the control; shooting methods, which solve the two-point boundary value problem of the \PMP; gradient methods tailored to quantum dynamics (GRAPE and its relatives, Krotov), whose gradient turns out to be the \PMP\ costate in disguise; and finally global methods, which cast the control problem as a polynomial optimisation problem (QCPOP) and thereby connect back to the conic optimisation of Lecture~\ref{C.Motivation}. We close with a robust variant, noise-informed control, which turns the geodesic problem of \Chap~\ref{C.GeometryControl} into a standard optimal control problem with an extra penalty.}
+\ona{\Chap~\ref{C.GeometryControl} characterised optimal controls through the Pontryagin maximum principle and through geodesics. Apart from a handful of low-dimensional problems, neither characterisation can be worked out by hand, and this \chap{} is about computing controls numerically. We proceed from the general to the specific: black-box optimisers on a finite parametrisation of the control; shooting methods, which solve the two-point boundary value problem of the \PMP; gradient methods tailored to quantum dynamics (GRAPE and its relatives, Krotov), whose gradient turns out to be the \PMP\ costate in disguise; and finally global methods, which cast the control problem as a polynomial optimisation problem (QCPOP) and thereby connect back to the conic optimisation of Lecture~\ref{C.Motivation}. We close with a robust variant, noise-informed control, which turns the geodesic problem of \Chap~\ref{C.GeometryControl} into a standard optimal control problem with an extra penalty, and with the certified worst case of robust pulses over the set of models that an identification leaves.}
 \onp{Outline of today's lecture:
 \begin{itemize}\setlength\itemsep{0.8em}
     \item from the \PMP\ and geodesics to \alert{algorithms}: what has to be discretised;
@@ -16,7 +16,8 @@
     \item shooting methods: solving the \PMP\ boundary value problem;
     \item GRAPE: the gradient from one forward and one backward propagation; GRAPE $=$ discretised \PMP; Krotov; exact gradients;
     \item global optimisation: quantum control via polynomial optimisation (QCPOP), traps, computability;
-    \item noise-informed (robust) control without computing geodesics.
+    \item noise-informed (robust) control without computing geodesics;
+    \item robust pulses, certified over the models an identification leaves.
 \end{itemize}}
 \ona{\medskip\noindent\textit{Sources.} This \chap{} draws on \citep{ansel2024introduction,bondar2025globally,lawrence2026geometric}; passages from these papers are reproduced with light editing, whereas material from the tutorial of \citet{ansel2024introduction} is paraphrased.}
 \onp{\vfill{\scriptsize Sources: \citep{ansel2024introduction,bondar2025globally,lawrence2026geometric}.}}
@@ -245,14 +246,34 @@ Pechen--Tannor three-level problem: $\lambda=0$ is a \alert{trap}; a gradient me
 \end{itemize}}
 \end{frame}
 
+\begin{frame}\ft{Robust against what?}
+\ona{Composite pulses are the older answer to the same question. A pulse is built of several rotations whose errors cancel to some order, and one must always ask: robust against what? The answer comes from identification (\Chap~\ref{C.AlgTomography}), which leaves not one model but a set of them. Take the driven qubit of \Chap~\ref{C.StateSpace} and look at it in the frame turning at the identified frequency, with the field in both quadratures. An error $\Delta$ in the identified frequency and an error $\epsilon$ in the calibration of a field of strength $\Omega$ turn every rotation through $\theta(1+\rho)$, about an axis tilted out of the equator by $\chi$, where $1+\rho=\sqrt{(1+\epsilon)^2+\Delta^2/\Omega^2}$ and $\tan\chi=\Delta/\bigl(\Omega(1+\epsilon)\bigr)$. Suppose that the identification leaves the box $\abs\rho\le0.1$, $\abs\chi\le\chi_m$. A pulse made of $D$ equal steps is a product of $D$ unit quaternions, each with the components $(c,\,p\cos\phi,\,p\sin\phi,\,q)$ for a phase $\phi$ fixed by the pulse; the box is a semialgebraic set in $(c,p,q)$, and the infidelity is a polynomial of degree $2D$ on it. Its largest value is therefore certified by the moment relaxation of order $D$, computed with \texttt{pysparsepmi} \citep{pysparsepmi} as in \Chap~\ref{C.AlgTomography}, and here the certificate is exact.}
+\ona{\endgraf Figure~\ref{fig:ch12:robust} compares the plain $\pi$ pulse with the composite pulse of \citet{levitt1979nmr} and with BB1 \citep{wimperis1994broadband}. Over the box with $\chi_m=0.1$ the composite pulses lower the worst infidelity only from $0.034$ to $0.013$. They cancel the error in $\rho$, but not the tilt, and their worst case approaches $\sin^2\chi_m$, the infidelity of a $\pi$ pulse about an axis tilted by $\chi_m$. Only when the frequency is identified to $\chi_m=0.01$ do they gain factors of about $30$ (Levitt and Freeman) and $150$ (BB1). What a robust pulse buys is decided by the set of models that the identification leaves, and the two are best designed together. The time-optimal pulse of \Chap~\ref{C.GeometryControl} cannot be treated in this way: its two bangs have incommensurate lengths, so that its infidelity is not a polynomial in one base step.}
+\onp{\begin{itemize}\setlength\itemsep{0.3em}
+    \item Identification leaves a \alert{set} of models: here the box $\abs\rho\le0.1$, $\abs\chi\le\chi_m$ (error in the angle; tilt of the axis by the error in the frequency).
+    \item A pulse of $D$ equal steps: infidelity of degree $2D$ in the quaternion $(c,p,q)$ of one step; worst case certified at order $D$ \citep{pysparsepmi}.
+    \item $\chi_m=0.1$: plain $0.034$, Levitt--Freeman $0.013$, BB1 $0.013$: $\rho$ is cancelled, the tilt is not.
+    \item $\chi_m=0.01$: gains of $30$ and $150$. Identify and control \alert{together}.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}\ft{Robust pulses, pictured}
+\onp{\begin{center}\resizebox{\linewidth}{!}{\input{figures/ch12_robust.tex}}\end{center}}
+\ona{\begin{figure}[tbp]\centering
+\resizebox{\linewidth}{!}{\input{figures/ch12_robust.tex}}
+\caption{From identification to control. The driven qubit of \Chap~\ref{C.StateSpace} is seen in the frame turning at the identified frequency, with the field in both quadratures. An error in the frequency tilts every axis of rotation out of the equator by $\chi$; together with the error in the field, it changes every angle of rotation by the factor $1+\rho$. The identification (\Chap~\ref{C.AlgTomography}) leaves the box $\abs\rho\le0.1$, $\abs\chi\le\chi_m$. (a) Three pulses from $\ket0$ to $\ket1$: the plain $\pi$ pulse, the composite pulse of \citet{levitt1979nmr}, and BB1 \citep{wimperis1994broadband}. (b) The infidelity over the box with $\chi_m=0.1$, with the contour $10^{-3}$ (dashed). The certified worst case (star) lies at a corner: $0.034$, $0.013$ and $0.013$. The composite pulses cancel the error in $\rho$ but not the tilt. (c) The certified worst case against $\chi_m$ (dots), on the largest values found on a grid (lines). It is a polynomial problem in the three components of the propagator of one step of the pulse, certified by \texttt{pysparsepmi} at the order of the number of steps, and exact here. The plain pulse stays near $0.025$. BB1 falls to $1.6\cdot10^{-4}$ at $\chi_m=0.01$, but only when the frequency is that well known; otherwise both composite pulses approach $\sin^2\chi_m$. Generated by \texttt{code/ch12\_robust.py}.}\label{fig:ch12:robust}
+\end{figure}}
+\end{frame}
+
 \begin{frame}\ft{Summary}
-\begin{itemize}\setlength\itemsep{0.4em}
+\begin{itemize}\setlength\itemsep{0.2em}
     \item Discretise the control (slices or basis), then optimise a function on $\R^N$.
     \item Black boxes: gradient-free for few parameters or experiments in the loop; gradient-based otherwise.
     \item Shooting solves the \PMP\ boundary value problem in $\chi(0)$: precise for regular extremals.
     \item GRAPE: gradient from one forward and one backward sweep, $\partial_{u_n}G=2\Delta t\operatorname{Im}\braket{\chi_n|\Hctrl[1]|\psi_n}$; it is the discretised \PMP\ gradient flow. Krotov, parametrised controls, exact gradients are refinements.
     \item QCPOP: Magnus $+$ Chebyshev $+$ series control turn the problem into polynomial optimisation, solved globally by SOS hierarchies or homotopy continuation; traps become irrelevant.
     \item Noise-informed control: replace the geodesic problem by a deterministic robust counterpart with a $\gLam$-length penalty.
+    \item Robust pulses: certify the worst case over the models the identification leaves; composite pulses gain little unless the frequency is well known.
 \end{itemize}
 \ona{Further reading: the tutorial \cite{kochroadmap} and the software list above; on QCPOP the globally optimal control paper and its notebooks; on penalty and noise metrics \Chaps~\ref{C.GeometryControl}--\ref{C.Complexity}.}
 \end{frame}
